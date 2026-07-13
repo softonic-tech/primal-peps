@@ -299,42 +299,131 @@ body.announce-visible .scroll-progress{top:36px}
 .marquee-item::after{content:"◆";font-size:.5rem;color:var(--gold-deep)}
 
 /* ---------- spotlight ---------- */
-.spotlight{background:var(--coal);border-block:1px solid var(--line)}
-.spotlight-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,72px);align-items:center}
+.spotlight{
+  background:var(--onyx);border-block:1px solid var(--line);
+  padding:clamp(64px,9vw,96px) 0;position:relative;overflow:hidden;
+}
+.spotlight::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 30% 50%,rgba(232,160,32,.06),transparent 70%);
+}
+.spotlight-head{margin-bottom:40px;position:relative}
+.spotlight-head-row{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:14px;
+}
+.spotlight-head h2{font-family:'Bebas Neue';font-size:clamp(2.4rem,4.5vw,3.6rem);line-height:1}
+.spotlight-head h2 .gold{color:var(--gold-hi)}
+.spotlight-dots{display:flex;gap:8px;align-items:center}
+.spot-dot{
+  width:32px;height:3px;border-radius:999px;background:rgba(255,255,255,.12);
+  border:none;cursor:pointer;transition:background .3s,width .3s;
+}
+.spot-dot.active{width:48px;background:linear-gradient(90deg,var(--gold-deep),var(--gold-hi))}
+.spotlight-panel{
+  position:relative;display:grid;grid-template-columns:1.05fr .95fr;
+  gap:0;border:1px solid var(--line);border-radius:24px;overflow:hidden;
+  background:linear-gradient(145deg,#12100c 0%,#080706 100%);
+  box-shadow:0 32px 80px rgba(0,0,0,.45);
+}
+.spotlight-panel::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:1px;z-index:2;
+  background:linear-gradient(180deg,transparent,rgba(232,160,32,.35),transparent);
+  left:52%;
+}
 .spotlight-visual{
-  position:relative;min-height:480px;display:grid;place-items:center;
-  background:radial-gradient(circle at 50% 55%,rgba(232,160,32,.12),transparent 50%);
-  border:1px solid var(--line);border-radius:24px;overflow:hidden;
+  position:relative;min-height:520px;display:flex;align-items:center;justify-content:center;
+  padding:48px 40px;overflow:hidden;
 }
-.spotlight-visual::before{
+.spotlight-stage{
+  position:relative;width:100%;max-width:380px;aspect-ratio:3/4;
+  display:grid;place-items:center;
+}
+.spotlight-stage::before{
   content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at 50% 80%,rgba(232,160,32,.08),transparent 60%);
+  background:radial-gradient(circle at 50% 38%,rgba(232,160,32,.18),transparent 55%);
 }
-.spotlight-vial{position:relative;z-index:2;transition:transform .5s}
-.spotlight-vial img{width:min(320px,80%);filter:drop-shadow(0 30px 50px rgba(0,0,0,.6));animation:heroFloat 6s ease-in-out infinite}
+.spotlight-ring{
+  position:absolute;width:280px;height:280px;border-radius:50%;
+  border:1px solid rgba(232,160,32,.15);
+  box-shadow:0 0 0 24px rgba(232,160,32,.04),0 0 80px rgba(232,160,32,.08);
+}
+.spotlight-vial{
+  position:relative;z-index:2;transition:opacity .35s,transform .5s;
+}
+.spotlight-vial img{
+  width:min(300px,85%);margin:0 auto;
+  filter:drop-shadow(0 36px 60px rgba(0,0,0,.65));
+  animation:heroFloat 7s ease-in-out infinite;
+}
 .spotlight-index{
-  position:absolute;top:20px;left:24px;z-index:3;
-  font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--mute);letter-spacing:.1em;
+  position:absolute;top:28px;left:28px;z-index:3;
+  font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--mute);
+  letter-spacing:.12em;padding:8px 12px;border:1px solid var(--line);
+  border-radius:8px;background:rgba(8,7,6,.7);backdrop-filter:blur(8px);
 }
-.spotlight-nav{
-  position:absolute;bottom:20px;right:24px;display:flex;gap:8px;z-index:3;
+.spotlight-copy{
+  padding:clamp(36px,5vw,52px) clamp(32px,4vw,48px);
+  display:flex;flex-direction:column;justify-content:center;border-left:1px solid var(--line);
 }
-.spotlight-nav button{
-  width:40px;height:40px;border:1px solid var(--line);border-radius:50%;
-  display:grid;place-items:center;color:var(--gold-hi);background:rgba(15,13,10,.8);
-  transition:border-color .2s,background .2s;
+.spotlight-meta{
+  display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;
 }
-.spotlight-nav button:hover{border-color:var(--gold);background:rgba(232,160,32,.1)}
-.spotlight-copy h2{font-family:'Bebas Neue';font-size:clamp(2.8rem,5vw,4.5rem);line-height:.95;margin:16px 0 20px}
-.spotlight-story{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.25rem;color:var(--ivory);line-height:1.6;margin-bottom:28px;max-width:42ch}
-.spotlight-metrics{
-  display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px;
+.spot-tag{
+  font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold-hi);padding:6px 12px;border:1px solid rgba(232,160,32,.25);
+  border-radius:999px;background:rgba(232,160,32,.08);
+}
+.spot-stock{
+  display:flex;align-items:center;gap:6px;font-size:.62rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+}
+.spotlight-copy h3{
+  font-family:'Bebas Neue';font-size:clamp(2.6rem,4.5vw,3.8rem);
+  line-height:.95;letter-spacing:.03em;margin-bottom:8px;
+  transition:opacity .3s;
+}
+.spot-sub{
+  font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:20px;
+}
+.spotlight-story{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.2rem;color:var(--ivory);line-height:1.65;
+  margin-bottom:28px;max-width:40ch;
+}
+.spotlight-data{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;margin-bottom:32px;
 }
 .metric-chip{
-  padding:10px 16px;border:1px solid var(--line);border-radius:8px;
-  background:rgba(232,160,32,.04);font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--mute);
+  padding:14px 16px;background:rgba(8,7,6,.9);
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--chrome);
+  text-align:center;
 }
-.metric-chip strong{display:block;color:var(--gold-hi);font-size:.62rem;letter-spacing:.08em;margin-bottom:4px}
+.metric-chip strong{
+  display:block;color:var(--mute);font-size:.58rem;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:6px;font-weight:500;
+}
+.spotlight-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding-top:24px;border-top:1px solid var(--line);
+}
+.spot-price .label{
+  display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:4px;
+}
+.spot-price .amount{font-family:'Bebas Neue';font-size:2rem;color:var(--gold-hi);line-height:1}
+.spotlight-actions{display:flex;align-items:center;gap:10px}
+.spot-nav-btn{
+  width:44px;height:44px;border:1px solid var(--line);border-radius:50%;
+  display:grid;place-items:center;color:var(--gold-hi);
+  background:rgba(12,10,8,.8);transition:border-color .2s,background .2s,transform .2s;
+  flex-shrink:0;
+}
+.spot-nav-btn:hover{border-color:var(--gold);background:rgba(232,160,32,.1);transform:translateY(-1px)}
+.spotlight-actions .btn-primary{padding:14px 28px;white-space:nowrap}
+.spotlight-panel.is-changing .spotlight-vial{opacity:.6;transform:scale(.97)}
+.spotlight-panel.is-changing h3,.spotlight-panel.is-changing .spotlight-story{opacity:.5}
 
 /* ---------- sections ---------- */
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:46px;flex-wrap:wrap}
@@ -689,6 +778,32 @@ footer::before{
   border:1px solid #30271b;border-radius:8px;background:rgba(255,255,255,.018);
 }
 .research-notice::before{content:"RUO";font-size:.5rem;font-weight:800;letter-spacing:.1em;color:var(--gold);border:1px solid #5a421c;border-radius:4px;padding:2px 4px}
+
+/* ---------- research disclaimer ---------- */
+.ruo-band{
+  border-block:1px solid var(--line);background:var(--coal);
+  padding:clamp(40px,6vw,56px) 0;
+}
+.ruo-inner{
+  display:flex;align-items:flex-start;gap:24px;
+  padding:28px 32px;border:1px solid #3a2d1a;border-radius:16px;
+  background:
+    linear-gradient(135deg,rgba(232,160,32,.05),rgba(8,7,6,.9));
+  max-width:900px;margin:0 auto;
+}
+.ruo-badge{
+  flex-shrink:0;padding:10px 14px;border:1px solid var(--gold-deep);border-radius:8px;
+  font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:600;
+  letter-spacing:.14em;color:var(--gold-hi);background:rgba(232,160,32,.08);
+  line-height:1.4;text-align:center;
+}
+.ruo-copy h3{
+  font-family:'Bebas Neue';font-size:1.5rem;letter-spacing:.08em;color:var(--ivory);
+  margin-bottom:10px;
+}
+.ruo-copy p{
+  font-size:.88rem;line-height:1.7;color:var(--mute);max-width:62ch;
+}
 
 /* ---------- premium checkout modal ---------- */
 .checkout-overlay{
@@ -1072,8 +1187,16 @@ footer::before{
   .hero-grid{grid-template-columns:1fr;gap:44px}
   .hero-art{order:-1;margin-bottom:8px}
   .hero-art-main{max-width:min(500px,100%)}
-  .spotlight-grid{grid-template-columns:1fr}
-  .spotlight-visual{min-height:380px;order:-1}
+  .spotlight-panel{grid-template-columns:1fr}
+  .spotlight-panel::before{display:none}
+  .spotlight-visual{min-height:400px;order:-1;padding:36px 24px}
+  .spotlight-copy{border-left:none;border-top:1px solid var(--line)}
+  .spotlight-foot{flex-direction:column;align-items:stretch}
+  .spotlight-actions{width:100%;justify-content:space-between}
+  .spotlight-actions .btn-primary{flex:1;text-align:center;justify-content:center}
+  .spotlight-data{grid-template-columns:1fr}
+  .metric-chip{display:flex;justify-content:space-between;align-items:center;text-align:left}
+  .metric-chip strong{margin-bottom:0}
   .science-grid{grid-template-columns:1fr}
   .points-layout{grid-template-columns:1fr;gap:44px}
   .rank-ladder{flex-direction:row;justify-content:space-between}
@@ -1129,7 +1252,8 @@ footer::before{
   .foot-brand{grid-column:1/-1;padding:22px;border:1px solid #392c1b;border-radius:16px}
   .email-glass{flex-direction:column;border-radius:16px;padding:12px}
   .email-glass input,.email-glass .btn-primary{width:100%}
-  .rank-ladder{flex-direction:column}
+  .ruo-inner{flex-direction:column;align-items:flex-start;padding:22px 20px;gap:16px}
+  .ruo-badge{align-self:flex-start}
   .nav-inner{height:68px}
   .brand img{width:40px;height:40px}
   .brand-name{font-size:1.3rem}
@@ -1253,28 +1377,50 @@ footer::before{
 </div>
 
 <!-- SPOTLIGHT -->
-<section class="spotlight section section-cinematic noise" id="spotlight">
+<section class="spotlight" id="spotlight">
   <div class="wrap">
     <div class="hairline rv"></div>
-    <div class="spotlight-grid" style="margin-top:48px">
-      <div class="spotlight-visual rv">
+    <div class="spotlight-head rv" style="margin-top:40px">
+      <span class="eyebrow">Curated selection</span>
+      <div class="spotlight-head-row">
+        <h2>FEATURED <span class="gold">DROP</span></h2>
+        <div class="spotlight-dots" id="spotDots" role="tablist" aria-label="Featured products"></div>
+      </div>
+    </div>
+    <div class="spotlight-panel rv" id="spotPanel">
+      <div class="spotlight-visual">
         <span class="spotlight-index" id="spotIndex">01 / OF 08</span>
-        <div class="spotlight-vial" id="spotVial"><img src="products/RETATRUTIDE.png" alt="Retatrutide"></div>
-        <div class="spotlight-nav">
-          <button id="spotPrev" aria-label="Previous product">←</button>
-          <button id="spotNext" aria-label="Next product">→</button>
+        <div class="spotlight-stage">
+          <div class="spotlight-ring" aria-hidden="true"></div>
+          <div class="spotlight-vial" id="spotVial">
+            <img src="products/RETATRUTIDE.png" alt="Retatrutide">
+          </div>
         </div>
       </div>
-      <div class="spotlight-copy rv">
-        <span class="eyebrow">Featured drop</span>
-        <h2 id="spotName">RETATRUTIDE</h2>
-        <p class="spotlight-story" id="spotStory">The triple-receptor research peptide commanding attention across metabolic and incretin signaling studies. Precision-synthesized for serious research applications.</p>
-        <div class="spotlight-metrics" id="spotMetrics">
+      <div class="spotlight-copy">
+        <div class="spotlight-meta">
+          <span class="spot-tag" id="spotTag">Best seller</span>
+          <span class="spot-stock"><span class="dot"></span> In stock</span>
+        </div>
+        <h3 id="spotName">RETATRUTIDE</h3>
+        <p class="spot-sub" id="spotSub">Triple-receptor research peptide</p>
+        <p class="spotlight-story" id="spotStory">The triple-receptor research peptide commanding attention across metabolic and incretin signaling studies.</p>
+        <div class="spotlight-data" id="spotMetrics">
           <div class="metric-chip"><strong>Purity</strong>99%+</div>
           <div class="metric-chip"><strong>MW</strong>4,731 Da</div>
           <div class="metric-chip"><strong>Lot</strong>PP-2026-001</div>
         </div>
-        <a class="btn-primary magnetic" href="#shop" id="spotCta">Shop Retatrutide →</a>
+        <div class="spotlight-foot">
+          <div class="spot-price">
+            <span class="label">From</span>
+            <span class="amount" id="spotPrice">$119</span>
+          </div>
+          <div class="spotlight-actions">
+            <button class="spot-nav-btn" id="spotPrev" aria-label="Previous product">←</button>
+            <a class="btn-primary magnetic" href="#shop" id="spotCta">Shop Retatrutide</a>
+            <button class="spot-nav-btn" id="spotNext" aria-label="Next product">→</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1520,6 +1666,19 @@ footer::before{
   </div>
 </section>
 
+<!-- RESEARCH USE ONLY -->
+<section class="ruo-band" id="disclaimer" aria-label="Research use disclaimer">
+  <div class="wrap">
+    <div class="ruo-inner rv">
+      <div class="ruo-badge" aria-hidden="true">RUO</div>
+      <div class="ruo-copy">
+        <h3>Research Use Only</h3>
+        <p>All products sold by Primal Peps are intended strictly for laboratory and research use only. They are not medicines, supplements, or therapeutic goods and are not intended for human or animal consumption.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="wrap">
@@ -1565,7 +1724,7 @@ footer::before{
     </div>
     <div class="legal">
       <span>© 2026 Primal Peps. All rights reserved.</span>
-      <span class="research-notice">For laboratory research purposes only</span>
+      <span class="research-notice">Research use only — not for human or animal consumption</span>
     </div>
   </div>
 </footer>
@@ -1924,20 +2083,41 @@ $('#cartBody').addEventListener('click', e=>{
 
 /* ---------------- spotlight rotator ---------------- */
 let spotIdx = 0;
+const spotPanel = $('#spotPanel');
+const spotDots = $('#spotDots');
+
+function renderSpotDots(){
+  spotDots.innerHTML = SPOTLIGHT_IDS.map((id,i)=>`
+    <button class="spot-dot${i===spotIdx?' active':''}" data-idx="${i}" aria-label="View ${PRODUCTS.find(p=>p.id===id).name}" role="tab"></button>
+  `).join('');
+}
+spotDots.addEventListener('click', e=>{
+  const dot = e.target.closest('.spot-dot');
+  if(!dot) return;
+  spotIdx = +dot.dataset.idx;
+  updateSpotlight();
+});
+
 function updateSpotlight(){
   const p = PRODUCTS.find(x => x.id === SPOTLIGHT_IDS[spotIdx]);
   if(!p) return;
+  spotPanel.classList.add('is-changing');
+  setTimeout(()=>spotPanel.classList.remove('is-changing'), 350);
   const idx = PRODUCTS.indexOf(p) + 1;
   $('#spotVial img').src = imgSrc(p.img);
   $('#spotVial img').alt = p.name;
-  $('#spotIndex').textContent = `${String(idx).padStart(2,'0')} / OF ${PRODUCTS.length}`;
+  $('#spotIndex').textContent = `${String(idx).padStart(2,'0')} / ${String(PRODUCTS.length).padStart(2,'0')}`;
   $('#spotName').textContent = p.name.toUpperCase();
+  $('#spotSub').textContent = p.sub;
+  $('#spotTag').textContent = p.tag;
   $('#spotStory').textContent = p.story;
+  $('#spotPrice').textContent = fmt(p.price);
   $('#spotMetrics').innerHTML = `
     <div class="metric-chip"><strong>Purity</strong>99%+</div>
     <div class="metric-chip"><strong>MW</strong>${p.mw}</div>
     <div class="metric-chip"><strong>Lot</strong>${p.lot}</div>`;
-  $('#spotCta').textContent = `Shop ${p.name} →`;
+  $('#spotCta').textContent = `Shop ${p.name}`;
+  renderSpotDots();
 }
 $('#spotPrev').onclick = ()=>{ spotIdx = (spotIdx - 1 + SPOTLIGHT_IDS.length) % SPOTLIGHT_IDS.length; updateSpotlight(); };
 $('#spotNext').onclick = ()=>{ spotIdx = (spotIdx + 1) % SPOTLIGHT_IDS.length; updateSpotlight(); };
