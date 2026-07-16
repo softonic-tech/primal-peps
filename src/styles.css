@@ -1839,6 +1839,10 @@ footer::before{
   background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:#140d02;
   font-size:.7rem;font-weight:800;
 }
+.account-btn-icon{
+  display:none;line-height:0;color:inherit;
+}
+.account-btn-icon svg{display:block}
 .account-label{white-space:nowrap}
 .points-pill{text-decoration:none}
 .auth-modal-wrap{z-index:130}
@@ -2251,6 +2255,10 @@ footer::before{
   .pdp-grid{grid-template-columns:1fr;gap:28px}
   .pdp-visual{min-height:360px}
   .account-label{display:none}
+  .account-btn-guest{
+    width:44px;height:44px;padding:0;justify-content:center;gap:0;
+  }
+  .account-btn-guest .account-btn-icon{display:block}
 
   .dash-page{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
   .dash-tabs{

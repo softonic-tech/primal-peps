@@ -54,11 +54,26 @@ export default function Nav({ announceVisible }) {
             </Link>
           ) : (
             <button
-              className="account-btn"
+              className="account-btn account-btn-guest"
               type="button"
               aria-label="Sign in"
               onClick={() => openAuth('login')}
             >
+              <span className="account-btn-icon" aria-hidden="true">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 19.5c1.6-3.2 4-4.8 7-4.8s5.4 1.6 7 4.8" />
+                </svg>
+              </span>
               <span className="account-label">Sign in</span>
             </button>
           )}
