@@ -1,12 +1,25 @@
 import { useCart } from '../context/CartContext'
+import { useSettings } from '../context/SettingsContext'
+import { LEGAL } from '../data/site'
+
+const SOCIAL_LABELS = [
+  ['instagram', 'Instagram'],
+  ['facebook', 'Facebook'],
+  ['tiktok', 'TikTok'],
+  ['youtube', 'YouTube'],
+  ['x', 'X'],
+]
 
 export default function Footer() {
-  const { toast } = useCart()
+  const { toast, promoPercent } = useCart()
+  const { site, social, contact } = useSettings()
 
   const handleNewsletter = (e) => {
     e.preventDefault()
     toast('Subscribed ✓')
   }
+
+  const links = SOCIAL_LABELS.filter(([key]) => social[key]?.trim())
 
   return (
     <footer>
@@ -16,13 +29,26 @@ export default function Footer() {
             <span className="brand-name" style={{ fontSize: '1.7rem' }}>
               PRIMAL <span style={{ color: 'var(--gold)' }}>PEPS</span>
             </span>
-            <p className="mission">
-              Precision compounds. Verified quality. Built for serious research.
-            </p>
+            <p className="mission">{site.tagline}</p>
             <div className="foot-badges">
               <span className="foot-badge">Lab tested</span>
-              <span className="foot-badge">Secure shipping</span>
+              <span className="foot-badge">18+ only</span>
+              <span className="foot-badge">Research use only</span>
             </div>
+            {links.length > 0 && (
+              <div className="foot-social">
+                {links.map(([key, label]) => (
+                  <a
+                    key={key}
+                    href={social[key]}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
+            )}
             <form className="foot-newsletter" onSubmit={handleNewsletter}>
               <input
                 type="email"
@@ -45,39 +71,64 @@ export default function Footer() {
             <h5>Rewards</h5>
             <div className="foot-links">
               <a href="#points">Primal Points</a>
-              <a href="#offer">15% welcome offer</a>
+              <a href="#offer">{promoPercent}% welcome offer</a>
               <a href="#points">Tiers &amp; perks</a>
             </div>
           </div>
           <div className="foot-col foot-support">
             <h5>Support</h5>
             <div className="foot-links">
-              <a href="#">Shipping &amp; delivery</a>
-              <a href="#">Contact us</a>
-              <a href="#">FAQ</a>
-              <a href="#">Terms &amp; privacy</a>
+              <a href="#shipping">Shipping &amp; delivery</a>
+              <a href="#faq">FAQ</a>
+              <a href="#disclaimer">Legal disclaimer</a>
+              {contact.email && (
+                <a href={`mailto:${contact.email}`}>{contact.email}</a>
+              )}
+              {contact.phone && (
+                <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+              )}
             </div>
           </div>
         </div>
 
-        <div
-          className="foot-ruo"
+        <section
+          className="foot-legal"
           id="disclaimer"
-          aria-label="Research use disclaimer"
+          aria-label="Research use and age disclaimer"
         >
-          <span className="foot-ruo-badge" aria-hidden="true">
-            RUO
-          </span>
-          <div className="foot-ruo-copy">
-            <strong>Research Use Only</strong>
-            <p>
-              All products sold by Primal Peps are intended strictly for
-              laboratory and research use only. They are not medicines,
-              supplements, or therapeutic goods and are not intended for human
-              or animal consumption.
-            </p>
+          <div className="foot-legal-rail" aria-hidden="true" />
+          <header className="foot-legal-head">
+            <span className="foot-legal-kicker">Important notice</span>
+            <h3>Laboratory research compounds</h3>
+          </header>
+
+          <div className="foot-legal-grid">
+            <article className="foot-legal-card">
+              <div className="foot-legal-mark">
+                <span className="foot-legal-code">RUO</span>
+                <span className="foot-legal-title">Research use only</span>
+              </div>
+              <p>{LEGAL.ruoFull}</p>
+            </article>
+
+            <article className="foot-legal-card">
+              <div className="foot-legal-mark">
+                <span className="foot-legal-code">18+</span>
+                <span className="foot-legal-title">Age requirement</span>
+              </div>
+              <p>
+                {LEGAL.ageLine} By purchasing, you acknowledge that you meet
+                this requirement. We do not verify age at checkout beyond your
+                acknowledgement.
+              </p>
+            </article>
           </div>
-        </div>
+
+          <p className="foot-legal-foot">
+            {site.supportNote ||
+              'Not for human or veterinary consumption or use.'}
+          </p>
+        </section>
 
         <div className="legal">
           <span>© 2026 Primal Peps. All rights reserved.</span>

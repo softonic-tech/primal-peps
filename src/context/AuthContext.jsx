@@ -2,33 +2,134 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
-import { DEMO_EMAIL, DEMO_PASS, loadStore, saveStore } from '../lib/storage'
+import { mapOrder, mapReview } from '../lib/mapProduct'
+import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-function publicUser(record) {
-  if (!record) return null
-  const { password: _pw, ...rest } = record
-  return rest
+function mapProfile(row, authUser) {
+  if (!row && !authUser) return null
+  const shipping = row?.shipping || {}
+  return {
+    id: row?.id || authUser?.id,
+    email: row?.email || authUser?.email || '',
+    fullName:
+      row?.full_name ||
+      authUser?.user_metadata?.full_name ||
+      (authUser?.email || '').split('@')[0],
+    phone: row?.phone || '',
+    shipping: {
+      line1: shipping.line1 || '',
+      line2: shipping.line2 || '',
+      suburb: shipping.suburb || '',
+      state: shipping.state || '',
+      postcode: shipping.postcode || '',
+    },
+    points: row?.points || 0,
+    orders: [],
+  }
 }
 
 export function AuthProvider({ children }) {
-  const [store, setStore] = useState(() => loadStore())
+  const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [orders, setOrders] = useState([])
+  const [reviews, setReviews] = useState([])
+  const [publicReviews, setPublicReviews] = useState([])
+  const [loading, setLoading] = useState(true)
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
-  const persist = useCallback((next) => {
-    setStore(next)
-    saveStore(next)
+  const refreshPublicReviews = useCallback(async () => {
+    const { data } = await supabase
+      .from('reviews')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setPublicReviews((data || []).map(mapReview))
   }, [])
 
+  const loadUserData = useCallback(async (authUser) => {
+    if (!authUser) {
+      setProfile(null)
+      setOrders([])
+      setReviews([])
+      return
+    }
+
+    const [{ data: prof }, { data: orderRows }, { data: reviewRows }] =
+      await Promise.all([
+        supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle(),
+        supabase
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('user_id', authUser.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('reviews')
+          .select('*')
+          .eq('user_id', authUser.id)
+          .order('created_at', { ascending: false }),
+      ])
+
+    if (!prof) {
+      await supabase.from('profiles').upsert({
+        id: authUser.id,
+        email: authUser.email,
+        full_name:
+          authUser.user_metadata?.full_name ||
+          authUser.email?.split('@')[0] ||
+          '',
+      })
+      const { data: created } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .maybeSingle()
+      setProfile(mapProfile(created, authUser))
+    } else {
+      setProfile(mapProfile(prof, authUser))
+    }
+
+    setOrders((orderRows || []).map(mapOrder))
+    setReviews((reviewRows || []).map(mapReview))
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    refreshPublicReviews()
+
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return
+      setSession(data.session)
+      await loadUserData(data.session?.user ?? null)
+      setLoading(false)
+    })
+
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (event, next) => {
+        if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
+        setSession(next)
+        await loadUserData(next?.user ?? null)
+        setLoading(false)
+      },
+    )
+
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
+  }, [loadUserData, refreshPublicReviews])
+
   const user = useMemo(() => {
-    if (!store.sessionEmail) return null
-    return publicUser(store.users[store.sessionEmail] || null)
-  }, [store])
+    if (!profile) return null
+    return { ...profile, orders }
+  }, [profile, orders])
 
   const openAuth = useCallback((mode = 'login') => {
     setAuthMode(mode)
@@ -37,239 +138,311 @@ export function AuthProvider({ children }) {
 
   const closeAuth = useCallback(() => setAuthOpen(false), [])
 
-  const login = useCallback(
-    (email, password) => {
-      const key = email.trim().toLowerCase()
-      const record = store.users[key]
-      if (!record || record.password !== password) {
-        return { ok: false, error: 'Invalid email or password' }
+  const login = useCallback(async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+    if (error) {
+      const msg = error.message || 'Sign in failed'
+      if (/email not confirmed/i.test(msg)) {
+        return {
+          ok: false,
+          error:
+            'Confirm your email before signing in — check your inbox (and spam).',
+        }
       }
-      persist({ ...store, sessionEmail: key })
-      setAuthOpen(false)
-      return { ok: true }
-    },
-    [persist, store],
-  )
+      return { ok: false, error: msg }
+    }
+    setAuthOpen(false)
+    return { ok: true }
+  }, [])
 
-  const signup = useCallback(
-    ({ email, password, fullName }) => {
-      const key = email.trim().toLowerCase()
-      if (!key || !password || password.length < 6) {
-        return { ok: false, error: 'Use a valid email and password (6+ chars)' }
+  const signup = useCallback(async ({ email, password, fullName }) => {
+    const key = email.trim().toLowerCase()
+    const name = fullName?.trim() || key.split('@')[0]
+    if (!key || !password || password.length < 6) {
+      return { ok: false, error: 'Use a valid email and password (6+ chars)' }
+    }
+
+    // Preferred path (dev / vite): create confirmed user via service-role API
+    // so we skip confirmation emails (and their rate limits).
+    try {
+      const apiRes = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: key, password, fullName: name }),
+      })
+      if (apiRes.ok) {
+        const { error: loginErr } = await supabase.auth.signInWithPassword({
+          email: key,
+          password,
+        })
+        if (loginErr) return { ok: false, error: loginErr.message }
+        setAuthOpen(false)
+        return { ok: true }
       }
-      if (store.users[key]) {
-        return { ok: false, error: 'An account with this email already exists' }
+      if (apiRes.status !== 404 && apiRes.status !== 503) {
+        const payload = await apiRes.json().catch(() => ({}))
+        const msg = payload.error || 'Could not create account'
+        if (/already|registered|exists/i.test(msg)) {
+          return {
+            ok: false,
+            error: 'An account with this email already exists. Sign in instead.',
+          }
+        }
+        return { ok: false, error: msg }
       }
-      const record = {
-        id: `usr_${Date.now()}`,
+    } catch {
+      /* fall through to client signUp */
+    }
+
+    // Fallback: direct Supabase signUp (needs Confirm email OFF, or inbox confirm)
+    const { data, error } = await supabase.auth.signUp({
+      email: key,
+      password,
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: `${window.location.origin}/account`,
+      },
+    })
+    if (error) return { ok: false, error: error.message }
+
+    if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+      return {
+        ok: false,
+        error: 'An account with this email already exists. Sign in instead.',
+      }
+    }
+
+    if (data.session) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
         email: key,
-        password,
-        fullName: fullName.trim() || key.split('@')[0],
-        phone: '',
-        shipping: {
-          line1: '',
-          line2: '',
-          suburb: '',
-          state: '',
-          postcode: '',
-        },
-        points: 0,
-        orders: [],
-        createdAt: new Date().toISOString(),
-      }
-      persist({
-        ...store,
-        users: { ...store.users, [key]: record },
-        sessionEmail: key,
+        full_name: name,
       })
       setAuthOpen(false)
       return { ok: true }
-    },
-    [persist, store],
-  )
+    }
 
-  const logout = useCallback(() => {
-    persist({ ...store, sessionEmail: null })
-  }, [persist, store])
+    // User created but email confirmation required — try signing in anyway
+    // (works if a DB trigger already confirmed them).
+    const { error: loginErr } = await supabase.auth.signInWithPassword({
+      email: key,
+      password,
+    })
+    if (!loginErr) {
+      setAuthOpen(false)
+      return { ok: true }
+    }
+
+    return {
+      ok: true,
+      needsConfirmation: true,
+      error: null,
+    }
+  }, [])
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setProfile(null)
+    setOrders([])
+    setReviews([])
+  }, [])
 
   const updateProfile = useCallback(
-    (fields) => {
-      if (!store.sessionEmail) return { ok: false, error: 'Not signed in' }
-      const key = store.sessionEmail
-      const current = store.users[key]
-      const nextUser = {
-        ...current,
-        fullName: fields.fullName?.trim() ?? current.fullName,
-        phone: fields.phone?.trim() ?? current.phone,
-      }
-      persist({
-        ...store,
-        users: { ...store.users, [key]: nextUser },
-      })
+    async (fields) => {
+      if (!session?.user) return { ok: false, error: 'Not signed in' }
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fields.fullName?.trim() ?? profile?.fullName,
+          phone: fields.phone?.trim() ?? profile?.phone,
+        })
+        .eq('id', session.user.id)
+      if (error) return { ok: false, error: error.message }
+      await loadUserData(session.user)
       return { ok: true }
     },
-    [persist, store],
+    [loadUserData, profile, session],
   )
 
   const updateShipping = useCallback(
-    (shipping) => {
-      if (!store.sessionEmail) return { ok: false, error: 'Not signed in' }
-      const key = store.sessionEmail
-      const current = store.users[key]
-      persist({
-        ...store,
-        users: {
-          ...store.users,
-          [key]: { ...current, shipping: { ...current.shipping, ...shipping } },
-        },
-      })
+    async (shipping) => {
+      if (!session?.user) return { ok: false, error: 'Not signed in' }
+      const nextShipping = { ...(profile?.shipping || {}), ...shipping }
+      const { error } = await supabase
+        .from('profiles')
+        .update({ shipping: nextShipping })
+        .eq('id', session.user.id)
+      if (error) return { ok: false, error: error.message }
+      await loadUserData(session.user)
       return { ok: true }
     },
-    [persist, store],
+    [loadUserData, profile, session],
   )
 
   const updatePassword = useCallback(
-    (currentPassword, nextPassword) => {
-      if (!store.sessionEmail) return { ok: false, error: 'Not signed in' }
-      const key = store.sessionEmail
-      const current = store.users[key]
-      if (current.password !== currentPassword) {
-        return { ok: false, error: 'Current password is incorrect' }
-      }
+    async (currentPassword, nextPassword) => {
+      if (!session?.user?.email) return { ok: false, error: 'Not signed in' }
       if (!nextPassword || nextPassword.length < 6) {
         return { ok: false, error: 'New password must be at least 6 characters' }
       }
-      persist({
-        ...store,
-        users: {
-          ...store.users,
-          [key]: { ...current, password: nextPassword },
-        },
-      })
+      if (!passwordRecovery) {
+        const { error: checkErr } = await supabase.auth.signInWithPassword({
+          email: session.user.email,
+          password: currentPassword,
+        })
+        if (checkErr) return { ok: false, error: 'Current password is incorrect' }
+      }
+      const { error } = await supabase.auth.updateUser({ password: nextPassword })
+      if (error) return { ok: false, error: error.message }
+      setPasswordRecovery(false)
       return { ok: true }
     },
-    [persist, store],
+    [passwordRecovery, session],
   )
 
-  const resetPassword = useCallback(
-    (email, nextPassword) => {
-      const key = email.trim().toLowerCase()
-      const current = store.users[key]
-      if (!current) {
-        return { ok: false, error: 'No account found for that email' }
-      }
-      if (!nextPassword || nextPassword.length < 6) {
-        return { ok: false, error: 'New password must be at least 6 characters' }
-      }
-      persist({
-        ...store,
-        users: {
-          ...store.users,
-          [key]: { ...current, password: nextPassword },
-        },
-      })
-      return { ok: true }
-    },
-    [persist, store],
-  )
+  const resetPassword = useCallback(async (email) => {
+    const key = email.trim().toLowerCase()
+    if (!key) return { ok: false, error: 'Enter your account email' }
+    const redirectTo = `${window.location.origin}/account`
+    const { error } = await supabase.auth.resetPasswordForEmail(key, {
+      redirectTo,
+    })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  }, [])
 
   const recordOrder = useCallback(
-    (order) => {
-      if (!store.sessionEmail) return null
-      const key = store.sessionEmail
-      const current = store.users[key]
-      const shippingProfile = {
-        line1: order.shipping.line1 || '',
-        line2: order.shipping.line2 || '',
-        suburb: order.shipping.suburb || '',
-        state: order.shipping.state || '',
-        postcode: order.shipping.postcode || '',
+    async (order) => {
+      const shipping = order.shipping || {}
+      const payload = {
+        id: order.id,
+        status: order.status || 'Awaiting payment',
+        payment_method: order.paymentMethod || 'bank_transfer',
+        customer_email: shipping.email || session?.user?.email || '',
+        customer_name: shipping.fullName || profile?.fullName || '',
+        customer_phone: shipping.phone || profile?.phone || '',
+        shipping,
+        subtotal: order.subtotal,
+        shipping_fee: order.shippingFee || 0,
+        discount: order.discount || 0,
+        total: order.total,
+        points_earned: order.pointsEarned || 0,
+        user_id: session?.user?.id || null,
       }
-      const nextUser = {
-        ...current,
-        points: (current.points || 0) + (order.pointsEarned || 0),
-        phone: order.shipping.phone || current.phone,
-        fullName: order.shipping.fullName || current.fullName,
-        shipping: { ...current.shipping, ...shippingProfile },
-        orders: [order, ...(current.orders || [])],
+
+      const { error: orderErr } = await supabase.from('orders').insert(payload)
+      if (orderErr) throw new Error(orderErr.message)
+
+      const lines = (order.items || []).map((i) => ({
+        order_id: order.id,
+        product_id: i.productId,
+        name: i.name,
+        variant_label: i.variantLabel,
+        qty: i.qty,
+        price: i.price,
+        img: i.img || '',
+      }))
+      if (lines.length) {
+        const { error: itemsErr } = await supabase
+          .from('order_items')
+          .insert(lines)
+        if (itemsErr) throw new Error(itemsErr.message)
       }
-      persist({
-        ...store,
-        users: { ...store.users, [key]: nextUser },
-      })
+
+      if (session?.user) {
+        const shippingProfile = {
+          line1: shipping.line1 || '',
+          line2: shipping.line2 || '',
+          suburb: shipping.suburb || '',
+          state: shipping.state || '',
+          postcode: shipping.postcode || '',
+        }
+        await supabase
+          .from('profiles')
+          .update({
+            points: (profile?.points || 0) + (order.pointsEarned || 0),
+            phone: shipping.phone || profile?.phone || '',
+            full_name: shipping.fullName || profile?.fullName || '',
+            shipping: { ...(profile?.shipping || {}), ...shippingProfile },
+          })
+          .eq('id', session.user.id)
+        await loadUserData(session.user)
+      }
+
       return order
     },
-    [persist, store],
+    [loadUserData, profile, session],
   )
 
   const addReview = useCallback(
-    ({ productId, rating, body, orderId }) => {
-      if (!store.sessionEmail) return { ok: false, error: 'Sign in to review' }
-      const key = store.sessionEmail
-      const current = store.users[key]
-      const already = (store.reviews || []).some(
-        (r) => r.productId === productId && r.userId === current.id,
-      )
+    async ({ productId, rating, body, orderId }) => {
+      if (!session?.user || !profile) {
+        return { ok: false, error: 'Sign in to review' }
+      }
+      const already = reviews.some((r) => r.productId === productId)
       if (already) {
         return { ok: false, error: 'You already reviewed this product' }
       }
-      const purchased = (current.orders || []).some((o) =>
+      const purchased = orders.some((o) =>
         o.items.some((i) => i.productId === productId),
       )
       if (!purchased) {
         return { ok: false, error: 'Purchase this product before reviewing' }
       }
-      const review = {
-        id: `rev_${Date.now()}`,
-        productId,
-        userId: current.id,
-        userName: current.fullName || current.email,
-        rating: Math.min(5, Math.max(1, Number(rating) || 5)),
-        body: body.trim(),
-        createdAt: new Date().toISOString(),
-        orderId: orderId || null,
-      }
-      persist({
-        ...store,
-        reviews: [review, ...(store.reviews || [])],
-      })
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({
+          product_id: productId,
+          user_id: session.user.id,
+          user_name: profile.fullName || profile.email,
+          rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+          body: body.trim(),
+          order_id: orderId || null,
+        })
+        .select('*')
+        .single()
+      if (error) return { ok: false, error: error.message }
+      const review = mapReview(data)
+      setReviews((prev) => [review, ...prev])
+      setPublicReviews((prev) => [review, ...prev])
       return { ok: true, review }
     },
-    [persist, store],
+    [orders, profile, reviews, session],
   )
 
   const getProductReviews = useCallback(
     (productId) =>
-      (store.reviews || []).filter((r) => r.productId === productId),
-    [store.reviews],
+      publicReviews.filter((r) => r.productId === productId),
+    [publicReviews],
   )
 
   const canReviewProduct = useCallback(
     (productId) => {
       if (!user) return false
-      const purchased = (user.orders || []).some((o) =>
+      const purchased = orders.some((o) =>
         o.items.some((i) => i.productId === productId),
       )
       if (!purchased) return false
-      return !(store.reviews || []).some(
-        (r) => r.productId === productId && r.userId === user.id,
-      )
+      return !reviews.some((r) => r.productId === productId)
     },
-    [store.reviews, user],
+    [orders, reviews, user],
   )
 
   const reviewableProducts = useMemo(() => {
     if (!user) return []
     const bought = new Set()
-    ;(user.orders || []).forEach((o) =>
-      o.items.forEach((i) => bought.add(i.productId)),
-    )
+    orders.forEach((o) => o.items.forEach((i) => bought.add(i.productId)))
     return [...bought].filter((id) => canReviewProduct(id))
-  }, [canReviewProduct, user])
+  }, [canReviewProduct, orders, user])
 
   const value = {
     user,
-    isLoggedIn: Boolean(user),
+    session,
+    loading,
+    isLoggedIn: Boolean(session?.user && profile),
     authOpen,
     authMode,
     setAuthMode,
@@ -287,7 +460,9 @@ export function AuthProvider({ children }) {
     getProductReviews,
     canReviewProduct,
     reviewableProducts,
-    demoHint: { email: DEMO_EMAIL, password: DEMO_PASS },
+    passwordRecovery,
+    clearPasswordRecovery: () => setPasswordRecovery(false),
+    refreshUser: () => loadUserData(session?.user ?? null),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

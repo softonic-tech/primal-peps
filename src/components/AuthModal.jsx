@@ -87,7 +87,6 @@ export default function AuthModal() {
     login,
     signup,
     resetPassword,
-    demoHint,
   } = useAuth()
   const { toast, completeSignup } = useCart()
   const [email, setEmail] = useState('')
@@ -96,13 +95,17 @@ export default function AuthModal() {
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState('')
   const [resetSent, setResetSent] = useState(false)
+  const [confirmNotice, setConfirmNotice] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!authOpen) return
     setError('')
     setResetSent(false)
+    setConfirmNotice(false)
     setPassword('')
     setConfirm('')
+    setBusy(false)
   }, [authMode, authOpen])
 
   if (!authOpen) return null
@@ -118,61 +121,57 @@ export default function AuthModal() {
       : 'JOIN THE TROOP'
 
   const blurb = isForgot
-    ? 'Enter your account email and choose a new password. Demo only — no email is sent.'
+    ? 'Enter your account email and we will send a reset link if an account exists.'
     : isLogin
       ? 'Sign in to sync shipping, points, and order history. Guest checkout still works anytime.'
       : 'Create an account to track points and orders. Shopping without an account is still fine.'
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     setError('')
+    setBusy(true)
 
-    if (isForgot) {
+    try {
+      if (isForgot) {
+        const res = await resetPassword(email)
+        if (!res.ok) {
+          setError(res.error)
+          return
+        }
+        setResetSent(true)
+        toast('Check your email for a reset link')
+        return
+      }
+
+      if (isLogin) {
+        const res = await login(email, password)
+        if (!res.ok) {
+          setError(res.error)
+          return
+        }
+        toast('Signed in ✓')
+        return
+      }
+
       if (password !== confirm) {
         setError('Passwords do not match')
         return
       }
-      const res = resetPassword(email, password)
+      const res = await signup({ email, password, fullName })
       if (!res.ok) {
         setError(res.error)
         return
       }
-      setResetSent(true)
-      toast('Password updated — sign in with your new password')
-      setAuthMode('login')
-      setPassword('')
-      setConfirm('')
-      return
-    }
-
-    if (isLogin) {
-      const res = login(email, password)
-      if (!res.ok) {
-        setError(res.error)
+      completeSignup()
+      if (res.needsConfirmation) {
+        setConfirmNotice(true)
+        toast('Check your email to confirm your account')
         return
       }
-      toast('Signed in ✓')
-      return
+      toast('Account created — welcome to the troop ✓')
+    } finally {
+      setBusy(false)
     }
-
-    if (password !== confirm) {
-      setError('Passwords do not match')
-      return
-    }
-    const res = signup({ email, password, fullName })
-    if (!res.ok) {
-      setError(res.error)
-      return
-    }
-    completeSignup()
-    toast('Account created — welcome to the troop ✓')
-  }
-
-  const fillDemo = () => {
-    setEmail(demoHint.email)
-    setPassword(demoHint.password)
-    setConfirm(demoHint.password)
-    setError('')
   }
 
   return (
@@ -219,17 +218,17 @@ export default function AuthModal() {
             />
           </label>
 
-          <PasswordField
-            label={isForgot ? 'New password' : 'Password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={
-              isForgot || isSignup ? 'new-password' : 'current-password'
-            }
-            minLength={6}
-          />
+          {!isForgot && (
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={isSignup ? 'new-password' : 'current-password'}
+              minLength={6}
+            />
+          )}
 
-          {(isSignup || isForgot) && (
+          {isSignup && (
             <PasswordField
               label="Confirm password"
               value={confirm}
@@ -255,24 +254,27 @@ export default function AuthModal() {
           )}
 
           {error && <p className="auth-error">{error}</p>}
-          {resetSent && isLogin && (
-            <p className="auth-success">Password reset. Sign in below.</p>
+          {resetSent && isForgot && (
+            <p className="auth-success">
+              If an account exists for that email, a reset link is on its way.
+            </p>
+          )}
+          {confirmNotice && isSignup && (
+            <p className="auth-success">
+              Account created. Confirm the link in your email, then sign in.
+            </p>
           )}
 
-          <button className="btn-primary" type="submit">
-            {isForgot
-              ? 'Reset password'
-              : isLogin
-                ? 'Sign in'
-                : 'Create account'}
+          <button className="btn-primary" type="submit" disabled={busy}>
+            {busy
+              ? 'Please wait…'
+              : isForgot
+                ? 'Send reset link'
+                : isLogin
+                  ? 'Sign in'
+                  : 'Create account'}
           </button>
         </form>
-
-        {!isForgot && (
-          <button className="auth-demo" type="button" onClick={fillDemo}>
-            Use demo account ({demoHint.email})
-          </button>
-        )}
 
         {isForgot ? (
           <button

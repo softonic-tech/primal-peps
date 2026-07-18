@@ -1,23 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  PRODUCTS,
   SPOTLIGHT_IDS,
   defaultVariant,
   fmt,
   imgSrc,
+  isInStock,
+  productHasStock,
 } from '../data/products'
+import { useProducts } from '../context/ProductsContext'
 import { useReveal } from '../hooks/useReveal'
 
 export default function Spotlight() {
+  const { products, loading } = useProducts()
   const [spotIdx, setSpotIdx] = useState(0)
   const [changing, setChanging] = useState(false)
   const headRef = useReveal()
   const panelRef = useReveal()
   const hairRef = useReveal({ threshold: 0.5 })
 
-  const p = PRODUCTS.find((x) => x.id === SPOTLIGHT_IDS[spotIdx])
-  const idx = PRODUCTS.indexOf(p) + 1
+  const spotlight = useMemo(() => {
+    const byId = Object.fromEntries(products.map((p) => [p.id, p]))
+    const curated = SPOTLIGHT_IDS.map((id) => byId[id])
+      .filter(Boolean)
+      .filter(productHasStock)
+    if (curated.length) return curated
+    const inStock = products.filter(productHasStock)
+    return (inStock.length ? inStock : products).slice(0, 4)
+  }, [products])
+
+  useEffect(() => {
+    if (spotIdx >= spotlight.length) setSpotIdx(0)
+  }, [spotlight.length, spotIdx])
+
+  const p = spotlight[spotIdx] || spotlight[0]
+  const idx = p ? spotlight.indexOf(p) + 1 : 0
   const variant = p ? defaultVariant(p) : null
+  const variantInStock = isInStock(variant)
+  const total = spotlight.length || 1
 
   const go = (next) => {
     setChanging(true)
@@ -25,11 +44,10 @@ export default function Spotlight() {
     setSpotIdx(next)
   }
 
-  const prev = () =>
-    go((spotIdx - 1 + SPOTLIGHT_IDS.length) % SPOTLIGHT_IDS.length)
-  const next = () => go((spotIdx + 1) % SPOTLIGHT_IDS.length)
+  const prev = () => go((spotIdx - 1 + total) % total)
+  const next = () => go((spotIdx + 1) % total)
 
-  if (!p || !variant) return null
+  if (loading || !p || !variant) return null
 
   return (
     <section className="spotlight" id="spotlight">
@@ -47,12 +65,12 @@ export default function Spotlight() {
               role="tablist"
               aria-label="Featured products"
             >
-              {SPOTLIGHT_IDS.map((id, i) => (
+              {spotlight.map((item, i) => (
                 <button
-                  key={id}
+                  key={item.id}
                   className={`spot-dot${i === spotIdx ? ' active' : ''}`}
                   data-idx={i}
-                  aria-label={`View ${PRODUCTS.find((x) => x.id === id)?.name}`}
+                  aria-label={`View ${item.name}`}
                   role="tab"
                   type="button"
                   onClick={() => go(i)}
@@ -70,7 +88,7 @@ export default function Spotlight() {
           <div className="spotlight-visual">
             <span className="spotlight-index" id="spotIndex">
               {String(idx).padStart(2, '0')} /{' '}
-              {String(PRODUCTS.length).padStart(2, '0')}
+              {String(total).padStart(2, '0')}
             </span>
             <div className="spotlight-stage">
               <div className="spot-emblem" aria-hidden="true">
@@ -79,7 +97,6 @@ export default function Spotlight() {
                 <span className="spot-emblem-ring spot-emblem-ring-mid" />
                 <span className="spot-emblem-arc" />
                 <span className="spot-emblem-ring spot-emblem-ring-inner" />
-                <img className="spot-emblem-logo" src="/logo.png" alt="" />
               </div>
               <div className="spotlight-vial" id="spotVial">
                 <img
@@ -94,8 +111,9 @@ export default function Spotlight() {
               <span className="spot-tag" id="spotTag">
                 {p.tag}
               </span>
-              <span className="spot-stock">
-                <span className="dot" /> In stock
+              <span className={`spot-stock${variantInStock ? '' : ' spot-stock-oos'}`}>
+                <span className="dot" />{' '}
+                {variantInStock ? 'In stock' : 'Out of stock'}
               </span>
             </div>
             <h3 id="spotName">{p.name.toUpperCase()}</h3>
@@ -120,10 +138,18 @@ export default function Spotlight() {
             </div>
             <div className="spotlight-foot">
               <div className="spot-price">
-                <span className="label">From</span>
-                <span className="amount" id="spotPrice">
-                  {fmt(variant.price)}
-                </span>
+                {variantInStock ? (
+                  <>
+                    <span className="label">From</span>
+                    <span className="amount" id="spotPrice">
+                      {fmt(variant.price)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="amount price-oos-label" id="spotPrice">
+                    Out of stock
+                  </span>
+                )}
               </div>
               <div className="spotlight-actions">
                 <button

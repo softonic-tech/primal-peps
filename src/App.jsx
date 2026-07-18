@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { ProductsProvider } from './context/ProductsContext'
+import { SettingsProvider } from './context/SettingsContext'
 import AnnounceBar from './components/AnnounceBar'
 import ScrollProgress from './components/ScrollProgress'
 import Nav from './components/Nav'
@@ -71,17 +73,24 @@ function RevealObserver() {
   return null
 }
 
-function HashScroller() {
+/** Reset scroll on route change (RR keeps prior page Y by default). */
+function ScrollToTop() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
-    if (pathname !== '/' || !hash) return
-    const id = hash.replace('#', '')
-    const el = document.getElementById(id)
-    if (el) {
-      requestAnimationFrame(() =>
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      )
+    if (hash) {
+      const id = hash.replace('#', '')
+      // Wait a frame so the new page has painted
+      const t = window.setTimeout(() => {
+        const el = document.getElementById(id)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } else {
+          window.scrollTo(0, 0)
+        }
+      }, 50)
+      return () => clearTimeout(t)
     }
+    window.scrollTo(0, 0)
   }, [pathname, hash])
   return null
 }
@@ -134,7 +143,7 @@ function AppLayout() {
 
   return (
     <>
-      <HashScroller />
+      <ScrollToTop />
       {!isHome && <Nav announceVisible={false} />}
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -154,9 +163,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CartProvider>
-          <AppLayout />
-        </CartProvider>
+        <SettingsProvider>
+          <ProductsProvider>
+            <CartProvider>
+              <AppLayout />
+            </CartProvider>
+          </ProductsProvider>
+        </SettingsProvider>
       </AuthProvider>
     </BrowserRouter>
   )

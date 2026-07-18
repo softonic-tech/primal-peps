@@ -4,11 +4,19 @@ import { useReveal } from '../hooks/useReveal'
 const FAQS = [
   {
     q: 'How fast does shipping take?',
-    a: 'Orders are dispatched within 24 hours. Domestic delivery typically takes 2–5 business days. All orders include tracking.',
+    a: 'Orders are dispatched within 24 hours of payment clearing. Domestic delivery typically takes 2–5 business days. All orders include tracking.',
   },
   {
-    q: 'Are these for human consumption?',
-    a: 'No. All Primal Peps products are sold strictly for laboratory research purposes only. Not for human or veterinary use.',
+    q: 'Are these for human or veterinary consumption?',
+    a: 'No. All Primal Peps products are sold strictly for laboratory research purposes only. Not for human or veterinary consumption or use.',
+  },
+  {
+    q: 'Do I need to be 18+ to purchase?',
+    a: 'Yes. You must be 18 years of age or older to purchase. At checkout you acknowledge this requirement; we do not run a separate age-verification check.',
+  },
+  {
+    q: 'How do I pay?',
+    a: 'We accept Australian bank transfer (BSB and account number). After you submit your order, transfer the total using your order number as the payment reference. We ship once payment clears.',
   },
   {
     q: 'How should I store peptides?',
@@ -35,7 +43,7 @@ export default function Faq() {
   const listRef = useReveal()
 
   return (
-    <section className="faq section">
+    <section className="faq section" id="faq">
       <div className="wrap">
         <div className="hairline rv" ref={hairRef} />
         <div

@@ -7,7 +7,7 @@ export default function Shipping() {
   const noteRef = useReveal()
 
   return (
-    <section className="shipping section">
+    <section className="shipping section" id="shipping">
       <div className="wrap">
         <div className="hairline rv" ref={hairRef} />
         <div className="shipping-head rv" style={{ marginTop: 48 }} ref={headRef}>
@@ -49,11 +49,15 @@ export default function Shipping() {
             </div>
             <div className="tl-num">03</div>
             <h4>Discreet 24h Dispatch</h4>
-            <p>Plain packaging, tracked delivery, ships within 24 hours.</p>
+            <p>
+              Plain packaging, tracked delivery — ships within 24 hours of bank
+              transfer clearing.
+            </p>
           </div>
         </div>
         <p className="shipping-note rv" ref={noteRef}>
-          Tracking on every order — no exceptions.
+          Pay by bank transfer (BSB). Tracking on every order — no exceptions.
+          Research use only · 18+ to purchase.
         </p>
       </div>
     </section>

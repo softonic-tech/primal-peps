@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PROMO, fmt, imgSrc } from '../data/products'
+import { fmt, imgSrc } from '../data/products'
+import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useSettings } from '../context/SettingsContext'
 
 const AU_STATES = [
   { value: 'NSW', label: 'New South Wales' },
@@ -137,6 +139,7 @@ function OrderSummary({
   sub,
   disc,
   promoApplied,
+  promoCode = 'PRIMAL15',
   shipFee,
   shipLabel,
   total,
@@ -152,7 +155,7 @@ function OrderSummary({
       </div>
       {promoApplied && sub > 0 && (
         <div className="summary-line discount">
-          <span>PRIMAL15 Discount</span>
+          <span>{promoCode} Discount</span>
           <span>–{fmt(disc)}</span>
         </div>
       )}
@@ -189,16 +192,16 @@ function OrderSummary({
         <div className="trust-badges">
           <div className="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              <rect x="3" y="6" width="18" height="12" rx="2" />
+              <path d="M3 10h18" />
             </svg>
-            <span>Secure Checkout</span>
+            <span>Bank transfer (BSB)</span>
           </div>
           <div className="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span>Lab Certified</span>
+            <span>Lab Certified · RUO</span>
           </div>
           <div className="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -208,6 +211,64 @@ function OrderSummary({
             <span>Discreet AU Shipping</span>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function BankTransferCard({ reference, amount, toast, bank }) {
+  const copy = async (label, value) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast(`${label} copied`)
+    } catch {
+      toast('Could not copy — select the value manually')
+    }
+  }
+
+  const rows = [
+    { label: 'Account name', value: bank.accountName },
+    ...(bank.bankName ? [{ label: 'Bank', value: bank.bankName }] : []),
+    { label: 'BSB', value: bank.bsb },
+    { label: 'Account number', value: bank.accountNumber },
+    ...(amount != null ? [{ label: 'Amount (AUD)', value: fmt(amount) }] : []),
+    ...(reference
+      ? [{ label: 'Payment reference', value: reference }]
+      : []),
+  ]
+
+  return (
+    <div className="bank-transfer">
+      <div className="bank-transfer-head">
+        <h3>Pay by bank transfer</h3>
+        <p>
+          Transfer the order total to the account below. Use your order number
+          as the payment reference so we can match your payment.
+        </p>
+      </div>
+      <dl className="bank-transfer-rows">
+        {rows.map((row) => (
+          <div key={row.label} className="bank-transfer-row">
+            <dt>{row.label}</dt>
+            <dd>
+              <span>{row.value}</span>
+              <button
+                type="button"
+                className="bank-copy-btn"
+                onClick={() => copy(row.label, String(row.value).replace(/^\$/, ''))}
+                aria-label={`Copy ${row.label}`}
+              >
+                Copy
+              </button>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {!reference && (
+        <p className="bank-transfer-note">
+          After you submit, you&apos;ll get an order number to use as your
+          transfer reference. Orders ship once payment clears.
+        </p>
       )}
     </div>
   )
@@ -223,27 +284,35 @@ export default function Checkout() {
     totalVal,
     earnPts,
     promoApplied,
+    promoCode,
+    ptsPerDollar,
     applyPromo,
     updateQty,
     placeOrder,
     toast,
   } = useCart()
   const { user, isLoggedIn, openAuth } = useAuth()
+  const { bank, shipping: shipSettings } = useSettings()
+  const freeThreshold = Number(shipSettings.freeThreshold) || 150
 
   const [step, setStep] = useState(1)
-  const [promoInput, setPromoInput] = useState(promoApplied ? PROMO : '')
+  const [promoInput, setPromoInput] = useState(promoApplied ? promoCode : '')
   const [shipping, setShipping] = useState(emptyShipping)
   const [errors, setErrors] = useState({})
+  const [legalAck, setLegalAck] = useState(false)
+  const [placedOrder, setPlacedOrder] = useState(null)
   const prefillsDone = useRef(false)
 
   useEffect(() => {
-    if (promoApplied) setPromoInput(PROMO)
-  }, [promoApplied])
+    if (promoApplied) setPromoInput(promoCode)
+  }, [promoApplied, promoCode])
 
   useEffect(() => {
     if (!cartOpen) {
       setStep(1)
       setErrors({})
+      setLegalAck(false)
+      setPlacedOrder(null)
       prefillsDone.current = false
       return
     }
@@ -265,16 +334,16 @@ export default function Checkout() {
   const empty = !cartItems.length
 
   const method = SHIP_METHODS.find((m) => m.id === shipping.method) || SHIP_METHODS[0]
-  const qualifiesFreeShip = totalVal >= 150
+  const qualifiesFreeShip = totalVal >= freeThreshold
   const shipFee = qualifiesFreeShip ? 0 : method.price
   const orderTotal = totalVal + shipFee
   const shipLabel = qualifiesFreeShip
-    ? 'Free AU shipping on orders over $150'
+    ? `Free AU shipping on orders over $${freeThreshold}`
     : method.name
 
   const orderEarnPts = useMemo(
-    () => Math.round(orderTotal * 2),
-    [orderTotal],
+    () => Math.round(orderTotal * ptsPerDollar),
+    [orderTotal, ptsPerDollar],
   )
 
   const close = () => setCartOpen(false)
@@ -306,7 +375,11 @@ export default function Checkout() {
     return Object.keys(next).length === 0
   }
 
-  const goNext = () => {
+  const goNext = async () => {
+    if (placedOrder) {
+      close()
+      return
+    }
     if (step === 1) {
       if (empty) return
       setStep(2)
@@ -321,13 +394,27 @@ export default function Checkout() {
       return
     }
     if (step === 3) {
-      placeOrder(shipping, { shipFee })
-      setShipping(emptyShipping)
-      setStep(1)
+      if (!legalAck) {
+        toast('Please confirm the research-use and 18+ acknowledgement')
+        return
+      }
+      try {
+        const order = await placeOrder(shipping, { shipFee, keepOpen: true })
+        setPlacedOrder(order)
+        setShipping(emptyShipping)
+        setLegalAck(false)
+        toast(`Order ${order.id} submitted — transfer funds to confirm`)
+      } catch {
+        /* toast already shown in placeOrder */
+      }
     }
   }
 
   const goBack = () => {
+    if (placedOrder) {
+      close()
+      return
+    }
     if (step === 1) {
       continueShopping()
       return
@@ -335,15 +422,21 @@ export default function Checkout() {
     setStep((s) => s - 1)
   }
 
-  const primaryLabel = empty
-    ? 'Add items to continue'
-    : step === 1
-      ? 'Proceed to Shipping'
-      : step === 2
-        ? 'Continue to Payment'
-        : 'Place Order'
+  const primaryLabel = placedOrder
+    ? 'Done'
+    : empty
+      ? 'Add items to continue'
+      : step === 1
+        ? 'Proceed to Shipping'
+        : step === 2
+          ? 'Continue to Payment'
+          : 'Submit order'
 
-  const secondaryLabel = step === 1 ? 'Continue Shopping' : 'Back'
+  const secondaryLabel = placedOrder
+    ? 'Close'
+    : step === 1
+      ? 'Continue Shopping'
+      : 'Back'
 
   return (
     <>
@@ -390,9 +483,11 @@ export default function Checkout() {
             <span>Shipping</span>
           </div>
           <div className="progress-line" />
-          <div className={`progress-step${step >= 3 ? ' active' : ''}`}>
-            <div className="step-icon">💳</div>
-            <span>Payment</span>
+          <div
+            className={`progress-step${step >= 3 || placedOrder ? ' active' : ''}${placedOrder ? ' completed' : ''}`}
+          >
+            <div className="step-icon">🏦</div>
+            <span>{placedOrder ? 'Transfer' : 'Payment'}</span>
           </div>
         </div>
 
@@ -479,6 +574,7 @@ export default function Checkout() {
                   sub={sub}
                   disc={disc}
                   promoApplied={promoApplied}
+                  promoCode={promoCode}
                   shipFee={qualifiesFreeShip ? 0 : null}
                   shipLabel={
                     qualifiesFreeShip
@@ -649,7 +745,8 @@ export default function Checkout() {
                     <h3>Delivery method</h3>
                     {qualifiesFreeShip && (
                       <p className="ship-free-note">
-                        Free shipping unlocked — your order is over $150 AUD.
+                        Free shipping unlocked — your order is over $
+                        {freeThreshold} AUD.
                       </p>
                     )}
                     <div className="ship-method-list">
@@ -683,6 +780,7 @@ export default function Checkout() {
                   sub={sub}
                   disc={disc}
                   promoApplied={promoApplied}
+                  promoCode={promoCode}
                   shipFee={shipFee}
                   shipLabel={shipLabel}
                   total={orderTotal}
@@ -704,10 +802,20 @@ export default function Checkout() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && !placedOrder && (
             <div className="checkout-step">
               <div className="checkout-main">
                 <h2 className="checkout-title">PAYMENT</h2>
+                <p className="ship-intro">
+                  We accept payment by Australian bank transfer only. Submit your
+                  order, then transfer the total using your order number as the
+                  reference.
+                </p>
+                <BankTransferCard
+                  amount={orderTotal}
+                  toast={toast}
+                  bank={bank}
+                />
                 <div className="ship-review">
                   <h3>Shipping summary</h3>
                   <p>
@@ -723,26 +831,99 @@ export default function Checkout() {
                     {shipping.phone} · {shipping.email}
                   </p>
                   <p className="ship-review-method">
-                    {method.name} — {qualifiesFreeShip ? 'FREE' : fmt(method.price)}
+                    {method.name} —{' '}
+                    {qualifiesFreeShip ? 'FREE' : fmt(method.price)}
                   </p>
                 </div>
-                <p className="ship-intro">
-                  Payment processing (Stripe / PayPal) can be connected next.
-                  For now, confirm to place this demo order with your Australian
-                  shipping details saved for fulfilment.
-                </p>
+                <div className="checkout-legal">
+                  <p className="checkout-legal-banner">
+                    <strong>18+ · Research use only</strong>
+                    {LEGAL.ruoShort} {LEGAL.ageLine}
+                  </p>
+                  <label className="checkout-legal-ack">
+                    <input
+                      type="checkbox"
+                      checked={legalAck}
+                      onChange={(e) => setLegalAck(e.target.checked)}
+                    />
+                    <span>{LEGAL.checkoutAck}</span>
+                  </label>
+                </div>
               </div>
               <div className="checkout-sidebar">
                 <OrderSummary
                   sub={sub}
                   disc={disc}
                   promoApplied={promoApplied}
+                  promoCode={promoCode}
                   shipFee={shipFee}
                   shipLabel={shipLabel}
                   total={orderTotal}
                   earnPts={orderEarnPts}
                   showTrust
                 />
+              </div>
+            </div>
+          )}
+
+          {placedOrder && (
+            <div className="checkout-step">
+              <div className="checkout-main">
+                <h2 className="checkout-title">ORDER SUBMITTED</h2>
+                <div className="order-confirm">
+                  <p className="order-confirm-id">
+                    Order <strong>{placedOrder.id}</strong>
+                  </p>
+                  <p>
+                    Status: <em>{placedOrder.status}</em>. Transfer{' '}
+                    <strong>{fmt(placedOrder.total)}</strong> using the details
+                    below. Use <strong>{placedOrder.id}</strong> as your payment
+                    reference. We&apos;ll dispatch once payment clears.
+                  </p>
+                </div>
+                <BankTransferCard
+                  reference={placedOrder.id}
+                  amount={placedOrder.total}
+                  toast={toast}
+                  bank={bank}
+                />
+                <p className="checkout-legal-banner soft">
+                  {LEGAL.ruoFull} {LEGAL.ageLine}
+                </p>
+              </div>
+              <div className="checkout-sidebar">
+                <div className="summary-card">
+                  <h3>What&apos;s next</h3>
+                  <ol className="order-next-steps">
+                    <li>Transfer the amount via your bank app</li>
+                    <li>Enter {placedOrder.id} as the reference</li>
+                    <li>We confirm payment and ship your order</li>
+                  </ol>
+                  {isLoggedIn ? (
+                    <p className="bank-transfer-note">
+                      Track this order anytime in your{' '}
+                      <Link to="/account" onClick={close}>
+                        account
+                      </Link>
+                      .
+                    </p>
+                  ) : (
+                    <p className="bank-transfer-note">
+                      Save the order number — or{' '}
+                      <button
+                        type="button"
+                        className="text-link-btn"
+                        onClick={() => {
+                          close()
+                          openAuth('signup')
+                        }}
+                      >
+                        create an account
+                      </button>{' '}
+                      before your next order.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -754,11 +935,23 @@ export default function Checkout() {
               <div className="checkout-footer-total-main">
                 <span className="label">Order total (AUD)</span>
                 <span className="amount">
-                  {fmt(step === 1 ? totalVal : orderTotal)}
+                  {fmt(
+                    placedOrder
+                      ? placedOrder.total
+                      : step === 1
+                        ? totalVal
+                        : orderTotal,
+                  )}
                 </span>
               </div>
               <span className="pts">
-                +{step === 1 ? earnPts : orderEarnPts} Primal Points
+                +
+                {placedOrder
+                  ? placedOrder.pointsEarned
+                  : step === 1
+                    ? earnPts
+                    : orderEarnPts}{' '}
+                Primal Points
               </span>
             </div>
             <div className="checkout-footer-actions">
@@ -772,27 +965,29 @@ export default function Checkout() {
                   {secondaryLabel}
                 </span>
                 <span className="btn-label-short" aria-hidden="true">
-                  {step === 1 ? 'Shop' : 'Back'}
+                  {placedOrder ? 'Close' : step === 1 ? 'Shop' : 'Back'}
                 </span>
               </button>
               <button
                 className="checkout-next-btn"
                 type="button"
                 aria-label={primaryLabel}
-                disabled={empty}
+                disabled={!placedOrder && (empty || (step === 3 && !legalAck))}
                 onClick={goNext}
               >
                 <span className="btn-label-full" aria-hidden="true">
                   {primaryLabel}
                 </span>
                 <span className="btn-label-short" aria-hidden="true">
-                  {empty
-                    ? 'Add items'
-                    : step === 1
-                      ? 'Shipping'
-                      : step === 2
-                        ? 'Payment'
-                        : 'Place order'}
+                  {placedOrder
+                    ? 'Done'
+                    : empty
+                      ? 'Add items'
+                      : step === 1
+                        ? 'Shipping'
+                        : step === 2
+                          ? 'Payment'
+                          : 'Submit'}
                 </span>
                 <svg
                   width="18"

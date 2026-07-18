@@ -1,22 +1,64 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import {
-  PRODUCTS,
-  PROMO,
-  PTS_PER_DOLLAR,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import {
   cartKey,
   defaultVariant,
   findVariant,
+  isInStock,
   parseCartKey,
 } from '../data/products'
 import { useAuth } from './AuthContext'
+import { useProducts } from './ProductsContext'
+import { useSettings } from './SettingsContext'
 
 const CartContext = createContext(null)
+const WELCOME_KEY = 'pp_welcome_offer'
+
+function readWelcomeOffer() {
+  try {
+    const raw = localStorage.getItem(WELCOME_KEY)
+    if (!raw) return { seen: false, claimed: false }
+    const parsed = JSON.parse(raw)
+    return {
+      seen: Boolean(parsed?.seen),
+      claimed: Boolean(parsed?.claimed),
+    }
+  } catch {
+    return { seen: false, claimed: false }
+  }
+}
+
+function writeWelcomeOffer(next) {
+  try {
+    const prev = readWelcomeOffer()
+    localStorage.setItem(
+      WELCOME_KEY,
+      JSON.stringify({ ...prev, ...next }),
+    )
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
 
 export function CartProvider({ children }) {
-  const { user, recordOrder } = useAuth()
+  const { user, recordOrder, isLoggedIn, loading: authLoading } = useAuth()
+  const { products, getProduct } = useProducts()
+  const { promo, points } = useSettings()
+  const promoCode = (promo.code || 'PRIMAL15').toUpperCase()
+  const promoPercent = Number(promo.percent) || 0
+  const ptsPerDollar = Number(points.perDollar) || 0
+
+  const initialWelcome = useMemo(() => readWelcomeOffer(), [])
   const [cart, setCart] = useState({})
-  const [promoApplied, setPromoApplied] = useState(false)
-  const [signedUp, setSignedUp] = useState(false)
+  const [promoApplied, setPromoApplied] = useState(initialWelcome.claimed)
+  const [signedUp, setSignedUp] = useState(initialWelcome.claimed)
+  const [welcomeSeen, setWelcomeSeen] = useState(initialWelcome.seen)
   const [guestPoints, setGuestPoints] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
@@ -40,9 +82,10 @@ export function CartProvider({ children }) {
       Object.entries(cart)
         .map(([key, qty]) => {
           const { productId, variantId } = parseCartKey(key)
-          const product = PRODUCTS.find((p) => p.id === productId)
+          const product = getProduct(productId)
           if (!product) return null
           const variant = findVariant(product, variantId)
+          if (!variant) return null
           return {
             ...product,
             key,
@@ -54,7 +97,7 @@ export function CartProvider({ children }) {
           }
         })
         .filter(Boolean),
-    [cart],
+    [cart, getProduct, products],
   )
 
   const cartCount = useMemo(
@@ -67,25 +110,33 @@ export function CartProvider({ children }) {
     [cartItems],
   )
 
-  const disc = promoApplied ? sub * 0.15 : 0
+  const disc = promoApplied ? sub * (promoPercent / 100) : 0
   const totalVal = sub - disc
-  const earnPts = Math.round(totalVal * PTS_PER_DOLLAR)
+  const earnPts = Math.round(totalVal * ptsPerDollar)
 
   const addToCart = useCallback(
     (productId, variantId) => {
-      const product = PRODUCTS.find((x) => x.id === productId)
-      if (!product) return
+      const product = getProduct(productId)
+      if (!product) {
+        toast('Product unavailable')
+        return
+      }
       const variant = findVariant(
         product,
-        variantId || defaultVariant(product).id,
+        variantId || defaultVariant(product)?.id,
       )
+      if (!variant) return
+      if (!isInStock(variant)) {
+        toast(`${product.name} (${variant.label}) is out of stock`)
+        return
+      }
       const key = cartKey(productId, variant.id)
       setCart((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }))
       toast(
-        `${product.name} (${variant.label}) added — +${variant.price * PTS_PER_DOLLAR} pts at checkout`,
+        `${product.name} (${variant.label}) added — +${variant.price * ptsPerDollar} pts at checkout`,
       )
     },
-    [toast],
+    [getProduct, ptsPerDollar, toast],
   )
 
   const updateQty = useCallback((key, act) => {
@@ -103,35 +154,61 @@ export function CartProvider({ children }) {
 
   const applyPromo = useCallback(
     (code) => {
-      if (code.trim().toUpperCase() === PROMO) {
+      if (code.trim().toUpperCase() === promoCode) {
         setPromoApplied(true)
-        toast('15% welcome discount applied ✓')
+        toast(`${promoPercent}% welcome discount applied ✓`)
         return true
       }
       if (code.trim()) {
-        toast("That code isn't valid — try PRIMAL15")
+        toast(`That code isn't valid — try ${promoCode}`)
       }
       return false
     },
-    [toast],
+    [promoCode, promoPercent, toast],
   )
 
-  const completeSignup = useCallback(() => {
-    if (signedUp) return
-    setSignedUp(true)
-    setPromoApplied(true)
-    toast('Welcome to the troop — PRIMAL15 applied ✓')
-  }, [signedUp, toast])
+  const dismissWelcome = useCallback(() => {
+    setWelcomeSeen(true)
+    writeWelcomeOffer({ seen: true })
+  }, [])
+
+  const completeSignup = useCallback(
+    ({ silent = false } = {}) => {
+      setSignedUp(true)
+      setPromoApplied(true)
+      setWelcomeSeen(true)
+      writeWelcomeOffer({ seen: true, claimed: true })
+      if (!silent) {
+        toast(`Welcome to the troop — ${promoCode} applied ✓`)
+      }
+    },
+    [promoCode, toast],
+  )
+
+  // Logged-in members: never show the popup — apply welcome promo quietly
+  useEffect(() => {
+    if (authLoading || !isLoggedIn) return
+    if (promoApplied && welcomeSeen && signedUp) return
+    completeSignup({ silent: true })
+  }, [
+    authLoading,
+    completeSignup,
+    isLoggedIn,
+    promoApplied,
+    signedUp,
+    welcomeSeen,
+  ])
 
   const placeOrder = useCallback(
-    (shipping = null, extras = {}) => {
+    async (shipping = null, extras = {}) => {
       const shipFee = extras.shipFee || 0
       const orderTotal = totalVal + shipFee
-      const earned = Math.round(orderTotal * PTS_PER_DOLLAR)
+      const earned = Math.round(orderTotal * ptsPerDollar)
       const order = {
         id: `ORD-${Date.now().toString().slice(-6)}`,
         createdAt: new Date().toISOString(),
-        status: 'Processing',
+        status: 'Awaiting payment',
+        paymentMethod: 'bank_transfer',
         items: cartItems.map((i) => ({
           productId: i.id,
           name: i.name,
@@ -140,29 +217,33 @@ export function CartProvider({ children }) {
           price: i.price,
           img: i.img,
         })),
-        subtotal: totalVal,
+        subtotal: sub,
+        discount: disc,
         shippingFee: shipFee,
         total: orderTotal,
         pointsEarned: earned,
         shipping: shipping || {},
       }
 
-      if (user) {
-        recordOrder(order)
-      } else {
+      try {
+        await recordOrder(order)
+      } catch (err) {
+        toast(err.message || 'Could not place order')
+        throw err
+      }
+
+      if (!user) {
         setGuestPoints((p) => p + earned)
       }
 
       setCart({})
-      setCartOpen(false)
-      toast(
-        user
-          ? `Order ${order.id} placed — +${earned} pts saved to your account`
-          : `Order placed 🦍 You earned ${earned} Primal Points`,
-      )
+      if (!extras.keepOpen) {
+        setCartOpen(false)
+        toast(`Order ${order.id} placed — transfer funds to confirm`)
+      }
       return order
     },
-    [cartItems, recordOrder, toast, totalVal, user],
+    [cartItems, disc, ptsPerDollar, recordOrder, sub, toast, totalVal, user],
   )
 
   const value = {
@@ -174,7 +255,12 @@ export function CartProvider({ children }) {
     totalVal,
     earnPts,
     promoApplied,
+    promoCode,
+    promoPercent,
+    ptsPerDollar,
     signedUp,
+    welcomeSeen,
+    authLoading,
     lifetimePoints,
     cartOpen,
     setCartOpen,
@@ -185,6 +271,7 @@ export function CartProvider({ children }) {
     updateQty,
     applyPromo,
     completeSignup,
+    dismissWelcome,
     placeOrder,
     setPromoApplied,
   }

@@ -1,27 +1,44 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
 export default function WelcomeModal() {
-  const { signedUp, completeSignup } = useCart()
+  const { isLoggedIn, loading: authLoading } = useAuth()
+  const {
+    signedUp,
+    welcomeSeen,
+    completeSignup,
+    dismissWelcome,
+    promoPercent,
+  } = useCart()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    if (signedUp) return
+    // Wait for auth; logged-in users get the promo without this modal
+    if (authLoading || isLoggedIn || signedUp || welcomeSeen) {
+      setOpen(false)
+      return
+    }
     const t = setTimeout(() => setOpen(true), 6000)
     return () => clearTimeout(t)
-  }, [signedUp])
+  }, [authLoading, isLoggedIn, signedUp, welcomeSeen])
 
-  const hide = () => setOpen(false)
+  const hide = () => {
+    setOpen(false)
+    dismissWelcome()
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     completeSignup()
-    hide()
+    setOpen(false)
   }
+
+  const show = open && !signedUp && !welcomeSeen && !isLoggedIn && !authLoading
 
   return (
     <div
-      className={`modal-wrap${open && !signedUp ? ' open' : ''}`}
+      className={`modal-wrap${show ? ' open' : ''}`}
       id="modalWrap"
       role="dialog"
       aria-modal="true"
@@ -43,11 +60,11 @@ export default function WelcomeModal() {
         <h3>
           JOIN THE TROOP,
           <br />
-          <span className="gold">TAKE 15% OFF</span>
+          <span className="gold">TAKE {promoPercent}% OFF</span>
         </h3>
         <p>
-          Sign up with your email and your 15% welcome code is applied
-          automatically at checkout.
+          Sign up with your email and your {promoPercent}% welcome code is
+          applied automatically at checkout.
         </p>
         <form id="modalForm" onSubmit={handleSubmit}>
           <input
@@ -57,7 +74,7 @@ export default function WelcomeModal() {
             aria-label="Email address"
           />
           <button className="btn-primary" type="submit">
-            Unlock my 15% →
+            Unlock my {promoPercent}% →
           </button>
         </form>
         <button className="skip" id="modalSkip" type="button" onClick={hide}>

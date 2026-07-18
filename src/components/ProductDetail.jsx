@@ -1,20 +1,23 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  PRODUCTS,
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
   fmt,
   imgSrc,
+  isInStock,
 } from '../data/products'
+import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useProducts } from '../context/ProductsContext'
 
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const product = PRODUCTS.find((p) => p.id === id)
+  const { getProduct, loading } = useProducts()
+  const product = getProduct(id)
   const { addToCart, toast } = useCart()
   const {
     getProductReviews,
@@ -24,11 +27,17 @@ export default function ProductDetail() {
     openAuth,
   } = useAuth()
 
-  const [variantId, setVariantId] = useState(
-    product ? defaultVariant(product).id : '',
-  )
+  const [variantId, setVariantId] = useState('')
   const [reviewBody, setReviewBody] = useState('')
   const [rating, setRating] = useState(5)
+
+  useEffect(() => {
+    if (!product) return
+    setVariantId((prev) => {
+      if (prev && findVariant(product, prev)) return prev
+      return defaultVariant(product)?.id || ''
+    })
+  }, [product])
 
   const variant = product ? findVariant(product, variantId) : null
   const reviews = useMemo(
@@ -40,6 +49,16 @@ export default function ProductDetail() {
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0
   const canReview = product ? canReviewProduct(product.id) : false
+
+  if (loading) {
+    return (
+      <div className="pdp-page">
+        <div className="wrap pdp-missing">
+          <h1>Loading…</h1>
+        </div>
+      </div>
+    )
+  }
 
   if (!product || !variant) {
     return (
@@ -54,17 +73,23 @@ export default function ProductDetail() {
     )
   }
 
+  const inStock = isInStock(variant)
+
   const handleAdd = () => {
+    if (!inStock) {
+      toast(`${product.name} (${variant.label}) is out of stock`)
+      return
+    }
     addToCart(product.id, variant.id)
   }
 
-  const submitReview = (e) => {
+  const submitReview = async (e) => {
     e.preventDefault()
     if (!isLoggedIn) {
       openAuth('login')
       return
     }
-    const res = addReview({
+    const res = await addReview({
       productId: product.id,
       rating,
       body: reviewBody,
@@ -96,7 +121,6 @@ export default function ProductDetail() {
               <span className="spot-emblem-ring spot-emblem-ring-mid" />
               <span className="spot-emblem-arc" />
               <span className="spot-emblem-ring spot-emblem-ring-inner" />
-              <img className="spot-emblem-logo" src="/logo.png" alt="" />
             </div>
             <img
               src={imgSrc(variant.img)}
@@ -105,9 +129,16 @@ export default function ProductDetail() {
           </div>
 
           <div className="pdp-copy">
-            <span className="eyebrow">{product.tag}</span>
+            <span className="eyebrow">
+              {product.categoryLabel || product.tag}
+            </span>
             <h1>{product.name}</h1>
             <p className="pdp-sub">{product.sub}</p>
+            {product.aka?.length > 0 && (
+              <p className="pdp-aka">
+                Also known as {product.aka.join(' · ')}
+              </p>
+            )}
 
             <div className="pdp-rating">
               {reviews.length > 0 ? (
@@ -131,15 +162,15 @@ export default function ProductDetail() {
             <div className="pdp-meta">
               <div>
                 <span>Purity</span>
-                <strong>99%+</strong>
+                <strong>{product.purity || '99%+'}</strong>
               </div>
               <div>
                 <span>MW</span>
                 <strong>{product.mw}</strong>
               </div>
               <div>
-                <span>Lot</span>
-                <strong>{product.lot}</strong>
+                <span>Form</span>
+                <strong>{product.form || 'Lyophilised'}</strong>
               </div>
             </div>
 
@@ -150,7 +181,9 @@ export default function ProductDetail() {
                   <button
                     key={v.id}
                     type="button"
-                    className={`dose-chip${variantId === v.id ? ' active' : ''}`}
+                    className={`dose-chip${variantId === v.id ? ' active' : ''}${
+                      isInStock(v) ? '' : ' dose-oos'
+                    }`}
                     onClick={() => setVariantId(v.id)}
                   >
                     {v.label}
@@ -161,13 +194,25 @@ export default function ProductDetail() {
 
             <div className="pdp-buy">
               <div>
-                <span className="price">{fmt(variant.price)}</span>
-                <span className="pts">
-                  +{variant.price * PTS_PER_DOLLAR} pts
-                </span>
+                {inStock ? (
+                  <>
+                    <span className="price">{fmt(variant.price)}</span>
+                    <span className="pts">
+                      +{variant.price * PTS_PER_DOLLAR} pts
+                    </span>
+                    <span className="stock">In stock</span>
+                  </>
+                ) : (
+                  <span className="stock stock-oos">Out of stock</span>
+                )}
               </div>
-              <button className="btn-primary" type="button" onClick={handleAdd}>
-                Add to cart
+              <button
+                className="btn-primary"
+                type="button"
+                disabled={!inStock}
+                onClick={handleAdd}
+              >
+                {inStock ? 'Add to cart' : 'Out of stock'}
               </button>
             </div>
 
@@ -178,8 +223,101 @@ export default function ProductDetail() {
                 ))}
               </ul>
             )}
+
+            <aside className="pdp-ruo">
+              <strong>18+ · Research use only</strong>
+              {LEGAL.ruoShort} {LEGAL.ageLine}
+            </aside>
           </div>
         </div>
+
+        <section className="pdp-details" aria-label="Product details">
+          <div className="pdp-details-grid">
+            <article className="pdp-detail-block">
+              <h2>Overview</h2>
+              <p>{product.description || product.story}</p>
+            </article>
+
+            {product.researchFocus?.length > 0 && (
+              <article className="pdp-detail-block">
+                <h2>Key research areas</h2>
+                <ul className="pdp-focus-list">
+                  {product.researchFocus.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+            )}
+
+            {product.composition?.length > 0 && (
+              <article className="pdp-detail-block">
+                <h2>Blend composition</h2>
+                <ul className="pdp-comp-list">
+                  {product.composition.map((c) => (
+                    <li key={c.name}>
+                      <strong>{c.name}</strong>
+                      <span>{c.amount || c.note || ''}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )}
+
+            <article className="pdp-detail-block">
+              <h2>Specifications</h2>
+              <dl className="pdp-spec-table">
+                <div>
+                  <dt>Compound</dt>
+                  <dd>
+                    {product.name}
+                    {variant ? ` (${variant.label})` : ''}
+                  </dd>
+                </div>
+                {product.cas && (
+                  <div>
+                    <dt>CAS</dt>
+                    <dd>{product.cas}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Category</dt>
+                  <dd>{product.categoryLabel || product.cat}</dd>
+                </div>
+                <div>
+                  <dt>Purity</dt>
+                  <dd>{product.purity || '99%+'}</dd>
+                </div>
+                <div>
+                  <dt>Form</dt>
+                  <dd>{product.form || 'Lyophilised powder'}</dd>
+                </div>
+                <div>
+                  <dt>Molecular weight</dt>
+                  <dd>{product.mw}</dd>
+                </div>
+                <div>
+                  <dt>Lot</dt>
+                  <dd>{product.lot}</dd>
+                </div>
+                <div>
+                  <dt>Storage (lyophilised)</dt>
+                  <dd>{product.storageLyophilised || '-20 °C'}</dd>
+                </div>
+                <div>
+                  <dt>Storage (reconstituted)</dt>
+                  <dd>{product.storageReconstituted || '2–8 °C'}</dd>
+                </div>
+                <div>
+                  <dt>Reconstitution</dt>
+                  <dd>
+                    {product.reconstitution ||
+                      'Bacteriostatic water (recommended)'}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+        </section>
 
         <section className="pdp-reviews" id="reviews">
           <div className="pdp-reviews-head">

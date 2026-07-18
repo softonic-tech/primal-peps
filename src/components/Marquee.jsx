@@ -2,9 +2,10 @@ const ITEMS = [
   'Third-party tested',
   '99%+ purity',
   'Ships in 24h',
-  'Gorilla-grade',
   'Research use only',
-  'Made for the pack',
+  'Not for human consumption',
+  '18+ to purchase',
+  'Bank transfer payment',
 ]
 
 export default function Marquee() {

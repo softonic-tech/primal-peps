@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { PRODUCTS, fmt, imgSrc, orderItemImg } from '../data/products'
+import { fmt, imgSrc, orderItemImg } from '../data/products'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useProducts } from '../context/ProductsContext'
 
 const TABS = [
   { id: 'overview', label: 'Home', hint: 'Snapshot' },
@@ -84,8 +85,10 @@ function Stars({ value }) {
 export default function Dashboard() {
   const navigate = useNavigate()
   const { toast } = useCart()
+  const { products, getProduct } = useProducts()
   const {
     user,
+    loading: authLoading,
     isLoggedIn,
     openAuth,
     logout,
@@ -95,8 +98,13 @@ export default function Dashboard() {
     addReview,
     reviewableProducts,
     getProductReviews,
+    passwordRecovery,
   } = useAuth()
   const [tab, setTab] = useState('overview')
+
+  useEffect(() => {
+    if (passwordRecovery) setTab('password')
+  }, [passwordRecovery])
   const [profile, setProfile] = useState(null)
   const [ship, setShip] = useState(null)
   const [pass, setPass] = useState({ current: '', next: '', confirm: '' })
@@ -108,12 +116,23 @@ export default function Dashboard() {
 
   const myReviews = useMemo(() => {
     if (!user) return []
-    return PRODUCTS.flatMap((p) =>
+    return products.flatMap((p) =>
       getProductReviews(p.id)
         .filter((r) => r.userId === user.id)
         .map((r) => ({ ...r, productName: p.name })),
     )
-  }, [getProductReviews, user])
+  }, [getProductReviews, products, user])
+
+  if (authLoading) {
+    return (
+      <div className="dash-page">
+        <div className="wrap dash-gate">
+          <p className="dash-kicker">Account</p>
+          <h1>Loading…</h1>
+        </div>
+      </div>
+    )
+  }
 
   if (!isLoggedIn || !user) {
     return (
@@ -171,14 +190,14 @@ export default function Dashboard() {
     postcode: user.shipping?.postcode || '',
   }
 
-  const saveProfile = (e) => {
+  const saveProfile = async (e) => {
     e.preventDefault()
-    const res = updateProfile(profileState)
+    const res = await updateProfile(profileState)
     if (!res.ok) {
       toast(res.error)
       return
     }
-    const shipRes = updateShipping(shipState)
+    const shipRes = await updateShipping(shipState)
     if (!shipRes.ok) {
       toast(shipRes.error)
       return
@@ -188,13 +207,17 @@ export default function Dashboard() {
     toast('Profile saved ✓')
   }
 
-  const savePassword = (e) => {
+  const savePassword = async (e) => {
     e.preventDefault()
     if (pass.next !== pass.confirm) {
       toast('New passwords do not match')
       return
     }
-    const res = updatePassword(pass.current, pass.next)
+    if (!passwordRecovery && !pass.current) {
+      toast('Enter your current password')
+      return
+    }
+    const res = await updatePassword(pass.current, pass.next)
     if (!res.ok) {
       toast(res.error)
       return
@@ -203,13 +226,13 @@ export default function Dashboard() {
     toast('Password updated ✓')
   }
 
-  const submitReview = (e) => {
+  const submitReview = async (e) => {
     e.preventDefault()
     if (!reviewForm.productId || !reviewForm.body.trim()) {
       toast('Choose a product and write a short review')
       return
     }
-    const res = addReview(reviewForm)
+    const res = await addReview(reviewForm)
     if (!res.ok) {
       toast(res.error)
       return
@@ -247,8 +270,8 @@ export default function Dashboard() {
               <button
                 className="dash-text-btn"
                 type="button"
-                onClick={() => {
-                  logout()
+                onClick={async () => {
+                  await logout()
                   toast('Signed out')
                   navigate('/')
                 }}
@@ -356,7 +379,7 @@ export default function Dashboard() {
                       <div className="dash-latest-items">
                         {latestOrder.items.slice(0, 3).map((item, i) => (
                           <div key={`${latestOrder.id}-${i}`} className="dash-thumb-row">
-                            <img src={imgSrc(orderItemImg(item))} alt="" />
+                            <img src={imgSrc(orderItemImg(item, products))} alt="" />
                             <div>
                               <strong>{item.name}</strong>
                               <span>
@@ -437,7 +460,7 @@ export default function Dashboard() {
                       <ul>
                         {o.items.map((item, i) => (
                           <li key={`${o.id}-${i}`}>
-                            <img src={imgSrc(orderItemImg(item))} alt="" />
+                            <img src={imgSrc(orderItemImg(item, products))} alt="" />
                             <div>
                               <strong>{item.name}</strong>
                               <span>
@@ -481,7 +504,7 @@ export default function Dashboard() {
                       >
                         <option value="">Select product</option>
                         {reviewableProducts.map((id) => {
-                          const p = PRODUCTS.find((x) => x.id === id)
+                          const p = getProduct(id)
                           return (
                             <option key={id} value={id}>
                               {p?.name || id}
@@ -653,23 +676,26 @@ export default function Dashboard() {
               <form className="dash-pass-card" onSubmit={savePassword}>
                 <div className="dash-pass-intro">
                   <p>
-                    Update the password for <strong>{user.email}</strong>.
-                    Use at least 6 characters.
+                    {passwordRecovery
+                      ? 'Choose a new password for your account. Use at least 6 characters.'
+                      : `Update the password for ${user.email}. Use at least 6 characters.`}
                   </p>
                 </div>
                 <div className="dash-pass-grid">
-                  <label className="ship-field dash-pass-current">
-                    <span>Current password</span>
-                    <input
-                      type="password"
-                      value={pass.current}
-                      onChange={(e) =>
-                        setPass((p) => ({ ...p, current: e.target.value }))
-                      }
-                      required
-                      autoComplete="current-password"
-                    />
-                  </label>
+                  {!passwordRecovery && (
+                    <label className="ship-field dash-pass-current">
+                      <span>Current password</span>
+                      <input
+                        type="password"
+                        value={pass.current}
+                        onChange={(e) =>
+                          setPass((p) => ({ ...p, current: e.target.value }))
+                        }
+                        required
+                        autoComplete="current-password"
+                      />
+                    </label>
+                  )}
                   <label className="ship-field">
                     <span>New password</span>
                     <input

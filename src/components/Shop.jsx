@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FILTERS,
-  PRODUCTS,
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
   fmt,
   imgSrc,
+  isInStock,
+  productHasStock,
 } from '../data/products'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useProducts } from '../context/ProductsContext'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
 
@@ -57,7 +59,11 @@ function ProductCard({ product, index }) {
     }
   }, [cardRef, reduceMotion, finePointer])
 
+  const inStock = isInStock(variant)
+  const anyInStock = productHasStock(product)
+
   const handleAdd = () => {
+    if (!inStock) return
     addToCart(product.id, variant.id)
     setAdded(true)
     setTimeout(() => setAdded(false), 1100)
@@ -65,16 +71,19 @@ function ProductCard({ product, index }) {
 
   return (
     <article
-      className="card rv"
+      className={`card rv${!anyInStock ? ' card-oos' : ''}`}
       id={`card-${product.id}`}
       data-cat={product.cat}
       ref={cardRef}
     >
       <div className="card-topline">
         <span className="collection">
-          Research Series · {String(index).padStart(3, '0')}
+          {product.categoryLabel || 'Research'} ·{' '}
+          {String(index).padStart(3, '0')}
         </span>
-        <span className="stock">In stock</span>
+        <span className={`stock${inStock ? '' : ' stock-oos'}`}>
+          {inStock ? 'In stock' : 'Out of stock'}
+        </span>
       </div>
       <div
         className="product-visual"
@@ -86,7 +95,6 @@ function ProductCard({ product, index }) {
           <span className="card-mark-orbit card-mark-orbit-c" />
           <span className="card-mark-ring" />
           <span className="card-mark-ring card-mark-ring-outer" />
-          <img className="card-mark-logo" src="/logo.png" alt="" />
         </div>
         <div className="vial">
           <img
@@ -128,7 +136,9 @@ function ProductCard({ product, index }) {
               <button
                 key={v.id}
                 type="button"
-                className={`dose-chip${variantId === v.id ? ' active' : ''}`}
+                className={`dose-chip${variantId === v.id ? ' active' : ''}${
+                  isInStock(v) ? '' : ' dose-oos'
+                }`}
                 aria-pressed={variantId === v.id}
                 onClick={() => setVariantId(v.id)}
               >
@@ -140,19 +150,32 @@ function ProductCard({ product, index }) {
 
         <div className="card-foot">
           <div>
-            <span className="price">{fmt(variant.price)}</span>
-            <span className="pts">
-              +{variant.price * PTS_PER_DOLLAR} pts
-            </span>
+            {inStock ? (
+              <>
+                <span className="price">{fmt(variant.price)}</span>
+                <span className="pts">
+                  +{variant.price * PTS_PER_DOLLAR} pts
+                </span>
+              </>
+            ) : (
+              <span className="price-oos-label">Out of stock</span>
+            )}
           </div>
           <button
-            className={`add-btn-round add-btn${added ? ' added' : ''}`}
+            className={`add-btn-round add-btn${added ? ' added' : ''}${
+              inStock ? '' : ' is-disabled'
+            }`}
             data-id={product.id}
-            aria-label={`Add ${product.name} ${variant.label} to cart`}
+            aria-label={
+              inStock
+                ? `Add ${product.name} ${variant.label} to cart`
+                : `${product.name} ${variant.label} out of stock`
+            }
             type="button"
+            disabled={!inStock}
             onClick={handleAdd}
           >
-            {added ? '✓' : '+'}
+            {added ? '✓' : inStock ? '+' : '–'}
           </button>
         </div>
       </div>
@@ -161,6 +184,7 @@ function ProductCard({ product, index }) {
 }
 
 export default function Shop() {
+  const { products, loading, error } = useProducts()
   const [activeFilter, setActiveFilter] = useState('all')
   const hairRef = useReveal({ threshold: 0.5 })
   const headRef = useReveal()
@@ -168,8 +192,8 @@ export default function Shop() {
 
   const filtered =
     activeFilter === 'all'
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.cat === activeFilter)
+      ? products
+      : products.filter((p) => p.cat === activeFilter)
 
   return (
     <section className="section" id="shop">
@@ -205,12 +229,13 @@ export default function Shop() {
             </div>
           </aside>
           <div className="grid" id="productGrid">
-            {filtered.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                index={PRODUCTS.indexOf(p) + 1}
-              />
+            {loading && <p className="muted">Loading products…</p>}
+            {error && <p className="muted">{error}</p>}
+            {!loading && !error && filtered.length === 0 && (
+              <p className="muted">No products available yet.</p>
+            )}
+            {filtered.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i + 1} />
             ))}
           </div>
         </div>
