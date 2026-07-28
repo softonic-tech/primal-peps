@@ -182,7 +182,8 @@ export function AuthProvider({ children }) {
         setAuthOpen(false)
         return { ok: true }
       }
-      if (apiRes.status !== 404 && apiRes.status !== 503) {
+      // 404/405: no serverless route (misconfigured host). 503: missing service key.
+      if (apiRes.status !== 404 && apiRes.status !== 405 && apiRes.status !== 503) {
         const payload = await apiRes.json().catch(() => ({}))
         const msg = payload.error || 'Could not create account'
         if (/already|registered|exists/i.test(msg)) {

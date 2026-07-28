@@ -6,7 +6,7 @@
 import { readFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { createClient } from '@supabase/supabase-js'
+import { handleSignup, resolveSignupEnv } from './signup-handler.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
@@ -23,15 +23,11 @@ function loadEnvFile(path) {
 }
 
 function getAdminEnv() {
-  const merged = {
+  return resolveSignupEnv({
     ...loadEnvFile(resolve(root, '.env')),
     ...loadEnvFile(resolve(root, 'admin/.env')),
     ...process.env,
-  }
-  return {
-    url: merged.VITE_SUPABASE_URL || merged.SUPABASE_URL || '',
-    serviceKey: merged.SUPABASE_SERVICE_ROLE_KEY || '',
-  }
+  })
 }
 
 async function readJson(req) {
@@ -54,67 +50,10 @@ export function signupApiPlugin() {
         res.setHeader('Content-Type', 'application/json')
 
         try {
-          const { url, serviceKey } = getAdminEnv()
-          if (!url || !serviceKey) {
-            res.statusCode = 503
-            res.end(
-              JSON.stringify({
-                error:
-                  'Signup API unavailable — add SUPABASE_SERVICE_ROLE_KEY to admin/.env',
-              }),
-            )
-            return
-          }
-
           const body = await readJson(req)
-          const email = String(body.email || '')
-            .trim()
-            .toLowerCase()
-          const password = String(body.password || '')
-          const fullName = String(body.fullName || '').trim()
-
-          if (!email || !password || password.length < 6) {
-            res.statusCode = 400
-            res.end(
-              JSON.stringify({
-                error: 'Use a valid email and password (6+ chars)',
-              }),
-            )
-            return
-          }
-
-          const admin = createClient(url, serviceKey, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          })
-
-          const { data, error } = await admin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: fullName || email.split('@')[0],
-            },
-          })
-
-          if (error) {
-            const msg = error.message || 'Could not create account'
-            const status = /already|registered|exists/i.test(msg) ? 409 : 400
-            res.statusCode = status
-            res.end(JSON.stringify({ error: msg }))
-            return
-          }
-
-          // Ensure profile row exists (trigger usually creates it)
-          if (data.user) {
-            await admin.from('profiles').upsert({
-              id: data.user.id,
-              email,
-              full_name: fullName || email.split('@')[0],
-            })
-          }
-
-          res.statusCode = 200
-          res.end(JSON.stringify({ ok: true, userId: data.user?.id }))
+          const result = await handleSignup(body, getAdminEnv())
+          res.statusCode = result.status
+          res.end(JSON.stringify(result.body))
         } catch (err) {
           res.statusCode = 500
           res.end(
