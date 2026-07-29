@@ -78,8 +78,8 @@ function ScrollToTop() {
   const { pathname, hash } = useLocation()
   useEffect(() => {
     if (hash) {
-      const id = hash.replace('#', '')
-      // Wait a frame so the new page has painted
+      // Support /?cat=recovery#shop — id is only the fragment before any ?
+      const id = hash.replace(/^#/, '').split('?')[0]
       const t = window.setTimeout(() => {
         const el = document.getElementById(id)
         if (el) {

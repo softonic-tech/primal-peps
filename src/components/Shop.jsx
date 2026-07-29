@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   FILTERS,
   PTS_PER_DOLLAR,
@@ -15,6 +15,13 @@ import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../context/ProductsContext'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
+
+const VALID_CATS = new Set(FILTERS.map((f) => f.cat))
+
+function catFromSearch(params) {
+  const cat = params.get('cat')
+  return VALID_CATS.has(cat) ? cat : 'all'
+}
 
 function ProductCard({ product, index }) {
   const { addToCart } = useCart()
@@ -185,10 +192,30 @@ function ProductCard({ product, index }) {
 
 export default function Shop() {
   const { products, loading, error } = useProducts()
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [activeFilter, setActiveFilter] = useState(() =>
+    catFromSearch(searchParams),
+  )
   const hairRef = useReveal({ threshold: 0.5 })
   const headRef = useReveal()
   const railRef = useReveal()
+
+  useEffect(() => {
+    setActiveFilter(catFromSearch(searchParams))
+  }, [searchParams])
+
+  const setFilter = (cat) => {
+    setActiveFilter(cat)
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (!cat || cat === 'all') next.delete('cat')
+        else next.set('cat', cat)
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const filtered =
     activeFilter === 'all'
@@ -221,7 +248,7 @@ export default function Shop() {
                   className={`filter-chip${activeFilter === f.cat ? ' active' : ''}`}
                   data-cat={f.cat}
                   type="button"
-                  onClick={() => setActiveFilter(f.cat)}
+                  onClick={() => setFilter(f.cat)}
                 >
                   {f.label}
                 </button>

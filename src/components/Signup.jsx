@@ -1,12 +1,23 @@
+import { useState } from 'react'
 import { useCart } from '../context/CartContext'
+import { subscribeNewsletter } from '../lib/newsletter'
 import { useReveal } from '../hooks/useReveal'
 
 export default function Signup() {
-  const { signedUp, completeSignup, promoCode, promoPercent } = useCart()
+  const { signedUp, completeSignup, promoCode, promoPercent, toast } = useCart()
   const boxRef = useReveal()
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    const email = new FormData(e.currentTarget).get('email')
+    setSubmitting(true)
+    const result = await subscribeNewsletter(email, 'signup')
+    setSubmitting(false)
+    if (!result.ok) {
+      toast(result.error || 'Could not save your email.')
+      return
+    }
     completeSignup()
     document.getElementById('revealCode')?.scrollIntoView({
       block: 'center',
@@ -27,19 +38,24 @@ export default function Signup() {
             TAKE <span className="big-gold">{promoPercent}% OFF</span>
           </h2>
           <p>
-            Drop your email and we&apos;ll send you a {promoPercent}% welcome
-            code, plus first access to restocks, new peptides, and members-only
-            deals.
+            Drop your email to unlock {promoPercent}% off at checkout and get
+            first access to restocks, new peptides, and members-only deals.
           </p>
           <form className="email-glass" id="signupForm" onSubmit={handleSubmit}>
             <input
               type="email"
+              name="email"
               placeholder="you@email.com"
               required
               aria-label="Email address"
+              disabled={submitting}
             />
-            <button className="btn-primary magnetic" type="submit">
-              Claim {promoPercent}% off
+            <button
+              className="btn-primary magnetic"
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? 'Saving…' : `Claim ${promoPercent}% off`}
             </button>
           </form>
           <div

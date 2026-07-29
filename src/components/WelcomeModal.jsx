@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { subscribeNewsletter } from '../lib/newsletter'
 
 export default function WelcomeModal() {
   const { isLoggedIn, loading: authLoading } = useAuth()
@@ -10,8 +11,10 @@ export default function WelcomeModal() {
     completeSignup,
     dismissWelcome,
     promoPercent,
+    toast,
   } = useCart()
   const [open, setOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     // Wait for auth; logged-in users get the promo without this modal
@@ -28,8 +31,16 @@ export default function WelcomeModal() {
     dismissWelcome()
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    const email = new FormData(e.currentTarget).get('email')
+    setSubmitting(true)
+    const result = await subscribeNewsletter(email, 'welcome')
+    setSubmitting(false)
+    if (!result.ok) {
+      toast(result.error || 'Could not save your email.')
+      return
+    }
     completeSignup()
     setOpen(false)
   }
@@ -63,18 +74,20 @@ export default function WelcomeModal() {
           <span className="gold">TAKE {promoPercent}% OFF</span>
         </h3>
         <p>
-          Sign up with your email and your {promoPercent}% welcome code is
-          applied automatically at checkout.
+          Enter your email and your {promoPercent}% welcome discount is applied
+          automatically at checkout — no code to wait for.
         </p>
         <form id="modalForm" onSubmit={handleSubmit}>
           <input
             type="email"
+            name="email"
             placeholder="you@email.com"
             required
             aria-label="Email address"
+            disabled={submitting}
           />
-          <button className="btn-primary" type="submit">
-            Unlock my {promoPercent}% →
+          <button className="btn-primary" type="submit" disabled={submitting}>
+            {submitting ? 'Saving…' : `Unlock my ${promoPercent}% →`}
           </button>
         </form>
         <button className="skip" id="modalSkip" type="button" onClick={hide}>

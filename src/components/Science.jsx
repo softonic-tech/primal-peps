@@ -83,7 +83,13 @@ export default function Science() {
               Every batch comes with a downloadable COA documenting purity,
               identity, and endotoxin levels.
             </p>
-            <a href="#" className="coa-link">
+            <a
+              href="/coa-sample.pdf"
+              className="coa-link"
+              download="primal-peps-sample-coa.pdf"
+              target="_blank"
+              rel="noreferrer"
+            >
               Download sample COA →
             </a>
           </div>

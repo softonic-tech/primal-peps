@@ -1458,6 +1458,28 @@ footer::before{
 }
 .promo-btn:hover{background:rgba(232,160,32,.15);border-color:var(--gold)}
 
+.redeem-section{margin-top:20px}
+.redeem-toggle{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:14px 18px;border-radius:12px;text-align:left;
+  background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);
+  color:var(--chrome);font-size:.9rem;font-weight:600;cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.redeem-toggle:hover{border-color:rgba(232,160,32,.45)}
+.redeem-toggle.active{
+  border-color:rgba(232,160,32,.55);background:rgba(232,160,32,.12);
+  color:var(--gold-hi);
+}
+.redeem-toggle-state{
+  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mute);font-weight:800;
+}
+.redeem-toggle.active .redeem-toggle-state{color:var(--gold-hi)}
+.redeem-hint{
+  margin:10px 0 0;font-size:.78rem;color:var(--mute);line-height:1.45;
+}
+
 /* Sidebar Summary */
 .checkout-sidebar{position:sticky;top:0}
 .summary-card{

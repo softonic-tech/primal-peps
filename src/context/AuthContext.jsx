@@ -369,10 +369,15 @@ export function AuthProvider({ children }) {
           state: shipping.state || '',
           postcode: shipping.postcode || '',
         }
+        const pointsRedeemed = Number(order.pointsRedeemed) || 0
+        const nextPoints = Math.max(
+          0,
+          (profile?.points || 0) + (order.pointsEarned || 0) - pointsRedeemed,
+        )
         await supabase
           .from('profiles')
           .update({
-            points: (profile?.points || 0) + (order.pointsEarned || 0),
+            points: nextPoints,
             phone: shipping.phone || profile?.phone || '',
             full_name: shipping.fullName || profile?.fullName || '',
             shipping: { ...(profile?.shipping || {}), ...shippingProfile },

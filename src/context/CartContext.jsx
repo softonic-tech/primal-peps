@@ -19,6 +19,8 @@ import { useSettings } from './SettingsContext'
 
 const CartContext = createContext(null)
 const WELCOME_KEY = 'pp_welcome_offer'
+export const REDEEM_POINTS = 500
+export const REDEEM_VALUE = 10
 
 function readWelcomeOffer() {
   try {
@@ -59,6 +61,7 @@ export function CartProvider({ children }) {
   const [promoApplied, setPromoApplied] = useState(initialWelcome.claimed)
   const [signedUp, setSignedUp] = useState(initialWelcome.claimed)
   const [welcomeSeen, setWelcomeSeen] = useState(initialWelcome.seen)
+  const [redeemApplied, setRedeemApplied] = useState(false)
   const [guestPoints, setGuestPoints] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
@@ -111,8 +114,34 @@ export function CartProvider({ children }) {
   )
 
   const disc = promoApplied ? sub * (promoPercent / 100) : 0
-  const totalVal = sub - disc
+  const canRedeem =
+    isLoggedIn && (user?.points || 0) >= REDEEM_POINTS && sub > 0
+  const redeemDisc = redeemApplied && canRedeem ? REDEEM_VALUE : 0
+  const totalVal = Math.max(0, sub - disc - redeemDisc)
   const earnPts = Math.round(totalVal * ptsPerDollar)
+
+  // Drop redeem if user logs out or no longer has enough points
+  useEffect(() => {
+    if (!canRedeem && redeemApplied) setRedeemApplied(false)
+  }, [canRedeem, redeemApplied])
+
+  const setRedeem = useCallback(
+    (on) => {
+      if (on && !canRedeem) {
+        toast(
+          isLoggedIn
+            ? `Need ${REDEEM_POINTS} points to redeem $${REDEEM_VALUE} off`
+            : 'Sign in to redeem Primal Points',
+        )
+        return
+      }
+      setRedeemApplied(Boolean(on))
+      if (on) {
+        toast(`Redeemed ${REDEEM_POINTS} pts — $${REDEEM_VALUE} off ✓`)
+      }
+    },
+    [canRedeem, isLoggedIn, toast],
+  )
 
   const addToCart = useCallback(
     (productId, variantId) => {
@@ -201,8 +230,17 @@ export function CartProvider({ children }) {
 
   const placeOrder = useCallback(
     async (shipping = null, extras = {}) => {
+      if (authLoading) {
+        const err = new Error('Please wait — checking your session')
+        toast(err.message)
+        throw err
+      }
       const shipFee = extras.shipFee || 0
-      const orderTotal = totalVal + shipFee
+      const redeeming = redeemApplied && canRedeem
+      const redeemAmount = redeeming ? REDEEM_VALUE : 0
+      const pointsSpent = redeeming ? REDEEM_POINTS : 0
+      const merchandise = Math.max(0, sub - disc - redeemAmount)
+      const orderTotal = merchandise + shipFee
       const earned = Math.round(orderTotal * ptsPerDollar)
       const order = {
         id: `ORD-${Date.now().toString().slice(-6)}`,
@@ -218,7 +256,10 @@ export function CartProvider({ children }) {
           img: i.img,
         })),
         subtotal: sub,
-        discount: disc,
+        discount: disc + redeemAmount,
+        promoDiscount: disc,
+        redeemDiscount: redeemAmount,
+        pointsRedeemed: pointsSpent,
         shippingFee: shipFee,
         total: orderTotal,
         pointsEarned: earned,
@@ -237,13 +278,25 @@ export function CartProvider({ children }) {
       }
 
       setCart({})
+      setRedeemApplied(false)
       if (!extras.keepOpen) {
         setCartOpen(false)
         toast(`Order ${order.id} placed — transfer funds to confirm`)
       }
       return order
     },
-    [cartItems, disc, ptsPerDollar, recordOrder, sub, toast, totalVal, user],
+    [
+      authLoading,
+      canRedeem,
+      cartItems,
+      disc,
+      ptsPerDollar,
+      recordOrder,
+      redeemApplied,
+      sub,
+      toast,
+      user,
+    ],
   )
 
   const value = {
@@ -252,6 +305,9 @@ export function CartProvider({ children }) {
     cartCount,
     sub,
     disc,
+    redeemDisc,
+    redeemApplied,
+    canRedeem,
     totalVal,
     earnPts,
     promoApplied,
@@ -270,6 +326,7 @@ export function CartProvider({ children }) {
     addToCart,
     updateQty,
     applyPromo,
+    setRedeem,
     completeSignup,
     dismissWelcome,
     placeOrder,

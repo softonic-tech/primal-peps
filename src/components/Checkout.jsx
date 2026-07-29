@@ -3,7 +3,11 @@ import { Link } from 'react-router-dom'
 import { fmt, imgSrc } from '../data/products'
 import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
+import {
+  REDEEM_POINTS,
+  REDEEM_VALUE,
+  useCart,
+} from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
 
 const AU_STATES = [
@@ -140,6 +144,7 @@ function OrderSummary({
   disc,
   promoApplied,
   promoCode = 'PRIMAL15',
+  redeemDisc = 0,
   shipFee,
   shipLabel,
   total,
@@ -153,10 +158,16 @@ function OrderSummary({
         <span>Subtotal</span>
         <span>{fmt(sub)}</span>
       </div>
-      {promoApplied && sub > 0 && (
+      {promoApplied && disc > 0 && (
         <div className="summary-line discount">
           <span>{promoCode} Discount</span>
           <span>–{fmt(disc)}</span>
+        </div>
+      )}
+      {redeemDisc > 0 && (
+        <div className="summary-line discount">
+          <span>Points redeem</span>
+          <span>–{fmt(redeemDisc)}</span>
         </div>
       )}
       <div className="summary-line">
@@ -281,6 +292,10 @@ export default function Checkout() {
     cartItems,
     sub,
     disc,
+    redeemDisc,
+    redeemApplied,
+    canRedeem,
+    setRedeem,
     totalVal,
     earnPts,
     promoApplied,
@@ -291,7 +306,7 @@ export default function Checkout() {
     placeOrder,
     toast,
   } = useCart()
-  const { user, isLoggedIn, openAuth } = useAuth()
+  const { user, isLoggedIn, openAuth, loading: authLoading } = useAuth()
   const { bank, shipping: shipSettings } = useSettings()
   const freeThreshold = Number(shipSettings.freeThreshold) || 150
 
@@ -301,6 +316,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({})
   const [legalAck, setLegalAck] = useState(false)
   const [placedOrder, setPlacedOrder] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const prefillsDone = useRef(false)
 
   useEffect(() => {
@@ -394,10 +410,15 @@ export default function Checkout() {
       return
     }
     if (step === 3) {
+      if (authLoading) {
+        toast('Please wait — checking your session')
+        return
+      }
       if (!legalAck) {
         toast('Please confirm the research-use and 18+ acknowledgement')
         return
       }
+      setSubmitting(true)
       try {
         const order = await placeOrder(shipping, { shipFee, keepOpen: true })
         setPlacedOrder(order)
@@ -406,6 +427,8 @@ export default function Checkout() {
         toast(`Order ${order.id} submitted — transfer funds to confirm`)
       } catch {
         /* toast already shown in placeOrder */
+      } finally {
+        setSubmitting(false)
       }
     }
   }
@@ -426,11 +449,15 @@ export default function Checkout() {
     ? 'Done'
     : empty
       ? 'Add items to continue'
-      : step === 1
-        ? 'Proceed to Shipping'
-        : step === 2
-          ? 'Continue to Payment'
-          : 'Submit order'
+      : authLoading && step === 3
+        ? 'Checking session…'
+        : submitting
+          ? 'Submitting…'
+          : step === 1
+            ? 'Proceed to Shipping'
+            : step === 2
+              ? 'Continue to Payment'
+              : 'Submit order'
 
   const secondaryLabel = placedOrder
     ? 'Close'
@@ -567,6 +594,29 @@ export default function Checkout() {
                     </button>
                   </div>
                 </div>
+
+                {canRedeem && (
+                  <div className="promo-section redeem-section">
+                    <label>Primal Points</label>
+                    <button
+                      type="button"
+                      className={`redeem-toggle${redeemApplied ? ' active' : ''}`}
+                      onClick={() => setRedeem(!redeemApplied)}
+                      aria-pressed={redeemApplied}
+                    >
+                      <span>
+                        Redeem {REDEEM_POINTS} pts (−{fmt(REDEEM_VALUE)})
+                      </span>
+                      <span className="redeem-toggle-state">
+                        {redeemApplied ? 'On' : 'Off'}
+                      </span>
+                    </button>
+                    <p className="redeem-hint">
+                      You have {user?.points || 0} points. Applied after any
+                      welcome promo; total won&apos;t go below $0.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="checkout-sidebar">
@@ -575,6 +625,7 @@ export default function Checkout() {
                   disc={disc}
                   promoApplied={promoApplied}
                   promoCode={promoCode}
+                  redeemDisc={redeemDisc}
                   shipFee={qualifiesFreeShip ? 0 : null}
                   shipLabel={
                     qualifiesFreeShip
@@ -598,15 +649,21 @@ export default function Checkout() {
                   your delivery details exactly as they appear for AU parcel
                   delivery.
                 </p>
-                {isLoggedIn ? (
+                {authLoading ? (
+                  <p className="checkout-auth-note">
+                    Checking your session… shipping and account options will
+                    appear in a moment.
+                  </p>
+                ) : isLoggedIn ? (
                   <p className="checkout-auth-note logged-in">
-                    Signed in as <strong>{user.email}</strong> — shipping
-                    details prefilled from your profile. Edit anything before
-                    continuing.
+                    Signed in as <strong>{user.email}</strong> — this order is
+                    linked to your account. Shipping details are prefilled from
+                    your profile; edit anything before continuing.
                   </p>
                 ) : (
                   <p className="checkout-auth-note">
-                    Checking out as a guest.{' '}
+                    Checking out as a guest — this order won&apos;t earn points
+                    on your account unless you sign in first.{' '}
                     <button
                       type="button"
                       className="text-link"
@@ -781,6 +838,7 @@ export default function Checkout() {
                   disc={disc}
                   promoApplied={promoApplied}
                   promoCode={promoCode}
+                  redeemDisc={redeemDisc}
                   shipFee={shipFee}
                   shipLabel={shipLabel}
                   total={orderTotal}
@@ -806,6 +864,21 @@ export default function Checkout() {
             <div className="checkout-step">
               <div className="checkout-main">
                 <h2 className="checkout-title">PAYMENT</h2>
+                {authLoading ? (
+                  <p className="checkout-auth-note">
+                    Checking your session before you submit…
+                  </p>
+                ) : isLoggedIn ? (
+                  <p className="checkout-auth-note logged-in">
+                    Submitting as <strong>{user.email}</strong> — points earned
+                    (and any redeem) apply to this account.
+                  </p>
+                ) : (
+                  <p className="checkout-auth-note">
+                    Submitting as a guest. Points from this order won&apos;t be
+                    saved to an account.
+                  </p>
+                )}
                 <p className="ship-intro">
                   We accept payment by Australian bank transfer only. Submit your
                   order, then transfer the total using your order number as the
@@ -856,6 +929,7 @@ export default function Checkout() {
                   disc={disc}
                   promoApplied={promoApplied}
                   promoCode={promoCode}
+                  redeemDisc={redeemDisc}
                   shipFee={shipFee}
                   shipLabel={shipLabel}
                   total={orderTotal}
@@ -972,7 +1046,12 @@ export default function Checkout() {
                 className="checkout-next-btn"
                 type="button"
                 aria-label={primaryLabel}
-                disabled={!placedOrder && (empty || (step === 3 && !legalAck))}
+                disabled={
+                  !placedOrder &&
+                  (empty ||
+                    submitting ||
+                    (step === 3 && (!legalAck || authLoading)))
+                }
                 onClick={goNext}
               >
                 <span className="btn-label-full" aria-hidden="true">

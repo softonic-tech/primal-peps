@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useCart } from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
 import { LEGAL } from '../data/site'
+import { subscribeNewsletter } from '../lib/newsletter'
 
 const SOCIAL_LABELS = [
   ['instagram', 'Instagram'],
@@ -13,9 +15,20 @@ const SOCIAL_LABELS = [
 export default function Footer() {
   const { toast, promoPercent } = useCart()
   const { site, social, contact } = useSettings()
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleNewsletter = (e) => {
+  const handleNewsletter = async (e) => {
     e.preventDefault()
+    const form = e.currentTarget
+    const email = new FormData(form).get('email')
+    setSubmitting(true)
+    const result = await subscribeNewsletter(email, 'footer')
+    setSubmitting(false)
+    if (!result.ok) {
+      toast(result.error || 'Could not subscribe.')
+      return
+    }
+    form.reset()
     toast('Subscribed ✓')
   }
 
@@ -52,19 +65,24 @@ export default function Footer() {
             <form className="foot-newsletter" onSubmit={handleNewsletter}>
               <input
                 type="email"
+                name="email"
                 placeholder="Email for updates"
                 aria-label="Newsletter email"
+                required
+                disabled={submitting}
               />
-              <button type="submit">Join</button>
+              <button type="submit" disabled={submitting}>
+                {submitting ? '…' : 'Join'}
+              </button>
             </form>
           </div>
           <div className="foot-col">
             <h5>Shop</h5>
             <div className="foot-links">
-              <a href="#shop">All peptides</a>
-              <a href="#shop">Recovery</a>
-              <a href="#shop">Metabolic</a>
-              <a href="#shop">Skin &amp; glow</a>
+              <a href="/#shop">All peptides</a>
+              <a href="/?cat=recovery#shop">Recovery</a>
+              <a href="/?cat=metabolic#shop">Metabolic</a>
+              <a href="/?cat=repair#shop">Skin &amp; glow</a>
             </div>
           </div>
           <div className="foot-col">
