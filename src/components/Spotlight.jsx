@@ -9,6 +9,7 @@ import {
 } from '../data/products'
 import { useProducts } from '../context/ProductsContext'
 import { useReveal } from '../hooks/useReveal'
+import { CoaAction } from './CoaDialog'
 
 export default function Spotlight() {
   const { products, loading } = useProducts()
@@ -136,6 +137,11 @@ export default function Spotlight() {
                 {p.lot}
               </div>
             </div>
+            <CoaAction
+              productName={p.name}
+              variant={variant}
+              className="coa-row spotlight-coa"
+            />
             <div className="spotlight-foot">
               <div className="spot-price">
                 {variantInStock ? (

@@ -12,6 +12,7 @@ import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
+import { CoaAction } from './CoaDialog'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -191,6 +192,8 @@ export default function ProductDetail() {
                 ))}
               </div>
             </div>
+
+            <CoaAction productName={product.name} variant={variant} />
 
             <div className="pdp-buy">
               <div>

@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 function CloseIcon() {
   return (
@@ -30,7 +31,7 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
 
   if (!open || !coaUrl) return null
 
-  return (
+  return createPortal(
     <div
       className="coa-overlay"
       role="dialog"
@@ -39,7 +40,7 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
       onClick={onClose}
     >
       <div className="coa-dialog" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="coa-dialog-close" aria-label="Close COA" onClick={onClose}>
+        <button type="button" className="coa-dialog-close" aria-label="Close COA preview" onClick={onClose}>
           <CloseIcon />
         </button>
 
@@ -72,16 +73,61 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
 
         <footer className="coa-dialog-foot">
           <span className="coa-dialog-meta">Primal Peps · Research use only</span>
-          <a
-            href={coaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost coa-dialog-open"
-          >
-            Open PDF →
-          </a>
+          <div className="coa-dialog-actions">
+            <a
+              href={coaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost coa-dialog-open"
+            >
+              Open PDF →
+            </a>
+            <button type="button" className="btn-primary coa-dialog-dismiss" onClick={onClose}>
+              Close preview
+            </button>
+          </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
+  )
+}
+
+export function CoaAction({ productName, variant, className = 'coa-row' }) {
+  const [open, setOpen] = useState(false)
+  const hasCoa = Boolean(variant?.coaUrl)
+
+  useEffect(() => {
+    if (open && !hasCoa) setOpen(false)
+  }, [hasCoa, open])
+
+  if (!variant) return null
+
+  return (
+    <>
+      <div className={className}>
+        {hasCoa ? (
+          <button
+            type="button"
+            className="coa-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(true)
+            }}
+          >
+            View COA
+          </button>
+        ) : (
+          <span className="coa-pending">COA Pending</span>
+        )}
+      </div>
+      <CoaDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        productName={productName}
+        variantLabel={variant.label}
+        coaUrl={variant.coaUrl}
+      />
+    </>
   )
 }
