@@ -52,6 +52,7 @@ create table if not exists public.product_variants (
   label text not null,
   price numeric(10, 2) not null check (price >= 0),
   img text not null default '',
+  coa_url text,
   stock int not null default 100 check (stock >= 0),
   active boolean not null default true,
   sort_order int not null default 0,

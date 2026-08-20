@@ -10,6 +10,7 @@ export function mapProduct(row, variants = []) {
       price: Number(v.price),
       img: v.img || '',
       stock: Number(v.stock ?? 0),
+      coaUrl: v.coa_url || null,
     }))
 
   return {

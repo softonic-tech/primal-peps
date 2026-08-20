@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../context/ProductsContext'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
+import CoaDialog from './CoaDialog'
 
 const VALID_CATS = new Set(FILTERS.map((f) => f.cat))
 
@@ -27,6 +28,7 @@ function ProductCard({ product, index }) {
   const { addToCart } = useCart()
   const { getProductReviews } = useAuth()
   const [added, setAdded] = useState(false)
+  const [coaOpen, setCoaOpen] = useState(false)
   const [variantId, setVariantId] = useState(defaultVariant(product).id)
   const variant = findVariant(product, variantId)
   const cardRef = useReveal()
@@ -37,7 +39,12 @@ function ProductCard({ product, index }) {
 
   useEffect(() => {
     setVariantId(defaultVariant(product).id)
+    setCoaOpen(false)
   }, [product])
+
+  useEffect(() => {
+    if (coaOpen && !variant.coaUrl) setCoaOpen(false)
+  }, [variant.coaUrl, coaOpen])
 
   useEffect(() => {
     const card = cardRef.current
@@ -68,6 +75,7 @@ function ProductCard({ product, index }) {
 
   const inStock = isInStock(variant)
   const anyInStock = productHasStock(product)
+  const hasCoa = Boolean(variant.coaUrl)
 
   const handleAdd = () => {
     if (!inStock) return
@@ -132,6 +140,20 @@ function ProductCard({ product, index }) {
           <span>{product.lot}</span>
         </div>
 
+        <div className="coa-row">
+          {hasCoa ? (
+            <button
+              type="button"
+              className="coa-btn"
+              onClick={() => setCoaOpen(true)}
+            >
+              View COA
+            </button>
+          ) : (
+            <span className="coa-pending">COA Pending</span>
+          )}
+        </div>
+
         <div
           className={`dose-select${multiVariant ? ' dose-select-multi' : ''}`}
           role="group"
@@ -186,6 +208,13 @@ function ProductCard({ product, index }) {
           </button>
         </div>
       </div>
+      <CoaDialog
+        open={coaOpen}
+        onClose={() => setCoaOpen(false)}
+        productName={product.name}
+        variantLabel={variant.label}
+        coaUrl={variant.coaUrl}
+      />
     </article>
   )
 }
