@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import CoaUpload from '../components/CoaUpload'
 import ImageUpload from '../components/ImageUpload'
 import { productImageUrl } from '../lib/storage'
 import { PRODUCT_CATEGORIES, fmtMoney, supabase } from '../lib/supabase'
@@ -43,6 +44,7 @@ const emptyVariant = () => ({
   label: '',
   price: '',
   img: '',
+  coa_url: '',
   stock: 100,
   active: true,
   sort_order: 0,
@@ -140,6 +142,7 @@ export default function ProductForm() {
               label: v.label,
               price: String(v.price),
               img: v.img || '',
+              coa_url: v.coa_url || '',
               stock: v.stock,
               active: v.active,
               sort_order: v.sort_order,
@@ -312,6 +315,7 @@ export default function ProductForm() {
         label: v.label.trim(),
         price: Number(v.price),
         img: v.img.trim(),
+        coa_url: v.coa_url.trim() || null,
         stock: Number(v.stock) || 0,
         active: Boolean(v.active),
         sort_order: Number(v.sort_order) || 0,
@@ -525,8 +529,9 @@ export default function ProductForm() {
               <div>
                 <h2>Sizes & images</h2>
                 <p className="panel-help" style={{ margin: '8px 0 0' }}>
-                  Each size can have its own price, stock, and image. Images
-                  upload to the <code>product-images</code> Supabase bucket.
+                  Each size can have its own price, stock, image, and COA PDF.
+                  Images go to <code>product-images</code>; COAs to{' '}
+                  <code>coa-documents</code>.
                 </p>
               </div>
               <button type="button" className="btn-ghost" onClick={addVariant}>
@@ -561,6 +566,13 @@ export default function ProductForm() {
                     variantKey={v.variant_key || `size-${displayIndex + 1}`}
                     label="Variant image"
                     onChange={(url) => setVariant(i, 'img', url)}
+                  />
+
+                  <CoaUpload
+                    value={v.coa_url}
+                    productId={productIdForUpload}
+                    variantKey={v.variant_key || `size-${displayIndex + 1}`}
+                    onChange={(url) => setVariant(i, 'coa_url', url)}
                   />
 
                   <div className="form-grid">

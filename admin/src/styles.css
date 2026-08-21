@@ -576,6 +576,15 @@ a.btn-primary,a.btn-ghost{text-decoration:none}
 .image-upload-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .image-upload-hint{width:100%;margin:0;color:var(--mute);font-size:.74rem}
 
+.coa-upload{margin-top:12px}
+.coa-upload-preview{font-size:.78rem;color:var(--mute)}
+.coa-upload-badge{
+  display:inline-grid;place-items:center;
+  min-width:52px;padding:10px 14px;border-radius:10px;
+  border:1px solid rgba(232,160,32,.35);background:rgba(232,160,32,.12);
+  color:var(--gold-hi);font-weight:800;letter-spacing:.12em;font-size:.72rem;
+}
+
 .color-field{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center}
 .color-field input[type="color"]{
   width:48px;height:44px;padding:4px;border-radius:10px;border:1px solid var(--line);

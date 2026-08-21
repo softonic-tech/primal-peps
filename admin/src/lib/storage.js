@@ -63,3 +63,53 @@ export async function uploadProductImage(file, { productId, variantKey }) {
 
   return { path, publicUrl: data.publicUrl }
 }
+
+export const COA_DOCUMENTS_BUCKET = 'coa-documents'
+
+/** Resolve a stored COA URL/path for opening or display. */
+export function coaDocumentUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('blob:')) return url
+  const { data } = supabase.storage.from(COA_DOCUMENTS_BUCKET).getPublicUrl(url)
+  return data?.publicUrl || url
+}
+
+/**
+ * Upload a COA PDF to Supabase Storage.
+ * Returns { path, publicUrl } on success.
+ */
+export async function uploadCoaDocument(file, { productId, variantKey }) {
+  if (!file) return { error: 'No file selected' }
+  const isPdf =
+    file.type === 'application/pdf' ||
+    file.name.toLowerCase().endsWith('.pdf')
+  if (!isPdf) {
+    return { error: 'Please choose a PDF file' }
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    return { error: 'COA must be under 10MB' }
+  }
+
+  const folder = (productId || 'draft').replace(/[^a-z0-9_-]/gi, '-').toLowerCase()
+  const key = (variantKey || 'coa')
+    .replace(/[^a-z0-9_-]/gi, '-')
+    .toLowerCase()
+  const path = `${folder}/${key}-${Date.now()}.pdf`
+
+  const { error } = await supabase.storage
+    .from(COA_DOCUMENTS_BUCKET)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: 'application/pdf',
+    })
+
+  if (error) return { error: error.message }
+
+  const { data } = supabase.storage
+    .from(COA_DOCUMENTS_BUCKET)
+    .getPublicUrl(path)
+
+  return { path, publicUrl: data.publicUrl }
+}
