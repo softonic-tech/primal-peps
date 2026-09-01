@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, mergeSettings } from '../lib/settings'
 import { supabase } from '../lib/supabase'
 
 const TABS = [
+  { id: 'storefront', label: 'Storefront', short: 'Live' },
   { id: 'bank', label: 'Bank', short: 'Bank' },
   { id: 'promo', label: 'Promo & shipping', short: 'Promo' },
   { id: 'social', label: 'Social', short: 'Social' },
@@ -21,7 +22,7 @@ function Field({ label, hint, children }) {
 }
 
 export default function Settings() {
-  const [tab, setTab] = useState('bank')
+  const [tab, setTab] = useState('storefront')
   const [form, setForm] = useState(structuredClone(DEFAULT_SETTINGS))
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -112,6 +113,10 @@ export default function Settings() {
       site: {
         tagline: form.site.tagline.trim(),
         supportNote: form.site.supportNote.trim(),
+        storefrontLive: Boolean(form.site.storefrontLive),
+        comingSoonHeadline:
+          (form.site.comingSoonHeadline || '').trim() || 'COMING SOON',
+        comingSoonBody: (form.site.comingSoonBody || '').trim(),
       },
     }
 
@@ -140,8 +145,8 @@ export default function Settings() {
           <p className="kicker">Configuration</p>
           <h1>Settings</h1>
           <p className="page-sub">
-            Bank transfer details, welcome discount, social links, and site
-            contact info.
+            Turn the public shop on or off, then edit bank, promo, social, and
+            contact details.
           </p>
         </div>
       </header>
@@ -166,8 +171,83 @@ export default function Settings() {
 
       {error && <p className="form-error banner">{error}</p>}
       {ok && <p className="form-ok banner">{ok}</p>}
+      {!form.site.storefrontLive && (
+        <p className="form-warn banner">
+          The public shop is in coming soon mode. Turn it Live on the Storefront
+          tab when you are ready.
+        </p>
+      )}
 
       <form className="settings-form" onSubmit={save}>
+        {tab === 'storefront' && (
+          <section className="panel">
+            <h2>Storefront visibility</h2>
+            <p className="panel-help">
+              When coming soon is on, visitors see a branded waitlist page
+              instead of the homepage, products, and checkout. Admin stays
+              available.
+            </p>
+            <div className="storefront-live-card">
+              <div>
+                <strong>
+                  {form.site.storefrontLive ? 'Shop is live' : 'Coming soon mode'}
+                </strong>
+                <span>
+                  {form.site.storefrontLive
+                    ? 'Customers can browse and order as normal.'
+                    : 'The public site is hidden behind the coming soon page.'}
+                </span>
+              </div>
+              <div className="live-switch" role="group" aria-label="Storefront mode">
+                <button
+                  type="button"
+                  className={form.site.storefrontLive ? 'active live' : ''}
+                  onClick={() => patch('site', 'storefrontLive', true)}
+                >
+                  Live
+                </button>
+                <button
+                  type="button"
+                  className={!form.site.storefrontLive ? 'active soon' : ''}
+                  onClick={() => patch('site', 'storefrontLive', false)}
+                >
+                  Coming soon
+                </button>
+              </div>
+            </div>
+            <div className="form-grid" style={{ marginTop: 18 }}>
+              <div className="span-2">
+                <Field
+                  label="Coming soon headline"
+                  hint="Shown in large type on the waitlist page"
+                >
+                  <input
+                    value={form.site.comingSoonHeadline}
+                    onChange={(e) =>
+                      patch('site', 'comingSoonHeadline', e.target.value)
+                    }
+                    placeholder="COMING SOON"
+                  />
+                </Field>
+              </div>
+              <div className="span-2">
+                <Field
+                  label="Coming soon message"
+                  hint="Short note under the headline. Email capture is included automatically."
+                >
+                  <textarea
+                    rows={3}
+                    value={form.site.comingSoonBody}
+                    onChange={(e) =>
+                      patch('site', 'comingSoonBody', e.target.value)
+                    }
+                  />
+                </Field>
+              </div>
+            </div>
+          </section>
+        )}
+
         {tab === 'bank' && (
           <section className="panel">
             <h2>Bank transfer</h2>

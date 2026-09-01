@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ProductsProvider } from './context/ProductsContext'
-import { SettingsProvider } from './context/SettingsContext'
+import { SettingsProvider, useSettings } from './context/SettingsContext'
 import AnnounceBar from './components/AnnounceBar'
 import ScrollProgress from './components/ScrollProgress'
 import Nav from './components/Nav'
@@ -24,6 +24,7 @@ import AuthModal from './components/AuthModal'
 import Toast from './components/Toast'
 import Dashboard from './components/Dashboard'
 import ProductDetail from './components/ProductDetail'
+import ComingSoon from './components/ComingSoon'
 import './styles.css'
 
 function RevealObserver() {
@@ -129,6 +130,8 @@ function HomePage() {
 
 function AppLayout() {
   const { pathname } = useLocation()
+  const { site, loading } = useSettings()
+  const storefrontLive = site.storefrontLive !== false
   const isHome = pathname === '/'
 
   useEffect(() => {
@@ -140,6 +143,23 @@ function AppLayout() {
     }
     return () => document.body.classList.remove('subpage')
   }, [isHome])
+
+  if (loading) {
+    return (
+      <div className="coming-soon coming-soon-boot" aria-busy="true">
+        <img src="/logo.png" alt="Primal Peps" />
+      </div>
+    )
+  }
+
+  if (!storefrontLive) {
+    return (
+      <>
+        <ComingSoon />
+        <Toast />
+      </>
+    )
+  }
 
   return (
     <>

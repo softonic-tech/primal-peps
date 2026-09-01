@@ -30,6 +30,10 @@ export const DEFAULT_SETTINGS = {
     tagline:
       'Precision compounds. Verified quality. Built for serious research.',
     supportNote: 'AU research peptides — lab tested, discrete shipping.',
+    storefrontLive: true,
+    comingSoonHeadline: 'COMING SOON',
+    comingSoonBody:
+      'The troop is assembling. Leave your email and we will let you know when Primal Peps goes live.',
   },
 }
 
@@ -58,6 +62,11 @@ export function mergeSettings(row) {
     },
     social: { ...DEFAULT_SETTINGS.social, ...(row.social || {}) },
     contact: { ...DEFAULT_SETTINGS.contact, ...(row.contact || {}) },
-    site: { ...DEFAULT_SETTINGS.site, ...(row.site || {}) },
+    site: {
+      ...DEFAULT_SETTINGS.site,
+      ...(row.site || {}),
+      storefrontLive:
+        row.site?.storefrontLive ?? DEFAULT_SETTINGS.site.storefrontLive,
+    },
   }
 }

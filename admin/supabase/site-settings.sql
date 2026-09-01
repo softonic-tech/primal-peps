@@ -64,7 +64,10 @@ insert into public.site_settings (
   }'::jsonb,
   '{
     "tagline": "Precision compounds. Verified quality. Built for serious research.",
-    "supportNote": "AU research peptides — lab tested, discrete shipping."
+    "supportNote": "AU research peptides — lab tested, discrete shipping.",
+    "storefrontLive": true,
+    "comingSoonHeadline": "COMING SOON",
+    "comingSoonBody": "The troop is assembling. Leave your email and we will let you know when Primal Peps goes live."
   }'::jsonb
 )
 on conflict (id) do nothing;
