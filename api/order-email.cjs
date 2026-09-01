@@ -22,10 +22,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const raw = req.body
     const body =
-      typeof req.body === 'string'
-        ? JSON.parse(req.body || '{}')
-        : req.body || {}
+      typeof raw === 'string'
+        ? JSON.parse(raw || '{}')
+        : raw && typeof raw === 'object'
+          ? raw
+          : JSON.parse(String(raw || '{}'))
     const result = await handleOrderEmail(body, resolveOrderEmailEnv(process.env))
     return res.status(result.status).json(result.body)
   } catch (err) {

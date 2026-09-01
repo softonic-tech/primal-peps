@@ -108,7 +108,8 @@ export default function OrderDetail() {
     try {
       const res = await fetch(orderEmailEndpoint(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ orderId: id, status: nextStatus }),
       })
       emailed = res.ok
