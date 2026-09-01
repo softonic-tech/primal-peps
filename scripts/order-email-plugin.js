@@ -8,7 +8,6 @@ import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
-const { handleOrderEmail, resolveOrderEmailEnv } = require('./order-email-handler.cjs')
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
@@ -25,6 +24,7 @@ function loadEnvFile(path) {
 }
 
 function getEnv() {
+  const { resolveOrderEmailEnv } = require('./order-email-handler.cjs')
   return resolveOrderEmailEnv({
     ...loadEnvFile(resolve(root, '.env')),
     ...loadEnvFile(resolve(root, 'admin/.env')),
@@ -43,6 +43,7 @@ async function readJson(req) {
 export function orderEmailApiPlugin() {
   return {
     name: 'primal-order-email-api',
+    apply: 'serve',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.split('?')[0] !== '/api/order-email') {
@@ -64,6 +65,7 @@ export function orderEmailApiPlugin() {
         }
 
         try {
+          const { handleOrderEmail } = require('./order-email-handler.cjs')
           const body = await readJson(req)
           const result = await handleOrderEmail(body, getEnv())
           res.statusCode = result.status

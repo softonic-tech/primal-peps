@@ -17,7 +17,7 @@ function orderEmailEndpoint() {
   if (configured) {
     return `${String(configured).replace(/\/$/, '')}/api/order-email`
   }
-  if (import.meta.env.DEV) return '/api/order-email'
+  if (import.meta.env.DEV) return 'http://localhost:5173/api/order-email'
   return 'https://primalpeps.shop/api/order-email'
 }
 
