@@ -12,6 +12,15 @@ import {
   supabase,
 } from '../lib/supabase'
 
+function orderEmailEndpoint() {
+  const configured = import.meta.env.VITE_STOREFRONT_URL
+  if (configured) {
+    return `${String(configured).replace(/\/$/, '')}/api/order-email`
+  }
+  if (import.meta.env.DEV) return '/api/order-email'
+  return 'https://primalpeps.shop/api/order-email'
+}
+
 function CopyButton({ value, label = 'Copy' }) {
   const [done, setDone] = useState(false)
   if (!value) return null
@@ -88,14 +97,32 @@ export default function OrderDetail() {
       .from('orders')
       .update({ status: nextStatus })
       .eq('id', id)
-    setSavingStatus(false)
     if (err) {
+      setSavingStatus(false)
       setError(err.message)
       return
     }
     setOrder((prev) => ({ ...prev, status: nextStatus }))
-    setStatusFlash(`Status set to ${nextStatus}`)
-    setTimeout(() => setStatusFlash(''), 2200)
+
+    let emailed = false
+    try {
+      const res = await fetch(orderEmailEndpoint(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: id, status: nextStatus }),
+      })
+      emailed = res.ok
+    } catch {
+      emailed = false
+    }
+
+    setSavingStatus(false)
+    setStatusFlash(
+      emailed
+        ? `Status set to ${nextStatus} — customer emailed`
+        : `Status set to ${nextStatus} — email could not be sent`,
+    )
+    setTimeout(() => setStatusFlash(''), 3200)
   }
 
   const saveNotes = async (e) => {

@@ -45,11 +45,24 @@ export function orderEmailApiPlugin() {
     name: 'primal-order-email-api',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (req.url?.split('?')[0] !== '/api/order-email' || req.method !== 'POST') {
+        if (req.url?.split('?')[0] !== '/api/order-email') {
           return next()
         }
 
         res.setHeader('Content-Type', 'application/json')
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          return next()
+        }
+
         try {
           const body = await readJson(req)
           const result = await handleOrderEmail(body, getEnv())
