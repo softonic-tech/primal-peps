@@ -126,6 +126,11 @@ export default function AuthModal() {
       ? 'Sign in to sync shipping, points, and order history. Guest checkout still works anytime.'
       : 'Create an account to track points and orders. Shopping without an account is still fine.'
 
+  const fail = (msg) => {
+    setError(msg)
+    toast(msg, 'error')
+  }
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
@@ -135,7 +140,7 @@ export default function AuthModal() {
       if (isForgot) {
         const res = await resetPassword(email)
         if (!res.ok) {
-          setError(res.error)
+          fail(res.error)
           return
         }
         setResetSent(true)
@@ -146,7 +151,7 @@ export default function AuthModal() {
       if (isLogin) {
         const res = await login(email, password)
         if (!res.ok) {
-          setError(res.error)
+          fail(res.error)
           return
         }
         toast('Signed in ✓')
@@ -154,12 +159,12 @@ export default function AuthModal() {
       }
 
       if (password !== confirm) {
-        setError('Passwords do not match')
+        fail('Passwords do not match')
         return
       }
       const res = await signup({ email, password, fullName })
       if (!res.ok) {
-        setError(res.error)
+        fail(res.error)
         return
       }
       completeSignup()
@@ -189,11 +194,13 @@ export default function AuthModal() {
         >
           ✕
         </button>
-        <img src="/logo.png" alt="" width={72} height={72} />
+        <div className="auth-modal-body">
+        <img src="/logo.png" alt="" width={56} height={56} />
         <h3>{title}</h3>
         <p>{blurb}</p>
 
         <form onSubmit={submit} className="auth-form">
+          {error && <p className="auth-error">{error}</p>}
           {isSignup && (
             <label className="ship-field">
               <span>Full name</span>
@@ -253,7 +260,6 @@ export default function AuthModal() {
             </div>
           )}
 
-          {error && <p className="auth-error">{error}</p>}
           {resetSent && isForgot && (
             <p className="auth-success">
               If an account exists for that email, a reset link is on its way.
@@ -305,6 +311,7 @@ export default function AuthModal() {
         <button className="skip" type="button" onClick={closeAuth}>
           Continue as guest
         </button>
+        </div>
       </div>
       <button
         className="auth-backdrop"

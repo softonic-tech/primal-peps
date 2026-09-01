@@ -65,17 +65,22 @@ export function CartProvider({ children }) {
   const [guestPoints, setGuestPoints] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+  const [toastKind, setToastKind] = useState('info')
   const [toastVisible, setToastVisible] = useState(false)
   const toastTimer = useMemo(() => ({ current: null }), [])
 
   const lifetimePoints = user ? user.points || 0 : guestPoints
 
   const toast = useCallback(
-    (msg) => {
+    (msg, kind = 'info') => {
       setToastMsg(msg)
+      setToastKind(kind === 'error' ? 'error' : 'info')
       setToastVisible(true)
       clearTimeout(toastTimer.current)
-      toastTimer.current = setTimeout(() => setToastVisible(false), 2600)
+      toastTimer.current = setTimeout(
+        () => setToastVisible(false),
+        kind === 'error' ? 4200 : 2600,
+      )
     },
     [toastTimer],
   )
@@ -321,6 +326,7 @@ export function CartProvider({ children }) {
     cartOpen,
     setCartOpen,
     toastMsg,
+    toastKind,
     toastVisible,
     toast,
     addToCart,
