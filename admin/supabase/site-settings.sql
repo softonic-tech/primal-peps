@@ -60,7 +60,7 @@ insert into public.site_settings (
   }'::jsonb,
   '{
     "email": "hello@primalpeps.com",
-    "phone": ""
+    "phone": "+61449979054"
   }'::jsonb,
   '{
     "tagline": "Precision compounds. Verified quality. Built for serious research.",

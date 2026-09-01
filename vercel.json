@@ -6,6 +6,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/order-email.cjs",
+      "use": "@vercel/node"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
@@ -16,6 +20,11 @@
       "src": "/api/signup",
       "methods": ["POST", "OPTIONS"],
       "dest": "/api/signup.cjs"
+    },
+    {
+      "src": "/api/order-email",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "/api/order-email.cjs"
     },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }

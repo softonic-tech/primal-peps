@@ -37,8 +37,8 @@ export const PRODUCTS = [
       'The triple-receptor research peptide at the centre of modern metabolic and incretin signalling studies.',
     hue: '#f7c04a',
     variants: [
-      { id: '5mg', label: '5MG', price: 119, img: 'products/RETATRUTIDE.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 145, img: 'products/RETATRUTIDE-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 109, img: 'products/RETATRUTIDE.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 135, img: 'products/RETATRUTIDE-10MG.png', stock: 100 },
     ],
   },
   {
@@ -74,9 +74,9 @@ export const PRODUCTS = [
       'A mitochondrial-derived peptide at the forefront of cellular metabolism and energy-pathway research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 79, img: 'products/MOTS-C.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 90, img: 'products/MOTS-C-10MG.png', stock: 100 },
-      { id: '40mg', label: '40MG', price: 155, img: 'products/MOTS-C-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 69, img: 'products/MOTS-C.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 80, img: 'products/MOTS-C-10MG.png', stock: 100 },
+      { id: '40mg', label: '40MG', price: 145, img: 'products/MOTS-C-10MG.png', stock: 100 },
     ],
   },
   {
@@ -116,8 +116,8 @@ export const PRODUCTS = [
       'The dual secretagogue blend trusted for GH-axis signalling and endocrine pathway research.',
     hue: '#f7c04a',
     variants: [
-      { id: '5mg', label: '5MG', price: 89, img: 'products/CJC-IPA.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 125, img: 'products/CJC-IPA-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 79, img: 'products/CJC-IPA.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 115, img: 'products/CJC-IPA-10MG.png', stock: 100 },
     ],
   },
   {
@@ -153,7 +153,7 @@ export const PRODUCTS = [
       'The copper-binding tripeptide essential for matrix signalling and cellular repair research.',
     hue: '#d98e1b',
     variants: [
-      { id: '50mg', label: '50MG', price: 80, img: 'products/GHK-CU.png', stock: 100 },
+      { id: '50mg', label: '50MG', price: 70, img: 'products/GHK-CU.png', stock: 100 },
     ],
   },
   {
@@ -189,8 +189,8 @@ export const PRODUCTS = [
       'A GHRH analogue widely used in lipid-metabolism and endocrine signalling research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 95, img: 'products/TESAMORELIN.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 140, img: 'products/TESAMORELIN-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 85, img: 'products/TESAMORELIN.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 130, img: 'products/TESAMORELIN-10MG.png', stock: 100 },
     ],
   },
   {
@@ -232,8 +232,8 @@ export const PRODUCTS = [
       'Our signature multi-peptide blend for advanced cellular signalling and recovery research.',
     hue: '#f7c04a',
     variants: [
-      { id: '70mg', label: '70MG', price: 85, img: 'products/KLOW-70.png', stock: 0 },
-      { id: '80mg', label: '80MG', price: 195, img: 'products/KLOW-80.png', stock: 100 },
+      { id: '70mg', label: '70MG', price: 75, img: 'products/KLOW-70.png', stock: 0 },
+      { id: '80mg', label: '80MG', price: 185, img: 'products/KLOW-80.png', stock: 100 },
     ],
   },
   {
@@ -269,8 +269,8 @@ export const PRODUCTS = [
       'The thymosin beta-4 fragment essential for actin regulation and tissue research models.',
     hue: '#d98e1b',
     variants: [
-      { id: '5mg', label: '5MG', price: 75, img: 'products/TB-500.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 125, img: 'products/TB-500-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 65, img: 'products/TB-500.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 115, img: 'products/TB-500-10MG.png', stock: 100 },
     ],
   },
   {
@@ -306,8 +306,8 @@ export const PRODUCTS = [
       'The gastric pentadecapeptide at the centre of angiogenic pathway and tissue research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 69, img: 'products/BPC-157.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 90, img: 'products/BPC-157-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 59, img: 'products/BPC-157.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 80, img: 'products/BPC-157-10MG.png', stock: 100 },
     ],
   },
   {
@@ -343,7 +343,7 @@ export const PRODUCTS = [
       'A long-acting amylin analogue advancing metabolic and appetite-pathway research models.',
     hue: '#f7c04a',
     variants: [
-      { id: '10mg', label: '10MG', price: 125, img: 'products/CAGRILINTIDE.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 115, img: 'products/CAGRILINTIDE.png', stock: 100 },
     ],
   },
   {
@@ -379,7 +379,7 @@ export const PRODUCTS = [
       'The melanocortin analogue used widely in pigmentation and receptor-pathway research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 75, img: 'products/MT-2.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 65, img: 'products/MT-2.png', stock: 100 },
     ],
   },
   {
@@ -454,7 +454,7 @@ export const PRODUCTS = [
       'A multi-peptide blend formulated for advanced skin, matrix, and cellular repair research.',
     hue: '#f7c04a',
     variants: [
-      { id: '70mg', label: '70MG', price: 165, img: 'products/GLOW.png', stock: 100 },
+      { id: '70mg', label: '70MG', price: 155, img: 'products/GLOW.png', stock: 100 },
     ],
   },
   {
@@ -490,7 +490,7 @@ export const PRODUCTS = [
       'The essential coenzyme at the centre of cellular energy and redox-pathway research.',
     hue: '#e8a020',
     variants: [
-      { id: '500mg', label: '500MG', price: 125, img: 'products/NAD.png', stock: 100 },
+      { id: '500mg', label: '500MG', price: 115, img: 'products/NAD.png', stock: 100 },
     ],
   },
   {
@@ -526,7 +526,7 @@ export const PRODUCTS = [
       'A widely referenced cognitive-research peptide for neurotrophic and neuroprotection models.',
     hue: '#6ea8dc',
     variants: [
-      { id: '10mg', label: '10MG', price: 65, img: 'products/SEMAX.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 55, img: 'products/SEMAX.png', stock: 100 },
     ],
   },
 ]

@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS = {
   },
   contact: {
     email: 'hello@primalpeps.com',
-    phone: '',
+    phone: '+61449979054'
   },
   site: {
     tagline:

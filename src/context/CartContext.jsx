@@ -278,6 +278,16 @@ export function CartProvider({ children }) {
         throw err
       }
 
+      try {
+        await fetch('/api/order-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.id }),
+        })
+      } catch {
+        /* order is saved even if the confirmation email fails */
+      }
+
       if (!user) {
         setGuestPoints((p) => p + earned)
       }

@@ -102,7 +102,7 @@ export default function Settings() {
       social: {
         instagram: form.social.instagram.trim(),
         facebook: form.social.facebook.trim(),
-        tiktok: form.social.tiktok.trim(),
+        tiktok: '',
         youtube: form.social.youtube.trim(),
         x: form.social.x.trim(),
       },
@@ -354,7 +354,6 @@ export default function Settings() {
               {[
                 ['instagram', 'Instagram'],
                 ['facebook', 'Facebook'],
-                ['tiktok', 'TikTok'],
                 ['youtube', 'YouTube'],
                 ['x', 'X (Twitter)'],
               ].map(([key, label]) => (
