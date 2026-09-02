@@ -193,7 +193,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <CoaAction productName={product.name} variant={variant} />
+            <CoaAction productName={product.name} coaUrl={product.coaUrl} />
 
             <div className="pdp-buy">
               <div>

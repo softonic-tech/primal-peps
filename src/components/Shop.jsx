@@ -133,7 +133,7 @@ function ProductCard({ product, index }) {
           <span>{product.lot}</span>
         </div>
 
-        <CoaAction productName={product.name} variant={variant} />
+        <CoaAction productName={product.name} coaUrl={product.coaUrl} />
 
         <div
           className={`dose-select${multiVariant ? ' dose-select-multi' : ''}`}

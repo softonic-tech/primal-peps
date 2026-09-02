@@ -41,6 +41,7 @@ create table if not exists public.products (
   hue text not null default '#e8a020',
   active boolean not null default true,
   sort_order int not null default 0,
+  coa_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

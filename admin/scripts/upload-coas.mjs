@@ -1,9 +1,9 @@
 /**
- * Upload COA PDFs → coa-documents bucket and set product_variants.coa_url.
- * Variants without a mapped PDF get coa_url cleared (pending in the UI).
+ * Upload COA PDFs → coa-documents bucket and set products.coa_url.
  *
  * Prerequisites — run once in Supabase SQL Editor:
  *   admin/supabase/coa-documents.sql
+ *   admin/supabase/product-coa.sql
  *
  * Usage:
  *   node admin/scripts/upload-coas.mjs
@@ -74,11 +74,11 @@ async function ensureBucket() {
 }
 
 async function main() {
-  const probe = await supabase.from('product_variants').select('coa_url').limit(1)
+  const probe = await supabase.from('products').select('coa_url').limit(1)
   if (probe.error?.message?.includes('coa_url')) {
     console.error(
-      'Column product_variants.coa_url is missing.\n' +
-        'Run admin/supabase/coa-documents.sql in the Supabase SQL Editor first.',
+      'Column products.coa_url is missing.\n' +
+        'Run admin/supabase/product-coa.sql in the Supabase SQL Editor first.',
     )
     process.exit(1)
   }
@@ -124,53 +124,26 @@ async function main() {
     process.exit(1)
   }
 
-  console.log('\nUpdating product_variants.coa_url…')
-
-  const { data: variants, error: vErr } = await supabase
-    .from('product_variants')
-    .select('id, product_id, variant_key, stock, active')
-
-  if (vErr) {
-    console.error('Failed to load variants:', vErr.message)
-    process.exit(1)
-  }
-
-  const urlByKey = Object.fromEntries(
-    uploads.map((u) => [`${u.productId}::${u.variantKey}`, u.publicUrl]),
-  )
+  console.log('\nUpdating products.coa_url…')
 
   let setCount = 0
-  let pendingCount = 0
 
-  for (const v of variants || []) {
-    const key = `${v.product_id}::${v.variant_key}`
-    const coaUrl = urlByKey[key] ?? null
-    const inScope = v.active !== false && Number(v.stock ?? 0) > 0
-
-    if (!inScope) continue
-
+  for (const u of uploads) {
     const { error } = await supabase
-      .from('product_variants')
-      .update({ coa_url: coaUrl })
-      .eq('id', v.id)
+      .from('products')
+      .update({ coa_url: u.publicUrl })
+      .eq('id', u.productId)
 
     if (error) {
-      console.error(`  ✗ ${key}: ${error.message}`)
+      console.error(`  ✗ ${u.productId}: ${error.message}`)
       continue
     }
 
-    if (coaUrl) {
-      setCount++
-      console.log(`  ✓ ${key} → COA live`)
-    } else {
-      pendingCount++
-      console.log(`  ○ ${key} → pending`)
-    }
+    setCount++
+    console.log(`  ✓ ${u.productId} → ${u.file}`)
   }
 
-  console.log(
-    `\nDone. Uploaded ${uploads.length} COAs, ${setCount} live, ${pendingCount} pending.`,
-  )
+  console.log(`\nDone. Uploaded ${uploads.length} COAs, ${setCount} products updated.`)
 }
 
 main().catch((err) => {

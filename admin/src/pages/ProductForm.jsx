@@ -36,6 +36,7 @@ const emptyProduct = {
   hue: '#e8a020',
   active: true,
   sort_order: 0,
+  coa_url: '',
 }
 
 const emptyVariant = () => ({
@@ -44,7 +45,6 @@ const emptyVariant = () => ({
   label: '',
   price: '',
   img: '',
-  coa_url: '',
   stock: 100,
   active: true,
   sort_order: 0,
@@ -94,6 +94,23 @@ function keyFromLabel(label) {
     .replace(/[^a-z0-9_-]/g, '')
 }
 
+async function saveProductRow(payload, isNew, productId) {
+  const write = (body) => {
+    if (isNew) return supabase.from('products').insert(body)
+    const { id: _omit, ...update } = body
+    return supabase.from('products').update(update).eq('id', productId)
+  }
+
+  let { error } = await write(payload)
+  let storedOnProduct = !error
+  if (error && /coa_url/i.test(error.message || '')) {
+    const { coa_url: _drop, ...withoutCoa } = payload
+    ;({ error } = await write(withoutCoa))
+    storedOnProduct = false
+  }
+  return { error, storedOnProduct }
+}
+
 export default function ProductForm() {
   const { id } = useParams()
   const isNew = !id || id === 'new'
@@ -133,6 +150,10 @@ export default function ProductForm() {
         research_focus: arrayToLines(product.research_focus),
         composition_text: compositionToText(product.composition),
         cas: product.cas || '',
+        coa_url:
+          product.coa_url ||
+          (vars || []).find((v) => v.coa_url)?.coa_url ||
+          '',
       })
       setVariants(
         (vars || []).length
@@ -142,7 +163,6 @@ export default function ProductForm() {
               label: v.label,
               price: String(v.price),
               img: v.img || '',
-              coa_url: v.coa_url || '',
               stock: v.stock,
               active: v.active,
               sort_order: v.sort_order,
@@ -249,6 +269,7 @@ export default function ProductForm() {
       hue: form.hue.trim() || '#e8a020',
       active: form.active,
       sort_order: Number(form.sort_order) || 0,
+      coa_url: (form.coa_url || '').trim() || null,
     }
 
     if (!payload.name) {
@@ -275,18 +296,11 @@ export default function ProductForm() {
       }
     }
 
-    let writeErr = null
-    if (isNew) {
-      const { error: err } = await supabase.from('products').insert(payload)
-      writeErr = err
-    } else {
-      const { id: _omit, ...update } = payload
-      const { error: err } = await supabase
-        .from('products')
-        .update(update)
-        .eq('id', productId)
-      writeErr = err
-    }
+    const { error: writeErr, storedOnProduct } = await saveProductRow(
+      payload,
+      isNew,
+      productId,
+    )
 
     if (writeErr) {
       setError(writeErr.message)
@@ -315,7 +329,6 @@ export default function ProductForm() {
         label: v.label.trim(),
         price: Number(v.price),
         img: v.img.trim(),
-        coa_url: v.coa_url.trim() || null,
         stock: Number(v.stock) || 0,
         active: Boolean(v.active),
         sort_order: Number(v.sort_order) || 0,
@@ -340,6 +353,18 @@ export default function ProductForm() {
           setSaving(false)
           return
         }
+      }
+    }
+
+    if (!storedOnProduct && payload.coa_url) {
+      const { error: coaErr } = await supabase
+        .from('product_variants')
+        .update({ coa_url: payload.coa_url })
+        .eq('product_id', productId)
+      if (coaErr) {
+        setError(coaErr.message)
+        setSaving(false)
+        return
       }
     }
 
@@ -510,6 +535,14 @@ export default function ProductForm() {
                 />
               </label>
             </div>
+
+            <CoaUpload
+              value={form.coa_url}
+              productId={productIdForUpload}
+              label="Certificate of Analysis (one PDF for this product)"
+              onChange={(url) => setField('coa_url', url)}
+            />
+
             <div className="tab-nav">
               <span />
               <button
@@ -529,9 +562,8 @@ export default function ProductForm() {
               <div>
                 <h2>Sizes & images</h2>
                 <p className="panel-help" style={{ margin: '8px 0 0' }}>
-                  Each size can have its own price, stock, image, and COA PDF.
-                  Images go to <code>product-images</code>; COAs to{' '}
-                  <code>coa-documents</code>.
+                  Each size can have its own price, stock, and image.
+                  The COA is uploaded once for the whole product on Basics.
                 </p>
               </div>
               <button type="button" className="btn-ghost" onClick={addVariant}>
@@ -566,13 +598,6 @@ export default function ProductForm() {
                     variantKey={v.variant_key || `size-${displayIndex + 1}`}
                     label="Variant image"
                     onChange={(url) => setVariant(i, 'img', url)}
-                  />
-
-                  <CoaUpload
-                    value={v.coa_url}
-                    productId={productIdForUpload}
-                    variantKey={v.variant_key || `size-${displayIndex + 1}`}
-                    onChange={(url) => setVariant(i, 'coa_url', url)}
                   />
 
                   <div className="form-grid">

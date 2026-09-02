@@ -1,11 +1,18 @@
--- COA documents bucket + product_variants.coa_url
+-- COA documents bucket + products.coa_url
 -- Run in Supabase SQL Editor after schema.sql
+-- One COA is stored per product. product_variants.coa_url is kept for older rows.
+
+alter table public.products
+  add column if not exists coa_url text;
+
+comment on column public.products.coa_url is
+  'Public URL to the product COA PDF in coa-documents storage. NULL = pending.';
 
 alter table public.product_variants
   add column if not exists coa_url text;
 
 comment on column public.product_variants.coa_url is
-  'Public URL to the variant COA PDF in coa-documents storage. NULL = pending.';
+  'Legacy variant COA URL. Prefer products.coa_url.';
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

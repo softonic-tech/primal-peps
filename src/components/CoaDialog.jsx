@@ -55,9 +55,15 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
           <div className="coa-dialog-copy">
             <span className="eyebrow">Certificate of Analysis</span>
             <h3 id="coa-dialog-title">
-              {productName} <span className="gold">{variantLabel}</span>
+              {productName}
+              {variantLabel ? (
+                <>
+                  {' '}
+                  <span className="gold">{variantLabel}</span>
+                </>
+              ) : null}
             </h3>
-            <p>Lab-verified identity, purity, and batch documentation for this vial.</p>
+            <p>Lab-verified identity, purity, and batch documentation for this product.</p>
           </div>
         </header>
 
@@ -66,7 +72,7 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
         <div className="coa-dialog-stage">
           <iframe
             src={coaUrl}
-            title={`${productName} ${variantLabel} COA`}
+            title={`${productName}${variantLabel ? ` ${variantLabel}` : ''} COA`}
             className="coa-dialog-frame"
           />
         </div>
@@ -93,15 +99,13 @@ export default function CoaDialog({ open, onClose, productName, variantLabel, co
   )
 }
 
-export function CoaAction({ productName, variant, className = 'coa-row' }) {
+export function CoaAction({ productName, coaUrl, className = 'coa-row' }) {
   const [open, setOpen] = useState(false)
-  const hasCoa = Boolean(variant?.coaUrl)
+  const hasCoa = Boolean(coaUrl)
 
   useEffect(() => {
     if (open && !hasCoa) setOpen(false)
   }, [hasCoa, open])
-
-  if (!variant) return null
 
   return (
     <>
@@ -125,8 +129,7 @@ export function CoaAction({ productName, variant, className = 'coa-row' }) {
         open={open}
         onClose={() => setOpen(false)}
         productName={productName}
-        variantLabel={variant.label}
-        coaUrl={variant.coaUrl}
+        coaUrl={coaUrl}
       />
     </>
   )

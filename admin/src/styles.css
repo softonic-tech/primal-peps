@@ -598,7 +598,7 @@ a.btn-primary,a.btn-ghost{text-decoration:none}
 .image-upload-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .image-upload-hint{width:100%;margin:0;color:var(--mute);font-size:.74rem}
 
-.coa-upload{margin-top:12px}
+.coa-upload{margin-top:18px}
 .coa-upload-preview{font-size:.78rem;color:var(--mute)}
 .coa-upload-badge{
   display:inline-grid;place-items:center;

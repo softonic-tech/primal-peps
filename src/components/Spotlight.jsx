@@ -139,7 +139,7 @@ export default function Spotlight() {
             </div>
             <CoaAction
               productName={p.name}
-              variant={variant}
+              coaUrl={p.coaUrl}
               className="coa-row spotlight-coa"
             />
             <div className="spotlight-foot">

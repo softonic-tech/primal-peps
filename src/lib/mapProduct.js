@@ -10,12 +10,17 @@ export function mapProduct(row, variants = []) {
       price: Number(v.price),
       img: v.img || '',
       stock: Number(v.stock ?? 0),
-      coaUrl: v.coa_url || null,
     }))
+
+  const coaUrl =
+    row.coa_url ||
+    (variants || []).find((v) => v.coa_url)?.coa_url ||
+    null
 
   return {
     id: row.id,
     name: row.name,
+    coaUrl,
     aka: row.aka || [],
     sub: row.sub || '',
     tag: row.tag || '',

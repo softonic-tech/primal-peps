@@ -5,7 +5,6 @@ export default function CoaUpload({
   value,
   onChange,
   productId,
-  variantKey,
   label = 'Certificate of Analysis (COA)',
 }) {
   const inputRef = useRef(null)
@@ -17,7 +16,7 @@ export default function CoaUpload({
     if (!file) return
     setError('')
     setUploading(true)
-    const result = await uploadCoaDocument(file, { productId, variantKey })
+    const result = await uploadCoaDocument(file, { productId })
     setUploading(false)
     if (result.error) {
       setError(result.error)

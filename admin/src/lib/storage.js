@@ -79,7 +79,7 @@ export function coaDocumentUrl(url) {
  * Upload a COA PDF to Supabase Storage.
  * Returns { path, publicUrl } on success.
  */
-export async function uploadCoaDocument(file, { productId, variantKey }) {
+export async function uploadCoaDocument(file, { productId } = {}) {
   if (!file) return { error: 'No file selected' }
   const isPdf =
     file.type === 'application/pdf' ||
@@ -92,10 +92,7 @@ export async function uploadCoaDocument(file, { productId, variantKey }) {
   }
 
   const folder = (productId || 'draft').replace(/[^a-z0-9_-]/gi, '-').toLowerCase()
-  const key = (variantKey || 'coa')
-    .replace(/[^a-z0-9_-]/gi, '-')
-    .toLowerCase()
-  const path = `${folder}/${key}-${Date.now()}.pdf`
+  const path = `${folder}/coa-${Date.now()}.pdf`
 
   const { error } = await supabase.storage
     .from(COA_DOCUMENTS_BUCKET)
