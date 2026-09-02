@@ -1,23 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  FILTERS,
-  PRODUCTS,
-  defaultVariant,
-  imgSrc,
-} from '../data/products'
 import { LEGAL } from '../data/site'
 import { useCart } from '../context/CartContext'
-import { useProducts } from '../context/ProductsContext'
 import { useSettings } from '../context/SettingsContext'
 import { useReveal } from '../hooks/useReveal'
 import { subscribeNewsletter } from '../lib/newsletter'
 import Faq from './Faq'
 import Footer from './Footer'
-import SalePrice from './SalePrice'
 import Signup from './Signup'
-
-const LIBRARY_FILTERS = FILTERS.filter((f) => f.cat !== 'all')
 
 const PILLARS = [
   {
@@ -39,7 +29,7 @@ const PILLARS = [
 ]
 
 const STEPS = [
-  { n: '01', title: 'Choose a compound', body: 'Filter the catalog by research area. Each entry is a lyophilised research peptide with specs, lot, and COA.' },
+  { n: '01', title: 'Choose a compound', body: 'Open the shop and pick a lyophilised research peptide. Each product has specs, lot data, and a COA.' },
   { n: '02', title: 'Order & transfer', body: 'Pay by Australian bank transfer. Use your order number as the reference. We dispatch once payment clears.' },
   { n: '03', title: 'Sealed, tracked, 24h', body: 'Vacuum-sealed vials, discreet packaging, tracking on every shipment. Research use only · 18+.' },
 ]
@@ -70,11 +60,11 @@ function LandingHero({ waitlist, onNotify }) {
               </button>
             ) : (
               <>
-                <a className="btn-primary" href="#library">
-                  Explore the catalog →
+                <a className="btn-primary" href="/#shop">
+                  Open the shop →
                 </a>
-                <a className="btn-ghost" href="/#shop">
-                  Open the shop
+                <a className="btn-ghost" href="#about">
+                  What is Primal Peps
                 </a>
               </>
             )}
@@ -110,58 +100,11 @@ function LandingHero({ waitlist, onNotify }) {
   )
 }
 
-function LibraryCard({ product, waitlist }) {
-  const variant = defaultVariant(product)
-  const tags = (product.perks || []).slice(0, 3)
-  const inner = (
-    <>
-      <div className="lp-card-visual">
-        {variant?.img ? (
-          <img src={imgSrc(variant.img)} alt="" loading="lazy" />
-        ) : null}
-        <span className="lp-card-cat">
-          {product.categoryLabel || product.cat}
-        </span>
-      </div>
-      <div className="lp-card-copy">
-        <h3>{product.name}</h3>
-        <p>{product.sub}</p>
-        {tags.length > 0 && (
-          <div className="lp-tags">
-            {tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </div>
-        )}
-        {variant && !waitlist ? (
-          <div className="lp-card-price">
-            <SalePrice price={variant.price} showBadge={false} />
-            <span className="lp-card-link">Research notes →</span>
-          </div>
-        ) : null}
-      </div>
-    </>
-  )
-
-  if (waitlist) {
-    return <article className="lp-card">{inner}</article>
-  }
-
-  return (
-    <Link className="lp-card" to={`/product/${product.id}`}>
-      {inner}
-    </Link>
-  )
-}
-
 export default function Landing({ waitlist = false }) {
-  const { products: live } = useProducts()
   const { toast } = useCart()
   const { contact } = useSettings()
-  const [cat, setCat] = useState('all')
   const [joined, setJoined] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const libraryHead = useReveal()
   const aboutRef = useReveal()
   const pillarsRef = useReveal()
   const stepsRef = useReveal()
@@ -173,13 +116,6 @@ export default function Landing({ waitlist = false }) {
       document.title = prev
     }
   }, [])
-
-  const catalog = live.length ? live : PRODUCTS
-  const shown = useMemo(() => {
-    const list = catalog.filter((p) => p.id !== 'bac')
-    if (cat === 'all') return list
-    return list.filter((p) => p.cat === cat)
-  }, [catalog, cat])
 
   const scrollNotify = () => {
     document.getElementById('lp-waitlist')?.scrollIntoView({
@@ -221,58 +157,6 @@ export default function Landing({ waitlist = false }) {
       )}
 
       <LandingHero waitlist={waitlist} onNotify={scrollNotify} />
-
-      <section className="lp-library section" id="library">
-        <div className="wrap">
-          <div className="lp-sec-head rv" ref={libraryHead}>
-            <span className="eyebrow">Peptide library</span>
-            <h2>
-              FRAMED AS RESEARCH.
-              <br />
-              FILTERED BY PATHWAY.
-            </h2>
-            <p>
-              Browse compounds the way a lab would — by research area, not by
-              hype. Each card opens specs, lot data, and the COA for that
-              product.
-            </p>
-          </div>
-
-          <div className="lp-filters" role="tablist" aria-label="Research area">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={cat === 'all'}
-              className={cat === 'all' ? 'active' : ''}
-              onClick={() => setCat('all')}
-            >
-              All
-            </button>
-            {LIBRARY_FILTERS.map((f) => (
-              <button
-                key={f.cat}
-                type="button"
-                role="tab"
-                aria-selected={cat === f.cat}
-                className={cat === f.cat ? 'active' : ''}
-                onClick={() => setCat(f.cat)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="lp-grid">
-            {shown.map((product) => (
-              <LibraryCard
-                key={product.id}
-                product={product}
-                waitlist={waitlist}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="lp-about section" id="about">
         <div className="wrap lp-about-grid rv" ref={aboutRef}>
