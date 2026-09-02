@@ -54,7 +54,7 @@ insert into public.site_settings (
   '{
     "instagram": "",
     "facebook": "",
-    "tiktok": "https://www.tiktok.com/@primal.pepss",
+    "tiktok": "",
     "youtube": "",
     "x": ""
   }'::jsonb,

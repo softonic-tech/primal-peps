@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS = {
   social: {
     instagram: '',
     facebook: '',
-    tiktok: 'https://www.tiktok.com/@primal.pepss',
+    tiktok: '',
     youtube: '',
     x: '',
   },
