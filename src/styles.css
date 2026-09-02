@@ -2728,3 +2728,155 @@ footer::before{
   .coming-soon-form{flex-direction:column;border-radius:16px;padding:12px}
   .coming-soon-form input,.coming-soon-form .btn-primary{width:100%}
 }
+
+/* ---------- landing ---------- */
+body.lp-wait-body{padding-top:0}
+.lp-page{
+  background:
+    radial-gradient(900px 420px at 12% -10%,rgba(232,160,32,.12),transparent 55%),
+    linear-gradient(180deg,#0c0a08 0%,#050504 28%);
+}
+.lp-wait-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:18px 28px;max-width:var(--wrap);margin:0 auto;
+}
+.lp-wait-mail{color:var(--gold-hi);font-size:.82rem;font-weight:700}
+.lp-hero{padding:clamp(36px,6vw,72px) 0 48px;position:relative}
+.lp-hero-grid{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;
+}
+.lp-hero h1{
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,7vw,5.4rem);
+  line-height:.92;letter-spacing:.03em;margin:16px 0 18px;
+}
+.lp-lede{
+  color:var(--mute);max-width:52ch;font-size:1.02rem;line-height:1.7;margin-bottom:28px;
+}
+.lp-hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:36px}
+.lp-hero-stats{
+  list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  max-width:520px;
+}
+.lp-hero-stats li{
+  padding:14px 12px;background:rgba(8,7,6,.92);text-align:center;
+}
+.lp-hero-stats strong{
+  display:block;font-family:'Bebas Neue',sans-serif;font-size:1.45rem;color:var(--gold-hi);line-height:1;
+}
+.lp-hero-stats span{
+  display:block;margin-top:4px;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+}
+.lp-hero-art{
+  position:relative;aspect-ratio:1;max-width:460px;margin:0 auto;display:grid;place-items:center;
+}
+.lp-orbit{
+  position:absolute;border-radius:50%;pointer-events:none;z-index:0;
+  top:50%;left:50%;width:92%;height:92%;
+  border:1px solid rgba(232,160,32,.2);
+  animation:heroSpin 28s linear infinite;
+}
+.lp-orbit-b{
+  width:74%;height:74%;border-style:dashed;opacity:.7;
+  animation:heroSpinReverse 36s linear infinite;
+}
+.lp-hero-logo{
+  position:relative;z-index:1;width:58%;
+  filter:drop-shadow(0 18px 40px rgba(232,160,32,.18));
+}
+.lp-sec-head{max-width:62ch;margin-bottom:36px}
+.lp-sec-head h2{
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(2.2rem,4.4vw,3.4rem);
+  line-height:.95;margin:12px 0 14px;
+}
+.lp-sec-head p{color:var(--mute);max-width:54ch}
+.lp-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.lp-filters button{
+  padding:10px 16px;border-radius:999px;border:1px solid var(--line);
+  font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mute);background:rgba(0,0,0,.25);
+}
+.lp-filters button:hover{color:var(--chrome);border-color:#57431c}
+.lp-filters button.active{
+  color:#140d02;border-color:var(--gold);
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+}
+.lp-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;
+}
+.lp-card{
+  display:flex;flex-direction:column;
+  border:1px solid #272117;border-radius:20px;overflow:hidden;
+  background:linear-gradient(165deg,#14110d,#080706 72%);
+  color:inherit;transition:border-color .25s,transform .25s,box-shadow .25s;
+}
+a.lp-card:hover{
+  border-color:#76531d;transform:translateY(-6px);
+  box-shadow:0 22px 50px rgba(0,0,0,.45),0 0 28px rgba(232,160,32,.1);
+}
+.lp-card-visual{
+  position:relative;height:220px;display:grid;place-items:center;
+  background:radial-gradient(180px 120px at 50% 60%,rgba(232,160,32,.12),transparent 70%);
+}
+.lp-card-visual img{max-height:180px;width:auto;object-fit:contain}
+.lp-card-cat{
+  position:absolute;left:14px;top:14px;padding:4px 8px;border-radius:6px;
+  border:1px solid rgba(232,160,32,.22);background:rgba(10,9,8,.78);
+  color:var(--gold-hi);font-size:.48rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+}
+.lp-card-copy{padding:4px 18px 20px;display:flex;flex-direction:column;flex:1}
+.lp-card-copy h3{
+  font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.04em;line-height:1;margin-bottom:8px;
+}
+.lp-card-copy>p{color:var(--mute);font-size:.78rem;line-height:1.5;margin-bottom:12px;flex:1}
+.lp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.lp-tags span{
+  padding:4px 8px;border-radius:6px;border:1px solid var(--line);
+  font-size:.58rem;letter-spacing:.04em;color:var(--mute);background:rgba(0,0,0,.25);
+}
+.lp-card-price{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.lp-card .price{font-size:1.45rem}
+.lp-card .sale-was{font-size:.92rem}
+.lp-card-link{
+  font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-hi);
+}
+.lp-about-grid{
+  display:grid;grid-template-columns:.8fr 1.2fr;gap:48px;align-items:start;
+}
+.lp-about-grid h2{
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,5vw,3.8rem);line-height:.95;margin-top:12px;
+}
+.lp-about-copy p{color:var(--mute);margin-bottom:16px;max-width:58ch}
+.lp-about-copy .serif{color:var(--ivory);font-size:1.25rem;line-height:1.65}
+.lp-ruo{
+  padding:14px 16px;border-radius:12px;border:1px solid rgba(232,160,32,.18);
+  background:rgba(232,160,32,.05);font-size:.82rem;
+}
+.lp-pillar-grid,.lp-step-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;
+}
+.lp-step-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lp-pillar,.lp-step{
+  padding:24px;border-radius:18px;border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.28);
+}
+.lp-pillar h3,.lp-step h3{
+  font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;margin-bottom:8px;
+}
+.lp-pillar p,.lp-step p{color:var(--mute);font-size:.88rem}
+.lp-step span{
+  display:block;font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  color:var(--gold);letter-spacing:.14em;margin-bottom:10px;
+}
+@media(max-width:980px){
+  .lp-hero-grid,.lp-about-grid{grid-template-columns:1fr}
+  .lp-hero-art{max-width:320px}
+  .lp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lp-step-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .lp-hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lp-grid,.lp-pillar-grid{grid-template-columns:1fr}
+  .lp-wait-nav{padding:16px 20px}
+}
+

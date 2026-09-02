@@ -7,6 +7,7 @@ import { subscribeNewsletter } from '../lib/newsletter'
 const SOCIAL_LABELS = [
   ['instagram', 'Instagram'],
   ['facebook', 'Facebook'],
+  ['tiktok', 'TikTok'],
   ['youtube', 'YouTube'],
   ['x', 'X'],
 ]
@@ -79,6 +80,7 @@ export default function Footer() {
             <h5>Shop</h5>
             <div className="foot-links">
               <a href="/#shop">All peptides</a>
+              <a href="/landing">About</a>
               <a href="/?cat=recovery#shop">Recovery</a>
               <a href="/?cat=metabolic#shop">Metabolic</a>
               <a href="/?cat=repair#shop">Skin &amp; glow</a>

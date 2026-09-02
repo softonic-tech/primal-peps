@@ -25,6 +25,7 @@ import Toast from './components/Toast'
 import Dashboard from './components/Dashboard'
 import ProductDetail from './components/ProductDetail'
 import ComingSoon from './components/ComingSoon'
+import Landing from './components/Landing'
 import './styles.css'
 
 function RevealObserver() {
@@ -133,16 +134,23 @@ function AppLayout() {
   const { site, loading } = useSettings()
   const storefrontLive = site.storefrontLive !== false
   const isHome = pathname === '/'
+  const isLanding = pathname === '/landing'
 
   useEffect(() => {
+    const waitLanding = !storefrontLive && isLanding
+    document.body.classList.toggle('lp-wait-body', waitLanding)
+
     if (!isHome) {
       document.body.classList.remove('announce-visible')
       document.body.classList.add('subpage')
     } else {
       document.body.classList.remove('subpage')
     }
-    return () => document.body.classList.remove('subpage')
-  }, [isHome])
+    return () => {
+      document.body.classList.remove('subpage')
+      document.body.classList.remove('lp-wait-body')
+    }
+  }, [isHome, isLanding, storefrontLive])
 
   if (loading) {
     return (
@@ -153,6 +161,14 @@ function AppLayout() {
   }
 
   if (!storefrontLive) {
+    if (isLanding) {
+      return (
+        <>
+          <Landing waitlist />
+          <Toast />
+        </>
+      )
+    }
     return (
       <>
         <ComingSoon />
@@ -167,6 +183,7 @@ function AppLayout() {
       {!isHome && <Nav announceVisible={false} />}
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/account" element={<Dashboard />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="*" element={<Navigate to="/" replace />} />

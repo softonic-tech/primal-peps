@@ -6,6 +6,7 @@ import { subscribeNewsletter } from '../lib/newsletter'
 const SOCIAL_LABELS = [
   ['instagram', 'Instagram'],
   ['facebook', 'Facebook'],
+  ['tiktok', 'TikTok'],
   ['youtube', 'YouTube'],
   ['x', 'X'],
 ]
