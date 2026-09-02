@@ -26,6 +26,7 @@ import Dashboard from './components/Dashboard'
 import ProductDetail from './components/ProductDetail'
 import ComingSoon from './components/ComingSoon'
 import Landing from './components/Landing'
+import WhatsAppFloat from './components/WhatsAppFloat'
 import './styles.css'
 
 function RevealObserver() {
@@ -125,6 +126,7 @@ function HomePage() {
       <Faq />
       <Signup />
       <Footer />
+      <WhatsAppFloat />
     </>
   )
 }
