@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   SPOTLIGHT_IDS,
   defaultVariant,
-  fmt,
   imgSrc,
   isInStock,
   productHasStock,
@@ -10,6 +9,7 @@ import {
 import { useProducts } from '../context/ProductsContext'
 import { useReveal } from '../hooks/useReveal'
 import { CoaAction } from './CoaDialog'
+import SalePrice from './SalePrice'
 
 export default function Spotlight() {
   const { products, loading } = useProducts()
@@ -147,9 +147,7 @@ export default function Spotlight() {
                 {variantInStock ? (
                   <>
                     <span className="label">From</span>
-                    <span className="amount" id="spotPrice">
-                      {fmt(variant.price)}
-                    </span>
+                    <SalePrice price={variant.price} className="amount" id="spotPrice" />
                   </>
                 ) : (
                   <span className="amount price-oos-label" id="spotPrice">

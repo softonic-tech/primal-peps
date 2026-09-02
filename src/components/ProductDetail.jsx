@@ -4,7 +4,6 @@ import {
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
-  fmt,
   imgSrc,
   isInStock,
 } from '../data/products'
@@ -13,6 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
 import { CoaAction } from './CoaDialog'
+import SalePrice from './SalePrice'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -199,7 +199,7 @@ export default function ProductDetail() {
               <div>
                 {inStock ? (
                   <>
-                    <span className="price">{fmt(variant.price)}</span>
+                    <SalePrice price={variant.price} />
                     <span className="pts">
                       +{variant.price * PTS_PER_DOLLAR} pts
                     </span>

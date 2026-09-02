@@ -564,6 +564,13 @@ export const imgSrc = (path) => {
 
 export const fmt = (n) => '$' + Number(n || 0).toFixed(2)
 
+/** Display-only compare-at markup. Checkout still uses the current price. */
+export const SALE_OFF_PERCENT = 20
+
+export function listPrice(price) {
+  return Math.round(Number(price) * (1 + SALE_OFF_PERCENT / 100) * 100) / 100
+}
+
 /** True when stock is unknown (static catalog) or greater than zero. */
 export const isInStock = (variant) =>
   variant != null &&

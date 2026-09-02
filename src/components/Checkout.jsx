@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fmt, imgSrc } from '../data/products'
+import { fmt, imgSrc, listPrice } from '../data/products'
 import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -556,7 +556,10 @@ export default function Checkout() {
                           </div>
                         </div>
                         <div>
-                          <div className="ci-price">{fmt(i.price * i.qty)}</div>
+                          <div className="ci-price">
+                            <span className="sale-was">{fmt(listPrice(i.price) * i.qty)}</span>
+                            {fmt(i.price * i.qty)}
+                          </div>
                           <button
                             className="rm"
                             type="button"

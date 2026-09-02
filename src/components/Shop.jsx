@@ -5,7 +5,6 @@ import {
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
-  fmt,
   imgSrc,
   isInStock,
   productHasStock,
@@ -16,6 +15,7 @@ import { useProducts } from '../context/ProductsContext'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
 import { CoaAction } from './CoaDialog'
+import SalePrice from './SalePrice'
 
 const VALID_CATS = new Set(FILTERS.map((f) => f.cat))
 
@@ -162,7 +162,7 @@ function ProductCard({ product, index }) {
           <div>
             {inStock ? (
               <>
-                <span className="price">{fmt(variant.price)}</span>
+                <SalePrice price={variant.price} />
                 <span className="pts">
                   +{variant.price * PTS_PER_DOLLAR} pts
                 </span>
