@@ -1,13 +1,11 @@
 /**
  * Site-wide business & legal config.
- * Set VITE_BANK_* in .env for live bank transfer details.
+ * PayID is the primary payment method.
  */
 export const BANK_DETAILS = {
   accountName:
-    import.meta.env.VITE_BANK_ACCOUNT_NAME || 'Primal Peps',
-  bsb: import.meta.env.VITE_BANK_BSB || '000-000',
-  accountNumber: import.meta.env.VITE_BANK_ACCOUNT || '00000000',
-  bankName: import.meta.env.VITE_BANK_NAME || '',
+    import.meta.env.VITE_BANK_ACCOUNT_NAME || 'A Akil',
+  payId: import.meta.env.VITE_PAY_ID || '0400001235',
 }
 
 export const LEGAL = {

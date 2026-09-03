@@ -9,8 +9,8 @@ const STATUS_COPY = {
     subject: (id) => `Order ${id} — Primal Peps`,
     heading: 'Order confirmed',
     intro: (id) =>
-      `Order <strong style="color:#f7c04a">${id}</strong> is awaiting your bank transfer.`,
-    introText: (id) => `Order ${id} is awaiting your bank transfer.`,
+      `Order <strong style="color:#f7c04a">${id}</strong> is awaiting your PayID transfer.`,
+    introText: (id) => `Order ${id} is awaiting your PayID transfer.`,
     showBank: true,
     bcc: true,
   },
@@ -129,10 +129,8 @@ function totalsHtml(order) {
 
 function bankText(bank) {
   return [
-    bank.accountName && `Account name: ${bank.accountName}`,
-    bank.bankName && `Bank: ${bank.bankName}`,
-    bank.bsb && `BSB: ${bank.bsb}`,
-    bank.accountNumber && `Account number: ${bank.accountNumber}`,
+    bank.payId && `PayID: ${bank.payId}`,
+    bank.accountName && `PayID name: ${bank.accountName}`,
   ]
     .filter(Boolean)
     .join('\n')
@@ -140,10 +138,8 @@ function bankText(bank) {
 
 function bankHtml(order, bank) {
   const rows = [
-    ['Account name', bank.accountName],
-    ['Bank', bank.bankName],
-    ['BSB', bank.bsb],
-    ['Account number', bank.accountNumber],
+    ['PayID', bank.payId],
+    ['PayID name', bank.accountName],
   ]
     .filter(([, v]) => v)
     .map(
@@ -193,7 +189,7 @@ function buildEmail(order, items, bank, status) {
     '',
     totalsText(order),
     copy.showBank
-      ? `\nPay by bank transfer using your order ID as the reference:\n${bankText(bank)}`
+      ? `\nPay by PayID using your order ID as the reference:\n${bankText(bank)}`
       : '',
     '',
     'Research use only. 18+.',

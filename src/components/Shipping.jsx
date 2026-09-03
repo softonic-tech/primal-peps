@@ -56,7 +56,7 @@ export default function Shipping() {
           </div>
         </div>
         <p className="shipping-note rv" ref={noteRef}>
-          Pay by bank transfer (BSB). Tracking on every order — no exceptions.
+          Pay by PayID — instant transfer. Tracking on every order — no exceptions.
           Research use only · 18+ to purchase.
         </p>
       </div>

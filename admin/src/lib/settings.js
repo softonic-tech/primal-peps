@@ -1,9 +1,7 @@
 export const DEFAULT_SETTINGS = {
   bank: {
-    accountName: 'Primal Peps',
-    bsb: '000-000',
-    accountNumber: '00000000',
-    bankName: '',
+    accountName: 'A Akil',
+    payId: '0400001235',
   },
   promo: {
     code: 'PRIMAL15',

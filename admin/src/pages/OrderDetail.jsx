@@ -219,7 +219,7 @@ export default function OrderDetail() {
       {order.status === 'Awaiting payment' && (
         <div className="order-alert warn">
           <div>
-            <strong>Waiting on bank transfer</strong>
+            <strong>Waiting on PayID transfer</strong>
             <p>
               Customer should use order ID <code>{order.id}</code> as the
               transfer reference.

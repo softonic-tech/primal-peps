@@ -16,7 +16,7 @@ const FAQS = [
   },
   {
     q: 'How do I pay?',
-    a: 'We accept Australian bank transfer (BSB and account number). After you submit your order, transfer the total using your order number as the payment reference. We ship once payment clears.',
+    a: 'We accept PayID — the fastest way to pay in Australia. After you submit your order, open your bank app, select PayID, and transfer the total using your order number as the payment reference. Payment arrives instantly and we ship once it clears.',
   },
   {
     q: 'How should I store peptides?',

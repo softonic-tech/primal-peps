@@ -538,7 +538,7 @@ export const PROMO = 'PRIMAL15'
 export const ANNOUNCE_MSGS = [
   'Free shipping on orders over $150',
   'Research use only · Not for human or veterinary consumption',
-  '18+ to purchase · Pay by bank transfer',
+  '18+ to purchase · Pay by PayID',
   'Every batch third-party lab tested',
 ]
 

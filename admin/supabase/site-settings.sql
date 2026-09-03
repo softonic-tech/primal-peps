@@ -37,9 +37,7 @@ insert into public.site_settings (
   1,
   '{
     "accountName": "Primal Peps",
-    "bsb": "000-000",
-    "accountNumber": "00000000",
-    "bankName": ""
+    "payId": "0400001235"
   }'::jsonb,
   '{
     "code": "PRIMAL15",

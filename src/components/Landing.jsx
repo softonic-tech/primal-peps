@@ -30,7 +30,7 @@ const PILLARS = [
 
 const STEPS = [
   { n: '01', title: 'Choose a compound', body: 'Open the shop and pick a lyophilised research peptide. Each product has specs, lot data, and a COA.' },
-  { n: '02', title: 'Order & transfer', body: 'Pay by Australian bank transfer. Use your order number as the reference. We dispatch once payment clears.' },
+  { n: '02', title: 'Order & pay via PayID', body: 'Pay instantly via PayID. Use your order number as the reference. We dispatch once payment clears.' },
   { n: '03', title: 'Sealed, tracked, 24h', body: 'Vacuum-sealed vials, discreet packaging, tracking on every shipment. Research use only · 18+.' },
 ]
 

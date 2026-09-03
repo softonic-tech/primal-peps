@@ -85,9 +85,7 @@ export default function Settings() {
       id: 1,
       bank: {
         accountName: form.bank.accountName.trim(),
-        bsb: form.bank.bsb.trim(),
-        accountNumber: form.bank.accountNumber.trim(),
-        bankName: form.bank.bankName.trim(),
+        payId: form.bank.payId.trim(),
       },
       promo: {
         code: (form.promo.code || '').trim().toUpperCase() || 'PRIMAL15',
@@ -252,7 +250,7 @@ export default function Settings() {
           <section className="panel">
             <h2>Bank transfer</h2>
             <p className="panel-help">
-              Shown at checkout when customers pay by bank transfer. Use order ID
+              Shown at checkout when customers pay by PayID. Use order ID
               as the payment reference.
             </p>
             <div className="form-grid">
@@ -263,26 +261,11 @@ export default function Settings() {
                   required
                 />
               </Field>
-              <Field label="Bank name" hint="Optional — leave blank to hide">
+              <Field label="PayID (phone number)">
                 <input
-                  value={form.bank.bankName}
-                  onChange={(e) => patch('bank', 'bankName', e.target.value)}
-                  placeholder="e.g. Commonwealth Bank"
-                />
-              </Field>
-              <Field label="BSB">
-                <input
-                  value={form.bank.bsb}
-                  onChange={(e) => patch('bank', 'bsb', e.target.value)}
-                  required
-                />
-              </Field>
-              <Field label="Account number">
-                <input
-                  value={form.bank.accountNumber}
-                  onChange={(e) =>
-                    patch('bank', 'accountNumber', e.target.value)
-                  }
+                  value={form.bank.payId}
+                  onChange={(e) => patch('bank', 'payId', e.target.value)}
+                  placeholder="0400001235"
                   required
                 />
               </Field>

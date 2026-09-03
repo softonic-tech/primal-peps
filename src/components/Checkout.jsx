@@ -206,7 +206,7 @@ function OrderSummary({
               <rect x="3" y="6" width="18" height="12" rx="2" />
               <path d="M3 10h18" />
             </svg>
-            <span>Bank transfer (BSB)</span>
+            <span>PayID transfer</span>
           </div>
           <div className="trust-badge">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -238,10 +238,8 @@ function BankTransferCard({ reference, amount, toast, bank }) {
   }
 
   const rows = [
-    { label: 'Account name', value: bank.accountName },
-    ...(bank.bankName ? [{ label: 'Bank', value: bank.bankName }] : []),
-    { label: 'BSB', value: bank.bsb },
-    { label: 'Account number', value: bank.accountNumber },
+    { label: 'PayID', value: bank.payId },
+    { label: 'PayID name', value: bank.accountName },
     ...(amount != null ? [{ label: 'Amount (AUD)', value: fmt(amount) }] : []),
     ...(reference
       ? [{ label: 'Payment reference', value: reference }]
@@ -251,10 +249,10 @@ function BankTransferCard({ reference, amount, toast, bank }) {
   return (
     <div className="bank-transfer">
       <div className="bank-transfer-head">
-        <h3>Pay by bank transfer</h3>
+        <h3>Pay by PayID</h3>
         <p>
-          Transfer the order total to the account below. Use your order number
-          as the payment reference so we can match your payment.
+          Open your bank app, select PayID, and transfer the order total.
+          Use your order number as the payment reference so we can match it.
         </p>
       </div>
       <dl className="bank-transfer-rows">
@@ -883,9 +881,9 @@ export default function Checkout() {
                   </p>
                 )}
                 <p className="ship-intro">
-                  We accept payment by Australian bank transfer only. Submit your
-                  order, then transfer the total using your order number as the
-                  reference.
+                  We accept payment by PayID — instant and easy. Submit your
+                  order, then transfer the total via PayID using your order number
+                  as the reference.
                 </p>
                 <BankTransferCard
                   amount={orderTotal}
@@ -972,7 +970,8 @@ export default function Checkout() {
                 <div className="summary-card">
                   <h3>What&apos;s next</h3>
                   <ol className="order-next-steps">
-                    <li>Transfer the amount via your bank app</li>
+                    <li>Open your bank app → PayID</li>
+                    <li>Send to PayID <strong>0400001235</strong></li>
                     <li>Enter {placedOrder.id} as the reference</li>
                     <li>We confirm payment and ship your order</li>
                   </ol>
