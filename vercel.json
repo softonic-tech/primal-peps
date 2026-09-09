@@ -10,6 +10,10 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/payment-reminders.cjs",
+      "use": "@vercel/node"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
@@ -52,6 +56,11 @@
         "Access-Control-Allow-Headers": "Content-Type"
       },
       "dest": "/api/order-email.cjs"
+    },
+    {
+      "src": "/api/payment-reminders",
+      "methods": ["GET", "POST"],
+      "dest": "/api/payment-reminders.cjs"
     },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }

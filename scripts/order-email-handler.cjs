@@ -62,7 +62,19 @@ const STATUS_COPY = {
     introText: (id) =>
       `Order ${id} has been cancelled. If you already transferred funds, reply to this email and we'll help.`,
     showBank: false,
+    showHelp: true,
     bcc: true,
+  },
+  'Payment reminder': {
+    subject: (id) => `Reminder: PayID for order ${id}`,
+    heading: 'Payment reminder',
+    intro: (id) =>
+      `Just a friendly reminder — order <strong style="color:#f7c04a">${id}</strong> is still awaiting your PayID transfer. Use the details below when you're ready.`,
+    introText: (id) =>
+      `Just a friendly reminder — order ${id} is still awaiting your PayID transfer. Use the details below when you're ready.`,
+    showBank: true,
+    showHelp: true,
+    bcc: false,
   },
 }
 
@@ -127,6 +139,79 @@ function totalsHtml(order) {
   </table>`
 }
 
+function whatsappUrl(phone) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (!digits) return ''
+  return `https://wa.me/${digits}`
+}
+
+function helpText(contact) {
+  const phone = contact?.phone || ''
+  const wa = whatsappUrl(phone)
+  const email = contact?.email || ''
+  const lines = [
+    'Having trouble with payment?',
+    wa
+      ? `Message us on WhatsApp: ${wa}`
+      : phone
+        ? `Call or text us: ${phone}`
+        : '',
+    email ? `Or email: ${email}` : '',
+    "We're happy to help sort it out.",
+  ]
+  return lines.filter(Boolean).join('\n')
+}
+
+function helpHtml(contact) {
+  const phone = contact?.phone || ''
+  const wa = whatsappUrl(phone)
+  const email = contact?.email || ''
+  if (!wa && !phone && !email) return ''
+
+  const whatsappRow = wa
+    ? `<tr>
+        <td style="padding:4px 0;color:#9a9184">WhatsApp</td>
+        <td style="padding:4px 0;text-align:right">
+          <a href="${escapeHtml(wa)}" style="color:#f7c04a;text-decoration:none">${escapeHtml(phone || wa)}</a>
+        </td>
+      </tr>`
+    : phone
+      ? `<tr>
+          <td style="padding:4px 0;color:#9a9184">Phone</td>
+          <td style="padding:4px 0;color:#ece9e3;text-align:right">${escapeHtml(phone)}</td>
+        </tr>`
+      : ''
+
+  const emailRow = email
+    ? `<tr>
+        <td style="padding:4px 0;color:#9a9184">Email</td>
+        <td style="padding:4px 0;text-align:right">
+          <a href="mailto:${escapeHtml(email)}" style="color:#f7c04a;text-decoration:none">${escapeHtml(email)}</a>
+        </td>
+      </tr>`
+    : ''
+
+  return `<div style="margin-top:22px;padding:16px;border:1px solid #57431c;border-radius:12px;background:#1a1611">
+    <p style="margin:0 0 8px;color:#e8a020;letter-spacing:.12em;font-size:11px;text-transform:uppercase">Need help?</p>
+    <p style="margin:0 0 12px;color:#9a9184;font-size:13px;line-height:1.45">
+      If you're facing any issue with PayID or payment, message us on WhatsApp — we're happy to help.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${whatsappRow}
+      ${emailRow}
+    </table>
+    ${
+      wa
+        ? `<p style="margin:14px 0 0">
+            <a href="${escapeHtml(wa)}" style="display:inline-block;padding:10px 16px;background:#25D366;color:#06240f;text-decoration:none;border-radius:10px;font-weight:bold;font-size:13px">
+              Chat on WhatsApp
+            </a>
+          </p>`
+        : ''
+    }
+  </div>`
+}
+
 function bankText(bank) {
   return [
     bank.payId && `PayID: ${bank.payId}`,
@@ -147,7 +232,7 @@ function bankHtml(order, bank) {
         `<tr><td style="padding:4px 0;color:#9a9184">${escapeHtml(label)}</td><td style="padding:4px 0;color:#ece9e3;text-align:right">${escapeHtml(value)}</td></tr>`,
     )
     .join('')
-  return `<p style="margin:22px 0 8px;color:#e8a020;letter-spacing:.12em;font-size:11px;text-transform:uppercase">Bank transfer</p>
+  return `<p style="margin:22px 0 8px;color:#e8a020;letter-spacing:.12em;font-size:11px;text-transform:uppercase">Pay by PayID</p>
     <p style="margin:0 0 10px;color:#9a9184;font-size:13px">Use <strong style="color:#ece9e3">${escapeHtml(order.id)}</strong> as the payment reference.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>`
 }
@@ -171,15 +256,17 @@ function wrapHtml(heading, introHtml, bodyHtml) {
 </body></html>`
 }
 
-function buildEmail(order, items, bank, status) {
+function buildEmail(order, items, bank, status, contact = {}) {
   const copy = STATUS_COPY[status] || STATUS_COPY['Awaiting payment']
   const id = escapeHtml(order.id)
+  const help = copy.showHelp ? helpHtml(contact) : ''
   const html = wrapHtml(
     copy.heading,
     copy.intro(id),
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${itemRows(items)}</table>
      ${totalsHtml(order)}
-     ${copy.showBank ? bankHtml(order, bank) : ''}`,
+     ${copy.showBank ? bankHtml(order, bank) : ''}
+     ${help}`,
   )
   const text = [
     copy.introText(order.id),
@@ -191,6 +278,7 @@ function buildEmail(order, items, bank, status) {
     copy.showBank
       ? `\nPay by PayID using your order ID as the reference:\n${bankText(bank)}`
       : '',
+    copy.showHelp ? `\n${helpText(contact)}` : '',
     '',
     'Research use only. 18+.',
   ]
@@ -263,7 +351,13 @@ async function handleOrderEmail(body, env) {
     admin.from('site_settings').select('bank, contact').eq('id', 1).maybeSingle(),
   ])
 
-  const built = buildEmail(order, items || [], settings?.bank || {}, status)
+  const built = buildEmail(
+    order,
+    items || [],
+    settings?.bank || {},
+    status,
+    settings?.contact || {},
+  )
   const payload = {
     from,
     to: [to],

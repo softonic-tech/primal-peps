@@ -91,6 +91,7 @@ create table if not exists public.orders (
   points_earned int not null default 0,
   notes text not null default '',
   admin_notes text not null default '',
+  payment_reminder_sent_at timestamptz,
   user_id uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

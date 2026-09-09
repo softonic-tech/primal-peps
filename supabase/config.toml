@@ -1,0 +1,6 @@
+# Edge Functions config for Primal Peps
+# Deploy payment reminders with:
+#   npx supabase functions deploy payment-reminders --no-verify-jwt
+
+[functions.payment-reminders]
+verify_jwt = false
