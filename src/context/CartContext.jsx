@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import {
@@ -19,6 +20,7 @@ import { useSettings } from './SettingsContext'
 
 const CartContext = createContext(null)
 const WELCOME_KEY = 'pp_welcome_offer'
+const FREE_BAC_KEY = 'gift:bac:std'
 export const REDEEM_POINTS = 500
 export const REDEEM_VALUE = 10
 
@@ -51,10 +53,11 @@ function writeWelcomeOffer(next) {
 export function CartProvider({ children }) {
   const { user, recordOrder, isLoggedIn, loading: authLoading } = useAuth()
   const { products, getProduct } = useProducts()
-  const { promo, points } = useSettings()
+  const { promo, points, shipping: shipSettings } = useSettings()
   const promoCode = (promo.code || 'PRIMAL15').toUpperCase()
   const promoPercent = Number(promo.percent) || 0
   const ptsPerDollar = Number(points.perDollar) || 0
+  const freeBacThreshold = Number(shipSettings.freeBacThreshold) || 300
 
   const initialWelcome = useMemo(() => readWelcomeOffer(), [])
   const [cart, setCart] = useState({})
@@ -125,6 +128,46 @@ export function CartProvider({ children }) {
   const totalVal = Math.max(0, sub - disc - redeemDisc)
   const earnPts = Math.round(totalVal * ptsPerDollar)
 
+  const giftBacItem = useMemo(() => {
+    if (totalVal < freeBacThreshold || totalVal <= 0) return null
+    const product = getProduct('bac')
+    if (!product) return null
+    const variant = findVariant(product, 'std') || defaultVariant(product)
+    if (!variant) return null
+    return {
+      ...product,
+      key: FREE_BAC_KEY,
+      qty: 1,
+      variantId: variant.id,
+      variantLabel: variant.label,
+      price: 0,
+      img: variant.img,
+      isGift: true,
+      sub: `Complimentary with orders over $${freeBacThreshold}`,
+    }
+  }, [freeBacThreshold, getProduct, products, totalVal])
+
+  const qualifiesFreeBac = Boolean(giftBacItem)
+
+  const displayCartItems = useMemo(
+    () => (giftBacItem ? [...cartItems, giftBacItem] : cartItems),
+    [cartItems, giftBacItem],
+  )
+
+  const displayCartCount = useMemo(
+    () => cartCount + (qualifiesFreeBac ? 1 : 0),
+    [cartCount, qualifiesFreeBac],
+  )
+
+  const freeBacUnlockedRef = useRef(false)
+  useEffect(() => {
+    if (qualifiesFreeBac && !freeBacUnlockedRef.current) {
+      freeBacUnlockedRef.current = true
+      toast(`Free BAC Water unlocked — orders over $${freeBacThreshold} ✓`)
+    }
+    if (!qualifiesFreeBac) freeBacUnlockedRef.current = false
+  }, [freeBacThreshold, qualifiesFreeBac, toast])
+
   // Drop redeem if user logs out or no longer has enough points
   useEffect(() => {
     if (!canRedeem && redeemApplied) setRedeemApplied(false)
@@ -174,6 +217,7 @@ export function CartProvider({ children }) {
   )
 
   const updateQty = useCallback((key, act) => {
+    if (String(key).startsWith('gift:')) return
     setCart((prev) => {
       const next = { ...prev }
       if (act === 'inc') next[key] = (next[key] || 0) + 1
@@ -252,9 +296,9 @@ export function CartProvider({ children }) {
         createdAt: new Date().toISOString(),
         status: 'Awaiting payment',
         paymentMethod: 'bank_transfer',
-        items: cartItems.map((i) => ({
+        items: displayCartItems.map((i) => ({
           productId: i.id,
-          name: i.name,
+          name: i.isGift ? `${i.name} (Free gift)` : i.name,
           variantLabel: i.variantLabel,
           qty: i.qty,
           price: i.price,
@@ -303,7 +347,7 @@ export function CartProvider({ children }) {
     [
       authLoading,
       canRedeem,
-      cartItems,
+      displayCartItems,
       disc,
       ptsPerDollar,
       recordOrder,
@@ -316,8 +360,8 @@ export function CartProvider({ children }) {
 
   const value = {
     cart,
-    cartItems,
-    cartCount,
+    cartItems: displayCartItems,
+    cartCount: displayCartCount,
     sub,
     disc,
     redeemDisc,
@@ -329,6 +373,8 @@ export function CartProvider({ children }) {
     promoCode,
     promoPercent,
     ptsPerDollar,
+    qualifiesFreeBac,
+    freeBacThreshold,
     signedUp,
     welcomeSeen,
     authLoading,

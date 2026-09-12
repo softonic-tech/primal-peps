@@ -824,6 +824,7 @@ export const PROMO = 'PRIMAL15'
 
 export const ANNOUNCE_MSGS = [
   'Free shipping on orders over $150',
+  'Free BAC Water on orders over $300',
   'Research use only · Not for human or veterinary consumption',
   '18+ to purchase · Pay by PayID',
   'Every batch third-party lab tested',

@@ -56,8 +56,9 @@ export default function Shipping() {
           </div>
         </div>
         <p className="shipping-note rv" ref={noteRef}>
-          Pay by PayID — instant transfer. Tracking on every order — no exceptions.
-          Research use only · 18+ to purchase.
+          Free AU shipping over $150 · Free BAC Water over $300. Pay by PayID —
+          instant transfer. Tracking on every order — no exceptions. Research use
+          only · 18+ to purchase.
         </p>
       </div>
     </section>

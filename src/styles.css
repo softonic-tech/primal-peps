@@ -1443,6 +1443,27 @@ footer::before{
   transition:border-color .3s,transform .2s;
 }
 .ci:hover{border-color:rgba(232,160,32,.3);transform:translateY(-2px)}
+.ci.ci-gift{
+  border-color:rgba(99,201,110,.35);
+  background:linear-gradient(145deg,rgba(99,201,110,.07),rgba(0,0,0,.3));
+}
+.ci.ci-gift:hover{border-color:rgba(99,201,110,.5)}
+.ci-gift-badge{
+  display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;
+  font-family:inherit;font-size:.58rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:#9ee0a4;background:rgba(99,201,110,.15);
+  vertical-align:middle;
+}
+.qty-locked span{color:var(--mute)}
+.cart-gift-note{
+  margin:14px 0 4px;padding:12px 14px;border-radius:12px;
+  font-size:.82rem;line-height:1.45;color:var(--mute);
+  border:1px dashed rgba(255,255,255,.14);background:rgba(0,0,0,.2);
+}
+.cart-gift-note.unlocked{
+  color:#9ee0a4;border-color:rgba(99,201,110,.35);
+  background:rgba(99,201,110,.08);
+}
 .ci-thumb{
   width:100px;height:120px;border-radius:12px;overflow:hidden;
   border:1px solid rgba(255,255,255,.08);

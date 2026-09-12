@@ -280,8 +280,16 @@ export default function OrderDetail() {
                   </div>
                   <div className="order-item-qty">×{item.qty}</div>
                   <div className="order-item-price">
-                    <strong>{fmtMoney(item.price * item.qty)}</strong>
-                    <span>{fmtMoney(item.price)} each</span>
+                    <strong>
+                      {Number(item.price) === 0
+                        ? 'FREE'
+                        : fmtMoney(item.price * item.qty)}
+                    </strong>
+                    <span>
+                      {Number(item.price) === 0
+                        ? 'Gift'
+                        : `${fmtMoney(item.price)} each`}
+                    </span>
                   </div>
                 </li>
               ))}

@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   },
   shipping: {
     freeThreshold: 150,
+    freeBacThreshold: 300,
   },
   points: {
     perDollar: 2,
@@ -49,6 +50,10 @@ export function mergeSettings(row) {
       ...(row.shipping || {}),
       freeThreshold: Number(
         row.shipping?.freeThreshold ?? DEFAULT_SETTINGS.shipping.freeThreshold,
+      ),
+      freeBacThreshold: Number(
+        row.shipping?.freeBacThreshold ??
+          DEFAULT_SETTINGS.shipping.freeBacThreshold,
       ),
     },
     points: {

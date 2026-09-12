@@ -299,6 +299,8 @@ export default function Checkout() {
     promoApplied,
     promoCode,
     ptsPerDollar,
+    qualifiesFreeBac,
+    freeBacThreshold,
     applyPromo,
     updateQty,
     placeOrder,
@@ -307,6 +309,8 @@ export default function Checkout() {
   const { user, isLoggedIn, openAuth, loading: authLoading } = useAuth()
   const { bank, shipping: shipSettings } = useSettings()
   const freeThreshold = Number(shipSettings.freeThreshold) || 150
+  const bacThreshold = Number(freeBacThreshold) || 300
+  const bacRemaining = Math.max(0, bacThreshold - totalVal)
 
   const [step, setStep] = useState(1)
   const [promoInput, setPromoInput] = useState(promoApplied ? promoCode : '')
@@ -530,7 +534,7 @@ export default function Checkout() {
                     </p>
                   ) : (
                     cartItems.map((i) => (
-                      <div className="ci" key={i.key}>
+                      <div className={`ci${i.isGift ? ' ci-gift' : ''}`} key={i.key}>
                         <div className="ci-thumb">
                           <img
                             src={imgSrc(i.img)}
@@ -541,35 +545,62 @@ export default function Checkout() {
                           <h4>
                             {i.name}{' '}
                             <span className="ci-dose">{i.variantLabel}</span>
+                            {i.isGift && (
+                              <span className="ci-gift-badge">Free gift</span>
+                            )}
                           </h4>
                           <small>{i.sub}</small>
-                          <div className="qty">
-                            <button type="button" onClick={() => updateQty(i.key, 'dec')}>
-                              −
-                            </button>
-                            <span>{i.qty}</span>
-                            <button type="button" onClick={() => updateQty(i.key, 'inc')}>
-                              +
-                            </button>
-                          </div>
+                          {i.isGift ? (
+                            <div className="qty qty-locked">
+                              <span>1</span>
+                            </div>
+                          ) : (
+                            <div className="qty">
+                              <button type="button" onClick={() => updateQty(i.key, 'dec')}>
+                                −
+                              </button>
+                              <span>{i.qty}</span>
+                              <button type="button" onClick={() => updateQty(i.key, 'inc')}>
+                                +
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <div className="ci-price">
-                            <span className="sale-was">{fmt(listPrice(i.price) * i.qty)}</span>
-                            {fmt(i.price * i.qty)}
+                            {i.isGift ? (
+                              'FREE'
+                            ) : (
+                              <>
+                                <span className="sale-was">
+                                  {fmt(listPrice(i.price) * i.qty)}
+                                </span>
+                                {fmt(i.price * i.qty)}
+                              </>
+                            )}
                           </div>
-                          <button
-                            className="rm"
-                            type="button"
-                            onClick={() => updateQty(i.key, 'rm')}
-                          >
-                            Remove
-                          </button>
+                          {!i.isGift && (
+                            <button
+                              className="rm"
+                              type="button"
+                              onClick={() => updateQty(i.key, 'rm')}
+                            >
+                              Remove
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))
                   )}
                 </div>
+
+                {!empty && (
+                  <p className={`cart-gift-note${qualifiesFreeBac ? ' unlocked' : ''}`}>
+                    {qualifiesFreeBac
+                      ? `Free BAC Water unlocked — complimentary 3ML vial with orders over $${bacThreshold}.`
+                      : `Spend ${fmt(bacRemaining)} more for a free BAC Water vial (orders over $${bacThreshold}).`}
+                  </p>
+                )}
 
                 <div className="promo-section">
                   <label>Promo Code</label>
@@ -805,6 +836,12 @@ export default function Checkout() {
                       <p className="ship-free-note">
                         Free shipping unlocked — your order is over $
                         {freeThreshold} AUD.
+                      </p>
+                    )}
+                    {qualifiesFreeBac && (
+                      <p className="ship-free-note">
+                        Free BAC Water included — complimentary vial with orders
+                        over ${bacThreshold} AUD.
                       </p>
                     )}
                     <div className="ship-method-list">

@@ -44,7 +44,8 @@ insert into public.site_settings (
     "percent": 15
   }'::jsonb,
   '{
-    "freeThreshold": 150
+    "freeThreshold": 150,
+    "freeBacThreshold": 300
   }'::jsonb,
   '{
     "perDollar": 2

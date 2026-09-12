@@ -4,7 +4,7 @@ import { useReveal } from '../hooks/useReveal'
 const FAQS = [
   {
     q: 'How fast does shipping take?',
-    a: 'Orders are dispatched within 24 hours of payment clearing. Domestic delivery typically takes 2–5 business days. All orders include tracking.',
+    a: 'Orders are dispatched within 24 hours of payment clearing. Domestic delivery typically takes 2–5 business days. All orders include tracking. Free shipping on orders over $150 AUD, and a complimentary BAC Water vial on orders over $300 AUD.',
   },
   {
     q: 'Are these for human or veterinary consumption?',

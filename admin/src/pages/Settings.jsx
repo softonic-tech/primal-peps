@@ -93,6 +93,10 @@ export default function Settings() {
       },
       shipping: {
         freeThreshold: Math.max(0, Number(form.shipping.freeThreshold) || 0),
+        freeBacThreshold: Math.max(
+          0,
+          Number(form.shipping.freeBacThreshold) || 0,
+        ),
       },
       points: {
         perDollar: Math.max(0, Number(form.points.perDollar) || 0),
@@ -310,6 +314,20 @@ export default function Settings() {
                   value={form.shipping.freeThreshold}
                   onChange={(e) =>
                     patch('shipping', 'freeThreshold', e.target.value)
+                  }
+                />
+              </Field>
+              <Field
+                label="Free BAC Water over ($)"
+                hint="Adds a complimentary BAC Water vial when merchandise total reaches this amount"
+              >
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.shipping.freeBacThreshold}
+                  onChange={(e) =>
+                    patch('shipping', 'freeBacThreshold', e.target.value)
                   }
                 />
               </Field>
