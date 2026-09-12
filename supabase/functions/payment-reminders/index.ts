@@ -159,8 +159,21 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const resendKey = Deno.env.get('RESEND_API_KEY') || ''
     const from = Deno.env.get('RESEND_FROM') || ''
+    // Prefer minutes for testing (PAYMENT_REMINDER_MINUTES=2).
+    // Production: unset minutes and use PAYMENT_REMINDER_HOURS=4.
+    const minutesRaw = Number(Deno.env.get('PAYMENT_REMINDER_MINUTES') || 0)
     const hoursRaw = Number(Deno.env.get('PAYMENT_REMINDER_HOURS') || 4)
-    const hours = Number.isFinite(hoursRaw) && hoursRaw > 0 ? hoursRaw : 4
+    const delayMs =
+      Number.isFinite(minutesRaw) && minutesRaw > 0
+        ? minutesRaw * 60 * 1000
+        : (Number.isFinite(hoursRaw) && hoursRaw > 0 ? hoursRaw : 4) *
+          60 *
+          60 *
+          1000
+    const delayLabel =
+      Number.isFinite(minutesRaw) && minutesRaw > 0
+        ? `${minutesRaw}m`
+        : `${Number.isFinite(hoursRaw) && hoursRaw > 0 ? hoursRaw : 4}h`
 
     if (!supabaseUrl || !serviceKey) {
       return Response.json(
@@ -175,23 +188,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Allow service-role / cron calls; reject anonymous public hits.
-    const auth = req.headers.get('Authorization') || ''
-    const anon = Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const cronSecret = Deno.env.get('CRON_SECRET') || ''
-    const okAuth =
-      auth === `Bearer ${serviceKey}` ||
-      (cronSecret && auth === `Bearer ${cronSecret}`) ||
-      (anon && auth === `Bearer ${anon}`)
-    if (!okAuth) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401, headers: cors })
-    }
-
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
 
-    const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+    const cutoff = new Date(Date.now() - delayMs).toISOString()
     const { data: orders, error } = await admin
       .from('orders')
       .select('*')
@@ -276,7 +277,8 @@ Deno.serve(async (req) => {
     return Response.json(
       {
         ok: true,
-        hours,
+        delay: delayLabel,
+        cutoff,
         checked: (orders || []).length,
         sent: results.filter((r) => r.ok).length,
         results,

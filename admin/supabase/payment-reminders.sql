@@ -38,10 +38,11 @@ select vault.create_secret(
   'Service role key for payment-reminders cron'
 );
 
--- 4) Hourly schedule (UTC). Reminder email itself waits PAYMENT_REMINDER_HOURS (default 4).
+-- 4) Hourly schedule (UTC). Reminder sends after PAYMENT_REMINDER_HOURS (default 4).
+-- After testing, use this schedule (not */2).
 select cron.unschedule(jobid)
 from cron.job
-where jobname = 'payment-reminders-hourly';
+where jobname in ('payment-reminders-hourly', 'payment-reminders-test');
 
 select cron.schedule(
   'payment-reminders-hourly',
