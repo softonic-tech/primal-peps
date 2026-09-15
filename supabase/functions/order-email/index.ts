@@ -1,11 +1,29 @@
 /**
- * Shared order emails for Vite middleware and Vercel.
- * Sends via Resend — confirmation on checkout, then status updates from admin.
- * Idempotent via orders.*_email_sent flags (peplab-style).
+ * Edge Function: order-email
+ *
+ * Builds + sends Primal Peps order emails via Resend (peplab-style).
+ * Called from admin / storefront with supabase.functions.invoke — no CORS to storefront.
+ *
+ * Deploy:
+ *   npx supabase functions deploy order-email --no-verify-jwt
+ *
+ * Secrets:
+ *   RESEND_API_KEY
+ *   RESEND_FROM_EMAIL   (or RESEND_FROM)
+ *   optional RESEND_BCC
+ *
+ * SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are provided automatically.
  */
-const { createClient } = require('@supabase/supabase-js')
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 
-const STATUS_FLAG = {
+const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+const STATUS_FLAG: Record<string, string> = {
   'Awaiting payment': 'confirmation_email_sent',
   'Payment received': 'payment_email_sent',
   Processing: 'processing_email_sent',
@@ -14,7 +32,16 @@ const STATUS_FLAG = {
   Cancelled: 'cancelled_email_sent',
 }
 
-const STATUS_COPY = {
+type StatusCopy = {
+  subject: (id: string) => string
+  heading: string
+  intro: (id: string) => string
+  introText: (id: string) => string
+  showBank: boolean
+  bcc: boolean
+}
+
+const STATUS_COPY: Record<string, StatusCopy> = {
   'Awaiting payment': {
     subject: (id) => `Order ${id} — Primal Peps`,
     heading: 'Order confirmed',
@@ -75,7 +102,14 @@ const STATUS_COPY = {
   },
 }
 
-function escapeHtml(value) {
+function json(status: number, body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
+}
+
+function escapeHtml(value: unknown) {
   return String(value || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -83,24 +117,15 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
 }
 
-function money(n) {
+function money(n: unknown) {
   return `$${Number(n || 0).toFixed(2)}`
 }
 
-function ausPostUrl(trackingNumber) {
+function ausPostUrl(trackingNumber: string) {
   return `https://auspost.com.au/mypost/track/#/details/${encodeURIComponent(trackingNumber)}`
 }
 
-function itemLines(items) {
-  return (items || [])
-    .map(
-      (i) =>
-        `- ${i.name} (${i.variant_label}) x${i.qty} — ${money(Number(i.price) * Number(i.qty))}`,
-    )
-    .join('\n')
-}
-
-function itemRows(items) {
+function itemRows(items: Record<string, unknown>[]) {
   return (items || [])
     .map(
       (i) => `<tr>
@@ -116,18 +141,16 @@ function itemRows(items) {
     .join('')
 }
 
-function totalsText(order) {
-  return [
-    `Subtotal: ${money(order.subtotal)}`,
-    Number(order.discount) > 0 ? `Discount: -${money(order.discount)}` : '',
-    `Shipping: ${money(order.shipping_fee)}`,
-    `Total: ${money(order.total)}`,
-  ]
-    .filter(Boolean)
+function itemLines(items: Record<string, unknown>[]) {
+  return (items || [])
+    .map(
+      (i) =>
+        `- ${i.name} (${i.variant_label}) x${i.qty} — ${money(Number(i.price) * Number(i.qty))}`,
+    )
     .join('\n')
 }
 
-function totalsHtml(order) {
+function totalsHtml(order: Record<string, unknown>) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px">
     <tr><td style="color:#9a9184;padding:4px 0">Subtotal</td><td style="text-align:right;color:#ece9e3">${money(order.subtotal)}</td></tr>
     ${
@@ -140,16 +163,18 @@ function totalsHtml(order) {
   </table>`
 }
 
-function bankText(bank) {
+function totalsText(order: Record<string, unknown>) {
   return [
-    bank.payId && `PayID: ${bank.payId}`,
-    bank.accountName && `PayID name: ${bank.accountName}`,
+    `Subtotal: ${money(order.subtotal)}`,
+    Number(order.discount) > 0 ? `Discount: -${money(order.discount)}` : '',
+    `Shipping: ${money(order.shipping_fee)}`,
+    `Total: ${money(order.total)}`,
   ]
     .filter(Boolean)
     .join('\n')
 }
 
-function bankHtml(order, bank) {
+function bankHtml(order: Record<string, unknown>, bank: Record<string, string>) {
   const rows = [
     ['PayID', bank.payId],
     ['PayID name', bank.accountName],
@@ -165,7 +190,16 @@ function bankHtml(order, bank) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>`
 }
 
-function trackingHtml(trackingNumber, { replacement = false } = {}) {
+function bankText(bank: Record<string, string>) {
+  return [
+    bank.payId && `PayID: ${bank.payId}`,
+    bank.accountName && `PayID name: ${bank.accountName}`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+function trackingHtml(trackingNumber: string | null | undefined, replacement = false) {
   if (!trackingNumber) {
     return `<p style="margin:18px 0 0;color:#9a9184;font-size:13px">Tracking will follow shortly.</p>`
   }
@@ -182,7 +216,7 @@ function trackingHtml(trackingNumber, { replacement = false } = {}) {
   `
 }
 
-function trackingText(trackingNumber, { replacement = false } = {}) {
+function trackingText(trackingNumber: string | null | undefined, replacement = false) {
   if (!trackingNumber) return 'Tracking will follow shortly.'
   const label = replacement ? 'Updated tracking' : 'Tracking'
   return [
@@ -192,7 +226,7 @@ function trackingText(trackingNumber, { replacement = false } = {}) {
   ].join('\n')
 }
 
-function wrapHtml(heading, introHtml, bodyHtml) {
+function wrapHtml(heading: string, introHtml: string, bodyHtml: string) {
   return `<!doctype html>
 <html><body style="margin:0;background:#050504;color:#ece9e3;font-family:Arial,sans-serif">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050504;padding:28px 12px">
@@ -211,13 +245,20 @@ function wrapHtml(heading, introHtml, bodyHtml) {
 </body></html>`
 }
 
-function buildStatusEmail(order, items, bank, status) {
+function buildStatusEmail(
+  order: Record<string, unknown>,
+  items: Record<string, unknown>[],
+  bank: Record<string, string>,
+  status: string,
+) {
   const copy = STATUS_COPY[status] || STATUS_COPY['Awaiting payment']
   const id = escapeHtml(order.id)
   const includeTracking = status === 'Shipped'
-  const tracking = includeTracking ? trackingHtml(order.tracking_number) : ''
+  const tracking = includeTracking
+    ? trackingHtml(String(order.tracking_number || '') || null)
+    : ''
   const trackingPlain = includeTracking
-    ? trackingText(order.tracking_number)
+    ? trackingText(String(order.tracking_number || '') || null)
     : ''
 
   const html = wrapHtml(
@@ -229,7 +270,7 @@ function buildStatusEmail(order, items, bank, status) {
      ${copy.showBank ? bankHtml(order, bank) : ''}`,
   )
   const text = [
-    copy.introText(order.id),
+    copy.introText(String(order.id)),
     trackingPlain,
     '',
     'Items',
@@ -246,7 +287,7 @@ function buildStatusEmail(order, items, bank, status) {
     .join('\n')
 
   return {
-    subject: copy.subject(order.id),
+    subject: copy.subject(String(order.id)),
     html,
     text,
     bcc: copy.bcc,
@@ -255,189 +296,171 @@ function buildStatusEmail(order, items, bank, status) {
   }
 }
 
-function buildReplacementEmail(order, trackingNumber) {
+function buildReplacementEmail(order: Record<string, unknown>, trackingNumber: string) {
   const tn = String(trackingNumber || '').trim()
   const id = escapeHtml(order.id)
-  const html = wrapHtml(
-    'Updated tracking',
-    `Here's an updated tracking number for order <strong style="color:#f7c04a">${id}</strong>.`,
-    trackingHtml(tn, { replacement: true }),
-  )
-  const text = [
-    `Updated tracking for order ${order.id}.`,
-    '',
-    trackingText(tn, { replacement: true }),
-    '',
-    'Research use only. 18+.',
-  ].join('\n')
-
   return {
     subject: `Updated tracking — ${order.id}`,
-    html,
-    text,
+    html: wrapHtml(
+      'Updated tracking',
+      `Here's an updated tracking number for order <strong style="color:#f7c04a">${id}</strong>.`,
+      trackingHtml(tn, true),
+    ),
+    text: [
+      `Updated tracking for order ${order.id}.`,
+      '',
+      trackingText(tn, true),
+      '',
+      'Research use only. 18+.',
+    ].join('\n'),
     bcc: false,
     kind: 'replacement',
-    flag: null,
+    flag: null as string | null,
   }
 }
 
-function resolveOrderEmailEnv(env = process.env) {
-  return {
-    url: env.VITE_SUPABASE_URL || env.SUPABASE_URL || '',
-    serviceKey: env.SUPABASE_SERVICE_ROLE_KEY || '',
-    resendKey: env.RESEND_API_KEY || '',
-    from: env.RESEND_FROM || '',
-    bcc: env.RESEND_BCC || '',
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
-}
-
-async function sendViaResend(resendKey, payload) {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    return {
-      ok: false,
-      status: res.status === 403 ? 503 : 502,
-      error: data.message || data.error || 'Resend rejected the email',
-    }
+  if (req.method !== 'POST') {
+    return json(405, { error: 'Method not allowed' })
   }
-  return { ok: true, emailId: data.id }
-}
 
-async function handleOrderEmail(body, env) {
-  const { url, serviceKey, resendKey, from, bcc } = env
-  if (!resendKey || !from) {
-    return {
-      status: 503,
-      body: {
+  try {
+    const resendKey = Deno.env.get('RESEND_API_KEY') || ''
+    const from =
+      Deno.env.get('RESEND_FROM_EMAIL') ||
+      Deno.env.get('RESEND_FROM') ||
+      ''
+    const bcc = Deno.env.get('RESEND_BCC') || ''
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+    if (!resendKey || !from) {
+      return json(503, {
         error:
-          'Email not configured — set RESEND_API_KEY and RESEND_FROM in .env (and Vercel)',
-      },
+          'Missing RESEND_API_KEY or RESEND_FROM_EMAIL on the function secrets',
+      })
     }
-  }
-  if (!url || !serviceKey) {
-    return {
-      status: 503,
-      body: { error: 'Supabase service key missing' },
+    if (!supabaseUrl || !serviceKey) {
+      return json(503, { error: 'Supabase service env missing on function' })
     }
-  }
 
-  const orderId = String(body.orderId || '').trim()
-  if (!orderId) {
-    return { status: 400, body: { error: 'Missing orderId' } }
-  }
+    const body = (await req.json().catch(() => ({}))) as {
+      orderId?: string
+      status?: string
+      kind?: string
+      force?: boolean
+      trackingNumber?: string
+    }
 
-  const admin = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+    const orderId = String(body.orderId || '').trim()
+    if (!orderId) return json(400, { error: 'Missing orderId' })
 
-  const { data: order, error: orderErr } = await admin
-    .from('orders')
-    .select('*')
-    .eq('id', orderId)
-    .maybeSingle()
-  if (orderErr) return { status: 500, body: { error: orderErr.message } }
-  if (!order) return { status: 404, body: { error: 'Order not found' } }
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
 
-  const to = String(order.customer_email || '').trim()
-  if (!to || !to.includes('@')) {
-    return { status: 400, body: { error: 'Order has no customer email' } }
-  }
+    const { data: order, error: orderErr } = await admin
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (orderErr) return json(500, { error: orderErr.message })
+    if (!order) return json(404, { error: 'Order not found' })
 
-  const kind = String(body.kind || '').trim().toLowerCase()
-  const force = Boolean(body.force)
-  const overrideTracking = String(body.trackingNumber || '').trim()
+    const to = String(order.customer_email || '').trim()
+    if (!to || !to.includes('@')) {
+      return json(400, { error: 'Order has no customer email' })
+    }
 
-  const [{ data: items }, { data: settings }] = await Promise.all([
-    admin.from('order_items').select('*').eq('order_id', orderId),
-    admin.from('site_settings').select('bank, contact').eq('id', 1).maybeSingle(),
-  ])
+    const kind = String(body.kind || '').trim().toLowerCase()
+    const force = Boolean(body.force)
+    const overrideTracking = String(body.trackingNumber || '').trim()
 
-  let built
-  if (kind === 'replacement') {
-    if (!overrideTracking) {
-      return {
-        status: 400,
-        body: { error: 'Missing trackingNumber for replacement email' },
+    const [{ data: items }, { data: settings }] = await Promise.all([
+      admin.from('order_items').select('*').eq('order_id', orderId),
+      admin.from('site_settings').select('bank, contact').eq('id', 1).maybeSingle(),
+    ])
+
+    const bank = (settings?.bank || {}) as Record<string, string>
+    let built: ReturnType<typeof buildStatusEmail>
+
+    if (kind === 'replacement') {
+      if (!overrideTracking) {
+        return json(400, { error: 'Missing trackingNumber for replacement email' })
       }
-    }
-    built = buildReplacementEmail(order, overrideTracking)
-  } else {
-    const requested = String(body.status || '').trim()
-    const status = STATUS_COPY[requested] ? requested : order.status
-    const orderForEmail =
-      status === 'Shipped' && overrideTracking
-        ? { ...order, tracking_number: overrideTracking }
-        : order
-    built = buildStatusEmail(
-      orderForEmail,
-      items || [],
-      settings?.bank || {},
-      status,
-    )
+      built = buildReplacementEmail(order, overrideTracking)
+    } else {
+      const requested = String(body.status || '').trim()
+      const status = STATUS_COPY[requested] ? requested : String(order.status)
+      const orderForEmail =
+        status === 'Shipped' && overrideTracking
+          ? { ...order, tracking_number: overrideTracking }
+          : order
+      built = buildStatusEmail(orderForEmail, items || [], bank, status)
 
-    if (built.flag && order[built.flag] && !force) {
-      return {
-        status: 200,
-        body: {
+      if (built.flag && order[built.flag] && !force) {
+        return json(200, {
           ok: true,
           skipped: true,
           reason: 'already_sent',
           kind: built.kind,
           flag: built.flag,
-        },
+        })
       }
     }
-  }
 
-  const payload = {
-    from,
-    to: [to],
-    subject: built.subject,
-    html: built.html,
-    text: built.text,
-  }
-  const copyTo = bcc || settings?.contact?.email
-  if (built.bcc && copyTo && copyTo.toLowerCase() !== to.toLowerCase()) {
-    payload.bcc = [copyTo]
-  }
-
-  const sent = await sendViaResend(resendKey, payload)
-  if (!sent.ok) {
-    return { status: sent.status, body: { error: sent.error } }
-  }
-
-  if (built.flag) {
-    const { error: flagErr } = await admin
-      .from('orders')
-      .update({ [built.flag]: true })
-      .eq('id', orderId)
-    if (flagErr) {
-      console.warn('[order-email] flag update failed:', flagErr.message)
+    const payload: Record<string, unknown> = {
+      from,
+      to: [to],
+      subject: built.subject,
+      html: built.html,
+      text: built.text,
     }
-  }
+    const copyTo = bcc || (settings?.contact as { email?: string } | null)?.email
+    if (
+      built.bcc &&
+      copyTo &&
+      String(copyTo).toLowerCase() !== to.toLowerCase()
+    ) {
+      payload.bcc = [copyTo]
+    }
 
-  return {
-    status: 200,
-    body: {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return json(res.status === 403 ? 503 : 502, {
+        error: data.message || data.error || 'Resend rejected the email',
+      })
+    }
+
+    if (built.flag) {
+      const { error: flagErr } = await admin
+        .from('orders')
+        .update({ [built.flag]: true })
+        .eq('id', orderId)
+      if (flagErr) {
+        console.warn('[order-email] flag update failed:', flagErr.message)
+      }
+    }
+
+    return json(200, {
       ok: true,
-      emailId: sent.emailId,
+      emailId: data.id,
       kind: built.kind,
       flag: built.flag || null,
-    },
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return json(500, { error: msg })
   }
-}
-
-module.exports = {
-  handleOrderEmail,
-  resolveOrderEmailEnv,
-  STATUS_FLAG,
-  ausPostUrl,
-}
+})

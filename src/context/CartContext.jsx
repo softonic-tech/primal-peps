@@ -14,6 +14,7 @@ import {
   isInStock,
   parseCartKey,
 } from '../data/products'
+import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { useProducts } from './ProductsContext'
 import { useSettings } from './SettingsContext'
@@ -323,10 +324,8 @@ export function CartProvider({ children }) {
       }
 
       try {
-        await fetch('/api/order-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: order.id }),
+        await supabase.functions.invoke('order-email', {
+          body: { orderId: order.id },
         })
       } catch {
         /* order is saved even if the confirmation email fails */

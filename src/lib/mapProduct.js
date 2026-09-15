@@ -12,10 +12,8 @@ export function mapProduct(row, variants = []) {
       stock: Number(v.stock ?? 0),
     }))
 
-  const coaUrl =
-    row.coa_url ||
-    (variants || []).find((v) => v.coa_url)?.coa_url ||
-    null
+  // Storefront shows COA Pending for all peptides until new certificates are ready.
+  const coaUrl = null
 
   return {
     id: row.id,
@@ -66,6 +64,10 @@ export function mapOrder(row) {
     total: Number(row.total),
     pointsEarned: row.points_earned || 0,
     shipping: row.shipping || {},
+    trackingNumber: row.tracking_number || '',
+    additionalTrackingNumbers: Array.isArray(row.additional_tracking_numbers)
+      ? row.additional_tracking_numbers
+      : [],
   }
 }
 

@@ -336,6 +336,42 @@ label span,.stack-form label span{
 .status-flash{margin:12px 0 0}
 .notes-panel .panel-help{margin-top:0}
 
+.tracking-panel .panel-help{margin-top:0;margin-bottom:14px}
+.tracking-list{display:grid;gap:10px;margin-bottom:14px}
+.tracking-row{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);
+}
+.tracking-mono{
+  margin:0 0 6px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:1rem;font-weight:700;letter-spacing:.02em;color:var(--gold-hi);
+}
+.tracking-link{font-size:.82rem;font-weight:700}
+.tracking-form{display:flex;gap:10px;flex-wrap:wrap}
+.tracking-form input{
+  flex:1;min-width:180px;padding:12px 14px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(0,0,0,.28);color:var(--text);
+}
+.tracking-form .btn-primary{flex-shrink:0}
+
+.email-log{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.email-log-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;
+}
+.email-resend-btn{padding:8px 12px;font-size:.78rem}
+.email-flag-grid{display:flex;flex-wrap:wrap;gap:8px}
+.email-chip{
+  display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;
+  font-size:.72rem;font-weight:700;letter-spacing:.02em;
+  border:1px solid var(--line);color:var(--mute);background:rgba(0,0,0,.2);
+}
+.email-chip.sent{
+  color:#b8e0be;border-color:rgba(111,191,122,.35);background:rgba(111,191,122,.12);
+}
+.email-chip.pending{
+  color:var(--mute);
+}
+
 .btn-primary,.btn-ghost,.btn-danger{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   border-radius:12px;padding:12px 16px;cursor:pointer;border:1px solid transparent;font-weight:700;

@@ -1,6 +1,12 @@
 # Edge Functions config for Primal Peps
-# Deploy payment reminders with:
+# Deploy:
 #   npx supabase functions deploy payment-reminders --no-verify-jwt
+#   npx supabase functions deploy order-email --no-verify-jwt
+# Secrets:
+#   npx supabase secrets set RESEND_API_KEY=... RESEND_FROM_EMAIL="Primal Peps <orders@pepsprimal.com>"
 
 [functions.payment-reminders]
+verify_jwt = false
+
+[functions.order-email]
 verify_jwt = false

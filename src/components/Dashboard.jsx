@@ -471,6 +471,18 @@ export default function Dashboard() {
                           </li>
                         ))}
                       </ul>
+                      {o.trackingNumber ? (
+                        <div className="dash-order-tracking">
+                          <span>Tracking</span>
+                          <a
+                            href={`https://auspost.com.au/mypost/track/#/details/${encodeURIComponent(o.trackingNumber)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {o.trackingNumber}
+                          </a>
+                        </div>
+                      ) : null}
                       <div className="dash-order-foot">
                         <span>+{o.pointsEarned} Primal Points</span>
                         <strong>{fmt(o.total)}</strong>

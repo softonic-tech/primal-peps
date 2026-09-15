@@ -2431,6 +2431,16 @@ footer::before{
   border-top:1px solid rgba(255,255,255,.08);padding-top:12px;margin-top:4px;
 }
 .dash-latest-foot span,.dash-order-foot span{color:var(--gold);font-size:.78rem;font-weight:700}
+.dash-order-tracking{
+  margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
+}
+.dash-order-tracking span{
+  color:var(--mute);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+}
+.dash-order-tracking a{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88rem;font-weight:700;color:var(--gold);
+}
 .dash-address{
   font-style:normal;display:grid;gap:4px;color:var(--chrome);line-height:1.5;
 }

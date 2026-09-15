@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ConfirmDialog'
 import StatusLabel from '../components/StatusLabel'
+import { sendOrderEmail } from '../lib/orderEmail'
 import { productImageUrl } from '../lib/storage'
 import {
   ORDER_STATUSES,
@@ -13,13 +14,41 @@ import {
   supabase,
 } from '../lib/supabase'
 
-function orderEmailEndpoint() {
-  const configured = import.meta.env.VITE_STOREFRONT_URL
-  if (configured) {
-    return `${String(configured).replace(/\/$/, '')}/api/order-email`
+const EMAIL_FLAGS = [
+  { status: 'Awaiting payment', flag: 'confirmation_email_sent', label: 'Confirmation' },
+  { status: 'Payment received', flag: 'payment_email_sent', label: 'Payment' },
+  { status: 'Processing', flag: 'processing_email_sent', label: 'Processing' },
+  { status: 'Shipped', flag: 'shipped_email_sent', label: 'Shipped' },
+  { status: 'Delivered', flag: 'delivered_email_sent', label: 'Delivered' },
+  { status: 'Cancelled', flag: 'cancelled_email_sent', label: 'Cancelled' },
+]
+
+function ausPostUrl(trackingNumber) {
+  return `https://auspost.com.au/mypost/track/#/details/${encodeURIComponent(trackingNumber)}`
+}
+
+function parseAdditionalTracking(value) {
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v || '').trim()).filter(Boolean)
   }
-  if (import.meta.env.DEV) return 'http://localhost:5173/api/order-email'
-  return 'https://primalpeps.shop/api/order-email'
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) {
+        return parsed.map((v) => String(v || '').trim()).filter(Boolean)
+      }
+    } catch {
+      return value
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean)
+    }
+  }
+  return []
+}
+
+async function postOrderEmail(payload) {
+  return sendOrderEmail(payload)
 }
 
 function CopyButton({ value, label = 'Copy' }) {
@@ -51,12 +80,16 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null)
   const [items, setItems] = useState([])
   const [adminNotes, setAdminNotes] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
   const [loading, setLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState(false)
   const [savingNotes, setSavingNotes] = useState(false)
+  const [savingTracking, setSavingTracking] = useState(false)
+  const [resending, setResending] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [statusFlash, setStatusFlash] = useState('')
+  const [trackingFlash, setTrackingFlash] = useState('')
   const [notesFlash, setNotesFlash] = useState('')
   const [error, setError] = useState('')
 
@@ -91,8 +124,27 @@ export default function OrderDetail() {
     }
   }, [id])
 
+  const additionalTracking = useMemo(
+    () => parseAdditionalTracking(order?.additional_tracking_numbers),
+    [order?.additional_tracking_numbers],
+  )
+
+  const flashStatus = (message) => {
+    setStatusFlash(message)
+    setTimeout(() => setStatusFlash(''), 3200)
+  }
+
+  const flashTracking = (message) => {
+    setTrackingFlash(message)
+    setTimeout(() => setTrackingFlash(''), 3200)
+  }
+
   const setOrderStatus = async (nextStatus) => {
     if (!order || nextStatus === order.status || savingStatus) return
+    if (nextStatus === 'Shipped' && !order.tracking_number) {
+      setError('Add an Australia Post tracking number before marking as Shipped.')
+      return
+    }
     setSavingStatus(true)
     setError('')
     setStatusFlash('')
@@ -107,26 +159,159 @@ export default function OrderDetail() {
     }
     setOrder((prev) => ({ ...prev, status: nextStatus }))
 
-    let emailed = false
+    let message = `Status set to ${nextStatus}`
     try {
-      const res = await fetch(orderEmailEndpoint(), {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ orderId: id, status: nextStatus }),
+      const { ok, data } = await postOrderEmail({
+        orderId: id,
+        status: nextStatus,
       })
-      emailed = res.ok
+      if (!ok) {
+        message = `Status set to ${nextStatus} — email could not be sent`
+      } else if (data.skipped) {
+        message = `Status set to ${nextStatus} — email already sent (not resent)`
+      } else {
+        message = `Status set to ${nextStatus} — customer emailed`
+        const flag = EMAIL_FLAGS.find((f) => f.status === nextStatus)?.flag
+        if (flag) {
+          setOrder((prev) => ({ ...prev, [flag]: true }))
+        }
+      }
     } catch {
-      emailed = false
+      message = `Status set to ${nextStatus} — email could not be sent`
     }
 
     setSavingStatus(false)
-    setStatusFlash(
-      emailed
-        ? `Status set to ${nextStatus} — customer emailed`
-        : `Status set to ${nextStatus} — email could not be sent`,
-    )
-    setTimeout(() => setStatusFlash(''), 3200)
+    flashStatus(message)
+  }
+
+  const shipAndEmail = async () => {
+    if (!order || savingTracking) return
+    const trimmed = trackingNumber.trim()
+    if (!trimmed) {
+      setError('Enter an Australia Post tracking number')
+      return
+    }
+    setSavingTracking(true)
+    setError('')
+    setTrackingFlash('')
+
+    const { error: err } = await supabase
+      .from('orders')
+      .update({
+        tracking_number: trimmed,
+        status: 'Shipped',
+      })
+      .eq('id', id)
+
+    if (err) {
+      setSavingTracking(false)
+      setError(err.message)
+      return
+    }
+
+    setOrder((prev) => ({
+      ...prev,
+      tracking_number: trimmed,
+      status: 'Shipped',
+    }))
+    setTrackingNumber('')
+
+    try {
+      const { ok, data } = await postOrderEmail({
+        orderId: id,
+        status: 'Shipped',
+        trackingNumber: trimmed,
+      })
+      if (!ok) {
+        flashTracking('Tracking saved — shipped email could not be sent')
+      } else if (data.skipped) {
+        flashTracking('Tracking saved — shipped email already sent')
+        setOrder((prev) => ({ ...prev, shipped_email_sent: true }))
+      } else {
+        flashTracking('Shipped — customer emailed with AusPost tracking')
+        setOrder((prev) => ({ ...prev, shipped_email_sent: true }))
+      }
+    } catch {
+      flashTracking('Tracking saved — shipped email could not be sent')
+    }
+
+    setSavingTracking(false)
+  }
+
+  const sendReplacementTracking = async () => {
+    if (!order || savingTracking) return
+    const trimmed = trackingNumber.trim()
+    if (!trimmed) {
+      setError('Enter a replacement tracking number')
+      return
+    }
+    if (!order.tracking_number) {
+      setError('Add a primary tracking number first')
+      return
+    }
+
+    setSavingTracking(true)
+    setError('')
+    setTrackingFlash('')
+
+    const nextAdditional = [...additionalTracking, trimmed]
+    const { error: err } = await supabase
+      .from('orders')
+      .update({ additional_tracking_numbers: nextAdditional })
+      .eq('id', id)
+
+    if (err) {
+      setSavingTracking(false)
+      setError(err.message)
+      return
+    }
+
+    setOrder((prev) => ({
+      ...prev,
+      additional_tracking_numbers: nextAdditional,
+    }))
+    setTrackingNumber('')
+
+    try {
+      const { ok } = await postOrderEmail({
+        orderId: id,
+        kind: 'replacement',
+        trackingNumber: trimmed,
+      })
+      flashTracking(
+        ok
+          ? 'Replacement tracking emailed to customer'
+          : 'Replacement saved — email could not be sent',
+      )
+    } catch {
+      flashTracking('Replacement saved — email could not be sent')
+    }
+
+    setSavingTracking(false)
+  }
+
+  const resendCurrentEmail = async () => {
+    if (!order || resending) return
+    setResending(true)
+    setError('')
+    try {
+      const { ok, data } = await postOrderEmail({
+        orderId: id,
+        status: order.status,
+        force: true,
+        trackingNumber: order.tracking_number || undefined,
+      })
+      if (!ok) {
+        setError(data.error || 'Resend failed')
+      } else {
+        const flag = EMAIL_FLAGS.find((f) => f.status === order.status)?.flag
+        if (flag) setOrder((prev) => ({ ...prev, [flag]: true }))
+        flashStatus(`Resent ${order.status} email`)
+      }
+    } catch {
+      setError('Resend failed')
+    }
+    setResending(false)
   }
 
   const saveNotes = async (e) => {
@@ -167,6 +352,11 @@ export default function OrderDetail() {
   const next = order ? nextOrderStatus(order.status) : null
   const ship = order?.shipping || {}
   const phone = order?.customer_phone || ship.phone || ''
+  const showTrackingPanel =
+    order &&
+    ['Payment received', 'Processing', 'Shipped', 'Delivered'].includes(
+      order.status,
+    )
 
   const ACTION_LABELS = {
     'Payment received': 'Mark payment received',
@@ -371,6 +561,97 @@ export default function OrderDetail() {
             </div>
           </section>
 
+          {showTrackingPanel && (
+            <section className="panel tracking-panel">
+              <div className="panel-head">
+                <h2>Tracking</h2>
+                {savingTracking && <span className="muted">Saving…</span>}
+              </div>
+              <p className="panel-help">
+                Add an Australia Post tracking number to mark the order shipped
+                and email the customer (peplab-style).
+              </p>
+
+              {order.tracking_number && (
+                <div className="tracking-list">
+                  <div className="tracking-row">
+                    <div>
+                      <span className="ship-block-label">Original shipment</span>
+                      <p className="tracking-mono">{order.tracking_number}</p>
+                      <a
+                        href={ausPostUrl(order.tracking_number)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tracking-link"
+                      >
+                        Open AusPost →
+                      </a>
+                    </div>
+                    <span
+                      className={`email-chip ${order.shipped_email_sent ? 'sent' : 'pending'}`}
+                    >
+                      {order.shipped_email_sent ? 'Email sent' : 'Email pending'}
+                    </span>
+                  </div>
+                  {additionalTracking.map((num, idx) => (
+                    <div className="tracking-row" key={`${num}-${idx}`}>
+                      <div>
+                        <span className="ship-block-label">
+                          Replacement {idx + 1}
+                        </span>
+                        <p className="tracking-mono">{num}</p>
+                        <a
+                          href={ausPostUrl(num)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="tracking-link"
+                        >
+                          Open AusPost →
+                        </a>
+                      </div>
+                      <span className="email-chip sent">Emailed</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="tracking-form">
+                <input
+                  type="text"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder={
+                    order.tracking_number
+                      ? 'Enter replacement tracking number'
+                      : 'Enter Australia Post tracking number'
+                  }
+                />
+                {order.tracking_number ? (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={savingTracking || !trackingNumber.trim()}
+                    onClick={sendReplacementTracking}
+                  >
+                    {savingTracking ? 'Sending…' : 'Send & Email'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={savingTracking || !trackingNumber.trim()}
+                    onClick={shipAndEmail}
+                  >
+                    {savingTracking ? 'Shipping…' : 'Ship & Email'}
+                  </button>
+                )}
+              </div>
+              {trackingFlash && (
+                <p className="form-ok status-flash">{trackingFlash}</p>
+              )}
+            </section>
+          )}
+
           <section className="panel status-panel">
             <div className="panel-head">
               <h2>Status</h2>
@@ -414,6 +695,30 @@ export default function OrderDetail() {
               })}
             </div>
 
+            <div className="email-log">
+              <div className="email-log-head">
+                <span className="ship-block-label">Customer emails</span>
+                <button
+                  type="button"
+                  className="btn-ghost email-resend-btn"
+                  disabled={resending || isCancelled}
+                  onClick={resendCurrentEmail}
+                >
+                  {resending ? 'Resending…' : 'Resend current'}
+                </button>
+              </div>
+              <div className="email-flag-grid">
+                {EMAIL_FLAGS.map(({ flag, label }) => (
+                  <span
+                    key={flag}
+                    className={`email-chip ${order[flag] ? 'sent' : 'pending'}`}
+                  >
+                    {label}: {order[flag] ? 'Sent' : '—'}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             {statusFlash && <p className="form-ok status-flash">{statusFlash}</p>}
             {error && <p className="form-error">{error}</p>}
           </section>
@@ -421,14 +726,15 @@ export default function OrderDetail() {
           <section className="panel notes-panel">
             <h2>Internal notes</h2>
             <p className="panel-help">
-              Private — payment refs, tracking, pack notes. Not shown to the customer.
+              Private — payment refs, pack notes. Tracking lives in the Tracking
+              panel above.
             </p>
             <form className="stack-form" onSubmit={saveNotes}>
               <textarea
                 rows={4}
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="e.g. Paid — ref 1234 · AusPost tracking…"
+                placeholder="e.g. Paid — ref 1234 · pack with ice pack…"
               />
               <div className="order-save-row">
                 <button
