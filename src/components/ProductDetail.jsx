@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
   PTS_PER_DOLLAR,
   defaultVariant,
@@ -16,7 +16,6 @@ import SalePrice from './SalePrice'
 
 export default function ProductDetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { getProduct, loading } = useProducts()
   const product = getProduct(id)
   const { addToCart, toast } = useCart()
@@ -106,13 +105,9 @@ export default function ProductDetail() {
   return (
     <div className="pdp-page">
       <div className="wrap">
-        <button
-          className="pdp-back"
-          type="button"
-          onClick={() => navigate(-1)}
-        >
+        <Link className="pdp-back" to="/">
           ← Back
-        </button>
+        </Link>
 
         <div className="pdp-grid">
           <div className="pdp-visual">
