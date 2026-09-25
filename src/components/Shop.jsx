@@ -5,18 +5,23 @@ import {
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
+  fmt,
   imgSrc,
   isInStock,
+  listPrice,
   productHasStock,
 } from '../data/products'
+import {
+  BUNDLE_TIERS,
+  bundleLineTotal,
+  bundleUnitPrice,
+} from '../lib/bundlePricing'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../context/ProductsContext'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
 import { CoaAction } from './CoaDialog'
-import SalePrice from './SalePrice'
-
 const VALID_CATS = new Set(FILTERS.map((f) => f.cat))
 
 function catFromSearch(params) {
@@ -29,6 +34,7 @@ function ProductCard({ product, index }) {
   const { getProductReviews } = useAuth()
   const [added, setAdded] = useState(false)
   const [variantId, setVariantId] = useState(defaultVariant(product).id)
+  const [bundleQty, setBundleQty] = useState(1)
   const variant = findVariant(product, variantId)
   const cardRef = useReveal()
   const reduceMotion = useReducedMotion()
@@ -38,6 +44,7 @@ function ProductCard({ product, index }) {
 
   useEffect(() => {
     setVariantId(defaultVariant(product).id)
+    setBundleQty(1)
   }, [product])
 
   useEffect(() => {
@@ -69,10 +76,15 @@ function ProductCard({ product, index }) {
 
   const inStock = isInStock(variant)
   const anyInStock = productHasStock(product)
+  const unitPrice = bundleUnitPrice(variant.price, bundleQty)
+  const lineTotal = bundleLineTotal(variant.price, bundleQty)
+  const wasTotal = listPrice(variant.price) * bundleQty
+  const totalOffPercent =
+    wasTotal > 0 ? Math.round((1 - lineTotal / wasTotal) * 100) : 0
 
   const handleAdd = () => {
     if (!inStock) return
-    addToCart(product.id, variant.id)
+    addToCart(product.id, variant.id, bundleQty)
     setAdded(true)
     setTimeout(() => setAdded(false), 1100)
   }
@@ -158,13 +170,68 @@ function ProductCard({ product, index }) {
           </div>
         </div>
 
+        <div className="card-bundle">
+          <div className="card-bundle-head">
+            <span className="dose-label">Bundle &amp; Save</span>
+            <span className="card-bundle-max">Up to 20% off</span>
+          </div>
+          <div
+            className="card-bundle-options"
+            role="radiogroup"
+            aria-label={`${product.name} bundle size`}
+          >
+            {BUNDLE_TIERS.map((tier) => {
+              const selected = bundleQty === tier.qty
+              return (
+                <button
+                  key={tier.qty}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={`card-bundle-tile${selected ? ' active' : ''}${
+                    tier.bestValue ? ' best' : ''
+                  }`}
+                  disabled={!inStock}
+                  onClick={() => setBundleQty(tier.qty)}
+                >
+                  {tier.bestValue && (
+                    <span className="card-bundle-ribbon">Best</span>
+                  )}
+                  <span className="card-bundle-qty">{tier.qty}</span>
+                  <span className="card-bundle-unit">
+                    {tier.qty === 1 ? 'Vial' : 'Vials'}
+                  </span>
+                  <span
+                    className={`card-bundle-save${
+                      tier.savePercent ? '' : ' is-base'
+                    }`}
+                  >
+                    {tier.savePercent ? `−${tier.savePercent}%` : 'Base'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <div className="card-foot">
-          <div>
+          <div className="card-price">
             {inStock ? (
               <>
-                <SalePrice price={variant.price} />
-                <span className="pts">
-                  +{variant.price * PTS_PER_DOLLAR} pts
+                <span className="sale-price">
+                  <span className="sale-was">{fmt(wasTotal)}</span>
+                  <span className="price">{fmt(lineTotal)}</span>
+                  <span className="sale-off">{totalOffPercent}% off</span>
+                </span>
+                <span className="card-price-meta">
+                  {bundleQty > 1 ? (
+                    <>
+                      {fmt(unitPrice)} / vial ·{' '}
+                    </>
+                  ) : null}
+                  <span className="pts">
+                    +{Math.round(lineTotal * PTS_PER_DOLLAR)} pts
+                  </span>
                 </span>
               </>
             ) : (
@@ -178,7 +245,7 @@ function ProductCard({ product, index }) {
             data-id={product.id}
             aria-label={
               inStock
-                ? `Add ${product.name} ${variant.label} to cart`
+                ? `Add ${bundleQty}× ${product.name} ${variant.label} to cart`
                 : `${product.name} ${variant.label} out of stock`
             }
             type="button"

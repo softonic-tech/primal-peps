@@ -14,6 +14,7 @@ import {
   isInStock,
   parseCartKey,
 } from '../data/products'
+import { bundleUnitPrice } from '../lib/bundlePricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { useProducts } from './ProductsContext'
@@ -98,13 +99,15 @@ export function CartProvider({ children }) {
           if (!product) return null
           const variant = findVariant(product, variantId)
           if (!variant) return null
+          const basePrice = Number(variant.price) || 0
           return {
             ...product,
             key,
             qty,
             variantId: variant.id,
             variantLabel: variant.label,
-            price: variant.price,
+            basePrice,
+            price: bundleUnitPrice(basePrice, qty),
             img: variant.img,
           }
         })
@@ -193,7 +196,7 @@ export function CartProvider({ children }) {
   )
 
   const addToCart = useCallback(
-    (productId, variantId) => {
+    (productId, variantId, qty = 1) => {
       const product = getProduct(productId)
       if (!product) {
         toast('Product unavailable')
@@ -208,10 +211,15 @@ export function CartProvider({ children }) {
         toast(`${product.name} (${variant.label}) is out of stock`)
         return
       }
+      const addQty = Math.max(1, Math.floor(Number(qty) || 1))
       const key = cartKey(productId, variant.id)
-      setCart((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }))
+      setCart((prev) => {
+        const nextQty = (prev[key] || 0) + addQty
+        return { ...prev, [key]: nextQty }
+      })
+      const unit = bundleUnitPrice(variant.price, addQty)
       toast(
-        `${product.name} (${variant.label}) added — +${variant.price * ptsPerDollar} pts at checkout`,
+        `${product.name} (${variant.label}) ×${addQty} added — +${Math.round(unit * addQty * ptsPerDollar)} pts at checkout`,
       )
     },
     [getProduct, ptsPerDollar, toast],

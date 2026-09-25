@@ -573,12 +573,17 @@ export default function Checkout() {
                             ) : (
                               <>
                                 <span className="sale-was">
-                                  {fmt(listPrice(i.price) * i.qty)}
+                                  {fmt(listPrice(i.basePrice ?? i.price) * i.qty)}
                                 </span>
                                 {fmt(i.price * i.qty)}
                               </>
                             )}
                           </div>
+                          {!i.isGift && i.basePrice != null && i.price < i.basePrice && (
+                            <small className="ci-bundle-save">
+                              Bundle save on {i.qty}+ vials
+                            </small>
+                          )}
                           {!i.isGift && (
                             <button
                               className="rm"

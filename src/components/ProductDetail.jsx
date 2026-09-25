@@ -4,10 +4,17 @@ import {
   PTS_PER_DOLLAR,
   defaultVariant,
   findVariant,
+  fmt,
   imgSrc,
   isInStock,
+  listPrice,
 } from '../data/products'
 import { LEGAL } from '../data/site'
+import {
+  BUNDLE_TIERS,
+  bundleLineTotal,
+  bundleUnitPrice,
+} from '../lib/bundlePricing'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
@@ -28,6 +35,8 @@ export default function ProductDetail() {
   } = useAuth()
 
   const [variantId, setVariantId] = useState('')
+  const [bundleQty, setBundleQty] = useState(1)
+  const [packs, setPacks] = useState(1)
   const [reviewBody, setReviewBody] = useState('')
   const [rating, setRating] = useState(5)
 
@@ -37,6 +46,8 @@ export default function ProductDetail() {
       if (prev && findVariant(product, prev)) return prev
       return defaultVariant(product)?.id || ''
     })
+    setBundleQty(1)
+    setPacks(1)
   }, [product])
 
   const variant = product ? findVariant(product, variantId) : null
@@ -49,6 +60,14 @@ export default function ProductDetail() {
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0
   const canReview = product ? canReviewProduct(product.id) : false
+
+  const totalVials = bundleQty * packs
+  const unitPrice = variant
+    ? bundleUnitPrice(variant.price, totalVials)
+    : 0
+  const lineTotal = variant
+    ? bundleLineTotal(variant.price, totalVials)
+    : 0
 
   if (loading) {
     return (
@@ -80,7 +99,7 @@ export default function ProductDetail() {
       toast(`${product.name} (${variant.label}) is out of stock`)
       return
     }
-    addToCart(product.id, variant.id)
+    addToCart(product.id, variant.id, totalVials)
   }
 
   const submitReview = async (e) => {
@@ -101,6 +120,9 @@ export default function ProductDetail() {
     setReviewBody('')
     toast('Thanks for the review ✓')
   }
+
+  const gridTiers = BUNDLE_TIERS.filter((t) => !t.bestValue)
+  const bestTier = BUNDLE_TIERS.find((t) => t.bestValue)
 
   return (
     <div className="pdp-page">
@@ -190,13 +212,109 @@ export default function ProductDetail() {
 
             <CoaAction productName={product.name} coaUrl={product.coaUrl} />
 
-            <div className="pdp-buy">
-              <div>
+            <div className="bundle-save">
+              <div className="bundle-save-head">
+                <h2>Bundle &amp; Save</h2>
+                <p>Buy more vials of this dose — bigger packs unlock lower per-vial pricing.</p>
+              </div>
+              <div className="bundle-grid" role="radiogroup" aria-label="Bundle size">
+                {gridTiers.map((tier) => {
+                  const tierTotal = bundleLineTotal(variant.price, tier.qty)
+                  const tierUnit = bundleUnitPrice(variant.price, tier.qty)
+                  const tierWas = listPrice(variant.price)
+                  const selected = bundleQty === tier.qty
+                  return (
+                    <button
+                      key={tier.qty}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={`bundle-card${selected ? ' selected' : ''}`}
+                      onClick={() => setBundleQty(tier.qty)}
+                      disabled={!inStock}
+                    >
+                      <span className="bundle-radio" aria-hidden="true" />
+                      <span className="bundle-card-top">
+                        <span className="bundle-qty">
+                          {tier.qty} vial{tier.qty === 1 ? '' : 's'}
+                        </span>
+                        <span className="bundle-tag">{tier.tag}</span>
+                      </span>
+                      <span className="bundle-total">{fmt(tierTotal)}</span>
+                      <span className="bundle-unit">
+                        {tier.savePercent > 0 && (
+                          <span className="bundle-was">{fmt(tierWas)}</span>
+                        )}
+                        {fmt(tierUnit)} / vial
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              {bestTier && (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={bundleQty === bestTier.qty}
+                  className={`bundle-card bundle-card-best${
+                    bundleQty === bestTier.qty ? ' selected' : ''
+                  }`}
+                  onClick={() => setBundleQty(bestTier.qty)}
+                  disabled={!inStock}
+                >
+                  <span className="bundle-best-banner">Best value</span>
+                  <span className="bundle-card-body">
+                    <span className="bundle-radio" aria-hidden="true" />
+                    <span className="bundle-card-top">
+                      <span className="bundle-qty">
+                        {bestTier.qty} vials
+                      </span>
+                      <span className="bundle-tag">{bestTier.tag}</span>
+                    </span>
+                    <span className="bundle-total">
+                      {fmt(bundleLineTotal(variant.price, bestTier.qty))}
+                    </span>
+                    <span className="bundle-unit">
+                      <span className="bundle-was">
+                        {fmt(listPrice(variant.price))}
+                      </span>
+                      {fmt(bundleUnitPrice(variant.price, bestTier.qty))} / vial
+                    </span>
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <div className="pdp-buy pdp-buy-bundle">
+              <div className="pdp-buy-qty" aria-label="Pack quantity">
+                <button
+                  type="button"
+                  aria-label="Decrease packs"
+                  disabled={!inStock || packs <= 1}
+                  onClick={() => setPacks((p) => Math.max(1, p - 1))}
+                >
+                  −
+                </button>
+                <span>{packs}</span>
+                <button
+                  type="button"
+                  aria-label="Increase packs"
+                  disabled={!inStock}
+                  onClick={() => setPacks((p) => p + 1)}
+                >
+                  +
+                </button>
+              </div>
+              <div className="pdp-buy-summary">
                 {inStock ? (
                   <>
-                    <SalePrice price={variant.price} />
+                    <SalePrice price={unitPrice} showBadge={false} />
+                    <span className="pdp-buy-line">
+                      {fmt(lineTotal)} for {totalVials} vial
+                      {totalVials === 1 ? '' : 's'}
+                    </span>
                     <span className="pts">
-                      +{variant.price * PTS_PER_DOLLAR} pts
+                      +{Math.round(lineTotal * PTS_PER_DOLLAR)} pts
                     </span>
                     <span className="stock">In stock</span>
                   </>
