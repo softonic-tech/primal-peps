@@ -461,6 +461,16 @@ export default function Checkout() {
               ? 'Continue to Payment'
               : 'Submit order'
 
+  const primarySubmitClass = placedOrder
+    ? 'checkout-cta-done'
+    : empty
+      ? 'checkout-cta-empty'
+      : step === 1
+        ? 'checkout-cta-dispatch'
+        : step === 2
+          ? 'checkout-cta-transfer'
+          : 'checkout-cta-seal'
+
   const secondaryLabel = placedOrder
     ? 'Close'
     : step === 1
@@ -1087,7 +1097,7 @@ export default function Checkout() {
                 </span>
               </button>
               <button
-                className="checkout-next-btn"
+                className={`checkout-next-btn ${primarySubmitClass}`}
                 type="button"
                 aria-label={primaryLabel}
                 disabled={
