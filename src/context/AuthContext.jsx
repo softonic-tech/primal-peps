@@ -337,6 +337,9 @@ export function AuthProvider({ children }) {
         subtotal: order.subtotal,
         shipping_fee: order.shippingFee || 0,
         discount: order.discount || 0,
+        promo_code: order.promoCode
+          ? String(order.promoCode).trim().toUpperCase()
+          : null,
         total: order.total,
         points_earned: order.pointsEarned || 0,
         user_id: session?.user?.id || null,

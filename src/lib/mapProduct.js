@@ -86,6 +86,7 @@ export function mapOrder(row) {
     subtotal: Number(row.subtotal),
     shippingFee: Number(row.shipping_fee),
     discount: Number(row.discount || 0),
+    promoCode: row.promo_code || '',
     total: Number(row.total),
     pointsEarned: row.points_earned || 0,
     shipping: row.shipping || {},

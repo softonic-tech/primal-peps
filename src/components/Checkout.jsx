@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { fmt, imgSrc, listPrice } from '../data/products'
 import { LEGAL } from '../data/site'
 import { useAuth } from '../context/AuthContext'
@@ -299,8 +299,6 @@ export default function Checkout() {
     promoApplied,
     promoCode,
     ptsPerDollar,
-    qualifiesFreeBac,
-    freeBacThreshold,
     applyPromo,
     updateQty,
     placeOrder,
@@ -308,9 +306,10 @@ export default function Checkout() {
   } = useCart()
   const { user, isLoggedIn, openAuth, loading: authLoading } = useAuth()
   const { bank, shipping: shipSettings } = useSettings()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const onCheckoutRoute = pathname === '/checkout'
   const freeThreshold = Number(shipSettings.freeThreshold) || 150
-  const bacThreshold = Number(freeBacThreshold) || 300
-  const bacRemaining = Math.max(0, bacThreshold - totalVal)
 
   const [step, setStep] = useState(1)
   const [promoInput, setPromoInput] = useState(promoApplied ? promoCode : '')
@@ -324,6 +323,10 @@ export default function Checkout() {
   useEffect(() => {
     if (promoApplied) setPromoInput(promoCode)
   }, [promoApplied, promoCode])
+
+  useEffect(() => {
+    setCartOpen(onCheckoutRoute)
+  }, [onCheckoutRoute, setCartOpen])
 
   useEffect(() => {
     if (!cartOpen) {
@@ -364,11 +367,17 @@ export default function Checkout() {
     [orderTotal, ptsPerDollar],
   )
 
-  const close = () => setCartOpen(false)
+  const close = () => {
+    if (onCheckoutRoute) navigate('/', { replace: true })
+    else setCartOpen(false)
+  }
 
   const continueShopping = () => {
-    close()
-    document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })
+    if (onCheckoutRoute) navigate('/#shop', { replace: true })
+    else {
+      setCartOpen(false)
+      navigate('/#shop')
+    }
   }
 
   const setField = (key, value) => {
@@ -546,7 +555,7 @@ export default function Checkout() {
                     </p>
                   ) : (
                     cartItems.map((i) => (
-                      <div className={`ci${i.isGift ? ' ci-gift' : ''}`} key={i.key}>
+                      <div className="ci" key={i.key}>
                         <div className="ci-thumb">
                           <img
                             src={imgSrc(i.img)}
@@ -557,67 +566,42 @@ export default function Checkout() {
                           <h4>
                             {i.name}{' '}
                             <span className="ci-dose">{i.variantLabel}</span>
-                            {i.isGift && (
-                              <span className="ci-gift-badge">Free gift</span>
-                            )}
                           </h4>
                           <small>{i.sub}</small>
-                          {i.isGift ? (
-                            <div className="qty qty-locked">
-                              <span>1</span>
-                            </div>
-                          ) : (
-                            <div className="qty">
-                              <button type="button" onClick={() => updateQty(i.key, 'dec')}>
-                                −
-                              </button>
-                              <span>{i.qty}</span>
-                              <button type="button" onClick={() => updateQty(i.key, 'inc')}>
-                                +
-                              </button>
-                            </div>
-                          )}
+                          <div className="qty">
+                            <button type="button" onClick={() => updateQty(i.key, 'dec')}>
+                              −
+                            </button>
+                            <span>{i.qty}</span>
+                            <button type="button" onClick={() => updateQty(i.key, 'inc')}>
+                              +
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <div className="ci-price">
-                            {i.isGift ? (
-                              'FREE'
-                            ) : (
-                              <>
-                                <span className="sale-was">
-                                  {fmt(listPrice(i.basePrice ?? i.price) * i.qty)}
-                                </span>
-                                {fmt(i.price * i.qty)}
-                              </>
-                            )}
+                            <span className="sale-was">
+                              {fmt(listPrice(i.basePrice ?? i.price) * i.qty)}
+                            </span>
+                            {fmt(i.price * i.qty)}
                           </div>
-                          {!i.isGift && i.basePrice != null && i.price < i.basePrice && (
+                          {i.basePrice != null && i.price < i.basePrice && (
                             <small className="ci-bundle-save">
                               Bundle save on {i.qty}+ vials
                             </small>
                           )}
-                          {!i.isGift && (
-                            <button
-                              className="rm"
-                              type="button"
-                              onClick={() => updateQty(i.key, 'rm')}
-                            >
-                              Remove
-                            </button>
-                          )}
+                          <button
+                            className="rm"
+                            type="button"
+                            onClick={() => updateQty(i.key, 'rm')}
+                          >
+                            Remove
+                          </button>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
-
-                {!empty && (
-                  <p className={`cart-gift-note${qualifiesFreeBac ? ' unlocked' : ''}`}>
-                    {qualifiesFreeBac
-                      ? `Free BAC Water unlocked — complimentary 3ML vial with orders over $${bacThreshold}.`
-                      : `Spend ${fmt(bacRemaining)} more for a free BAC Water vial (orders over $${bacThreshold}).`}
-                  </p>
-                )}
 
                 <div className="promo-section">
                   <label>Promo Code</label>
@@ -630,14 +614,14 @@ export default function Checkout() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
-                          applyPromo(promoInput)
+                          applyPromo(promoInput, { email: shipping.email })
                         }
                       }}
                     />
                     <button
                       className="promo-btn"
                       type="button"
-                      onClick={() => applyPromo(promoInput)}
+                      onClick={() => applyPromo(promoInput, { email: shipping.email })}
                     >
                       Apply
                     </button>
@@ -853,12 +837,6 @@ export default function Checkout() {
                       <p className="ship-free-note">
                         Free shipping unlocked — your order is over $
                         {freeThreshold} AUD.
-                      </p>
-                    )}
-                    {qualifiesFreeBac && (
-                      <p className="ship-free-note">
-                        Free BAC Water included — complimentary vial with orders
-                        over ${bacThreshold} AUD.
                       </p>
                     )}
                     <div className="ship-method-list">

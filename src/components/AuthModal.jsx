@@ -167,7 +167,7 @@ export default function AuthModal() {
         fail(res.error)
         return
       }
-      completeSignup()
+      await completeSignup()
       if (res.needsConfirmation) {
         setConfirmNotice(true)
         toast('Check your email to confirm your account')

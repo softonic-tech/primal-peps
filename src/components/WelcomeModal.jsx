@@ -41,7 +41,7 @@ export default function WelcomeModal() {
       toast(result.error || 'Could not save your email.')
       return
     }
-    completeSignup()
+    await completeSignup()
     setOpen(false)
   }
 

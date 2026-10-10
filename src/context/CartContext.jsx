@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
 import {
@@ -15,6 +14,7 @@ import {
   parseCartKey,
 } from '../data/products'
 import { bundleUnitPrice } from '../lib/bundlePricing'
+import { hasUsedPromoCode, ordersShowPromoUsed } from '../lib/promo'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { useProducts } from './ProductsContext'
@@ -22,7 +22,6 @@ import { useSettings } from './SettingsContext'
 
 const CartContext = createContext(null)
 const WELCOME_KEY = 'pp_welcome_offer'
-const FREE_BAC_KEY = 'gift:bac:std'
 export const REDEEM_POINTS = 500
 export const REDEEM_VALUE = 10
 
@@ -53,13 +52,18 @@ function writeWelcomeOffer(next) {
 }
 
 export function CartProvider({ children }) {
-  const { user, recordOrder, isLoggedIn, loading: authLoading } = useAuth()
+  const {
+    user,
+    recordOrder,
+    isLoggedIn,
+    loading: authLoading,
+    orders,
+  } = useAuth()
   const { products, getProduct } = useProducts()
-  const { promo, points, shipping: shipSettings } = useSettings()
+  const { promo, points } = useSettings()
   const promoCode = (promo.code || 'PRIMAL15').toUpperCase()
   const promoPercent = Number(promo.percent) || 0
   const ptsPerDollar = Number(points.perDollar) || 0
-  const freeBacThreshold = Number(shipSettings.freeBacThreshold) || 300
 
   const initialWelcome = useMemo(() => readWelcomeOffer(), [])
   const [cart, setCart] = useState({})
@@ -132,46 +136,6 @@ export function CartProvider({ children }) {
   const totalVal = Math.max(0, sub - disc - redeemDisc)
   const earnPts = Math.round(totalVal * ptsPerDollar)
 
-  const giftBacItem = useMemo(() => {
-    if (totalVal < freeBacThreshold || totalVal <= 0) return null
-    const product = getProduct('bac')
-    if (!product) return null
-    const variant = findVariant(product, 'std') || defaultVariant(product)
-    if (!variant) return null
-    return {
-      ...product,
-      key: FREE_BAC_KEY,
-      qty: 1,
-      variantId: variant.id,
-      variantLabel: variant.label,
-      price: 0,
-      img: variant.img,
-      isGift: true,
-      sub: `Complimentary with orders over $${freeBacThreshold}`,
-    }
-  }, [freeBacThreshold, getProduct, products, totalVal])
-
-  const qualifiesFreeBac = Boolean(giftBacItem)
-
-  const displayCartItems = useMemo(
-    () => (giftBacItem ? [...cartItems, giftBacItem] : cartItems),
-    [cartItems, giftBacItem],
-  )
-
-  const displayCartCount = useMemo(
-    () => cartCount + (qualifiesFreeBac ? 1 : 0),
-    [cartCount, qualifiesFreeBac],
-  )
-
-  const freeBacUnlockedRef = useRef(false)
-  useEffect(() => {
-    if (qualifiesFreeBac && !freeBacUnlockedRef.current) {
-      freeBacUnlockedRef.current = true
-      toast(`Free BAC Water unlocked — orders over $${freeBacThreshold} ✓`)
-    }
-    if (!qualifiesFreeBac) freeBacUnlockedRef.current = false
-  }, [freeBacThreshold, qualifiesFreeBac, toast])
-
   // Drop redeem if user logs out or no longer has enough points
   useEffect(() => {
     if (!canRedeem && redeemApplied) setRedeemApplied(false)
@@ -226,7 +190,6 @@ export function CartProvider({ children }) {
   )
 
   const updateQty = useCallback((key, act) => {
-    if (String(key).startsWith('gift:')) return
     setCart((prev) => {
       const next = { ...prev }
       if (act === 'inc') next[key] = (next[key] || 0) + 1
@@ -240,18 +203,40 @@ export function CartProvider({ children }) {
   }, [])
 
   const applyPromo = useCallback(
-    (code) => {
-      if (code.trim().toUpperCase() === promoCode) {
-        setPromoApplied(true)
-        toast(`${promoPercent}% welcome discount applied ✓`)
-        return true
+    async (code, { email } = {}) => {
+      const trimmed = String(code || '')
+        .trim()
+        .toUpperCase()
+      if (trimmed !== promoCode) {
+        if (String(code || '').trim()) {
+          toast(`That code isn't valid — try ${promoCode}`)
+        }
+        return false
       }
-      if (code.trim()) {
-        toast(`That code isn't valid — try ${promoCode}`)
+
+      if (ordersShowPromoUsed(orders, promoCode)) {
+        toast('This welcome code can only be used once per customer', 'error')
+        setPromoApplied(false)
+        return false
       }
-      return false
+
+      const checkEmail = email || user?.email || ''
+      const used = await hasUsedPromoCode(promoCode, {
+        email: checkEmail,
+        userId: user?.id,
+      })
+      if (used) {
+        toast('This welcome code can only be used once per customer', 'error')
+        setPromoApplied(false)
+        return false
+      }
+
+      setPromoApplied(true)
+      writeWelcomeOffer({ claimed: true })
+      toast(`${promoPercent}% welcome discount applied ✓`)
+      return true
     },
-    [promoCode, promoPercent, toast],
+    [orders, promoCode, promoPercent, toast, user?.email, user?.id],
   )
 
   const dismissWelcome = useCallback(() => {
@@ -260,31 +245,52 @@ export function CartProvider({ children }) {
   }, [])
 
   const completeSignup = useCallback(
-    ({ silent = false } = {}) => {
+    async ({ silent = false } = {}) => {
       setSignedUp(true)
-      setPromoApplied(true)
       setWelcomeSeen(true)
+
+      if (ordersShowPromoUsed(orders, promoCode)) {
+        setPromoApplied(false)
+        writeWelcomeOffer({ seen: true, claimed: false })
+        return false
+      }
+
+      const used = await hasUsedPromoCode(promoCode, {
+        email: user?.email,
+        userId: user?.id,
+      })
+      if (used) {
+        setPromoApplied(false)
+        writeWelcomeOffer({ seen: true, claimed: false })
+        if (!silent) {
+          toast('Welcome code already used on a previous order', 'error')
+        }
+        return false
+      }
+
+      setPromoApplied(true)
       writeWelcomeOffer({ seen: true, claimed: true })
       if (!silent) {
         toast(`Welcome to the troop — ${promoCode} applied ✓`)
       }
+      return true
     },
-    [promoCode, toast],
+    [orders, promoCode, toast, user?.email, user?.id],
   )
 
-  // Logged-in members: never show the popup — apply welcome promo quietly
+  // Logged-in members: never show the popup — apply welcome promo quietly if unused
   useEffect(() => {
     if (authLoading || !isLoggedIn) return
-    if (promoApplied && welcomeSeen && signedUp) return
-    completeSignup({ silent: true })
-  }, [
-    authLoading,
-    completeSignup,
-    isLoggedIn,
-    promoApplied,
-    signedUp,
-    welcomeSeen,
-  ])
+    if (welcomeSeen && signedUp) return
+    let cancelled = false
+    ;(async () => {
+      await completeSignup({ silent: true })
+      if (cancelled) return
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, completeSignup, isLoggedIn, signedUp, welcomeSeen])
 
   const placeOrder = useCallback(
     async (shipping = null, extras = {}) => {
@@ -293,11 +299,39 @@ export function CartProvider({ children }) {
         toast(err.message)
         throw err
       }
+
+      let promoDiscount = promoApplied ? disc : 0
+      const shipEmail = shipping?.email || user?.email || ''
+      if (promoDiscount > 0) {
+        if (ordersShowPromoUsed(orders, promoCode)) {
+          setPromoApplied(false)
+          const err = new Error(
+            'This welcome code can only be used once per customer',
+          )
+          toast(err.message, 'error')
+          throw err
+        }
+        const used = await hasUsedPromoCode(promoCode, {
+          email: shipEmail,
+          userId: user?.id,
+        })
+        if (used === true) {
+          setPromoApplied(false)
+          const err = new Error(
+            'This welcome code can only be used once per customer',
+          )
+          toast(err.message, 'error')
+          throw err
+        }
+      } else {
+        promoDiscount = 0
+      }
+
       const shipFee = extras.shipFee || 0
       const redeeming = redeemApplied && canRedeem
       const redeemAmount = redeeming ? REDEEM_VALUE : 0
       const pointsSpent = redeeming ? REDEEM_POINTS : 0
-      const merchandise = Math.max(0, sub - disc - redeemAmount)
+      const merchandise = Math.max(0, sub - promoDiscount - redeemAmount)
       const orderTotal = merchandise + shipFee
       const earned = Math.round(orderTotal * ptsPerDollar)
       const order = {
@@ -305,17 +339,18 @@ export function CartProvider({ children }) {
         createdAt: new Date().toISOString(),
         status: 'Awaiting payment',
         paymentMethod: 'bank_transfer',
-        items: displayCartItems.map((i) => ({
+        items: cartItems.map((i) => ({
           productId: i.id,
-          name: i.isGift ? `${i.name} (Free gift)` : i.name,
+          name: i.name,
           variantLabel: i.variantLabel,
           qty: i.qty,
           price: i.price,
           img: i.img,
         })),
         subtotal: sub,
-        discount: disc + redeemAmount,
-        promoDiscount: disc,
+        discount: promoDiscount + redeemAmount,
+        promoDiscount,
+        promoCode: promoDiscount > 0 ? promoCode : null,
         redeemDiscount: redeemAmount,
         pointsRedeemed: pointsSpent,
         shippingFee: shipFee,
@@ -345,6 +380,10 @@ export function CartProvider({ children }) {
 
       setCart({})
       setRedeemApplied(false)
+      if (promoDiscount > 0) {
+        setPromoApplied(false)
+        writeWelcomeOffer({ claimed: false, seen: true })
+      }
       if (!extras.keepOpen) {
         setCartOpen(false)
         toast(
@@ -356,8 +395,11 @@ export function CartProvider({ children }) {
     [
       authLoading,
       canRedeem,
-      displayCartItems,
+      cartItems,
       disc,
+      orders,
+      promoApplied,
+      promoCode,
       ptsPerDollar,
       recordOrder,
       redeemApplied,
@@ -369,8 +411,8 @@ export function CartProvider({ children }) {
 
   const value = {
     cart,
-    cartItems: displayCartItems,
-    cartCount: displayCartCount,
+    cartItems,
+    cartCount,
     sub,
     disc,
     redeemDisc,
@@ -382,8 +424,6 @@ export function CartProvider({ children }) {
     promoCode,
     promoPercent,
     ptsPerDollar,
-    qualifiesFreeBac,
-    freeBacThreshold,
     signedUp,
     welcomeSeen,
     authLoading,

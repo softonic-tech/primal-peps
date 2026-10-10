@@ -18,7 +18,7 @@ export default function Signup() {
       toast(result.error || 'Could not save your email.')
       return
     }
-    completeSignup()
+    await completeSignup()
     document.getElementById('revealCode')?.scrollIntoView({
       block: 'center',
       behavior: 'smooth',
