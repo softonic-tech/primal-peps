@@ -2,6 +2,16 @@
  * Site-wide business & legal config.
  * PayID is the primary payment method.
  */
+
+export const SITE_URL = 'https://www.primalpeps.shop'
+export const SITE_NAME = 'Primal Peps'
+export const DEFAULT_TITLE = 'Primal Peps — Premium Research Peptides'
+export const DEFAULT_DESCRIPTION =
+  'Primal Peps — premium research peptides. Lab-tested vials, Australian PayID checkout, discreet shipping. Research use only · 18+.'
+export const OG_IMAGE = `${SITE_URL}/og-image.png`
+export const OG_IMAGE_ALT =
+  'Primal Peps logo — roaring gorilla above metallic PRIMAL PEPS wordmark'
+
 export const BANK_DETAILS = {
   accountName:
     import.meta.env.VITE_BANK_ACCOUNT_NAME || 'A Akil',
