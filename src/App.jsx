@@ -26,7 +26,10 @@ import Dashboard from './components/Dashboard'
 import ProductDetail from './components/ProductDetail'
 import ComingSoon from './components/ComingSoon'
 import Landing from './components/Landing'
+import TrackOrder from './components/TrackOrder'
+import LegalPage from './components/LegalPage'
 import WhatsAppFloat from './components/WhatsAppFloat'
+import Seo from './components/Seo'
 import './styles.css'
 
 function RevealObserver() {
@@ -156,9 +159,12 @@ function AppLayout() {
 
   if (loading) {
     return (
-      <div className="coming-soon coming-soon-boot" aria-busy="true">
-        <img src="/logo.png" alt="Primal Peps" />
-      </div>
+      <>
+        <Seo />
+        <div className="coming-soon coming-soon-boot" aria-busy="true">
+          <img src="/logo.png" alt="Primal Peps" />
+        </div>
+      </>
     )
   }
 
@@ -166,6 +172,7 @@ function AppLayout() {
     if (isLanding) {
       return (
         <>
+          <Seo />
           <Landing waitlist />
           <Toast />
         </>
@@ -173,6 +180,7 @@ function AppLayout() {
     }
     return (
       <>
+        <Seo />
         <ComingSoon />
         <Toast />
       </>
@@ -181,13 +189,23 @@ function AppLayout() {
 
   return (
     <>
+      <Seo />
       <ScrollToTop />
       {!isHome && <Nav announceVisible={false} />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/landing" element={<Landing />} />
         <Route path="/account" element={<Dashboard />} />
+        <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route
+          path="/shipping-policy"
+          element={<LegalPage slug="shipping-policy" />}
+        />
+        <Route path="/returns" element={<LegalPage slug="returns" />} />
+        <Route path="/privacy" element={<LegalPage slug="privacy" />} />
+        <Route path="/terms" element={<LegalPage slug="terms" />} />
+        <Route path="/legal" element={<LegalPage slug="legal" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Checkout />

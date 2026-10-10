@@ -347,7 +347,9 @@ export function CartProvider({ children }) {
       setRedeemApplied(false)
       if (!extras.keepOpen) {
         setCartOpen(false)
-        toast(`Order ${order.id} placed — transfer funds to confirm`)
+        toast(
+          `Order ${order.id} placed — transfer funds to confirm. Check spam for emails.`,
+        )
       }
       return order
     },

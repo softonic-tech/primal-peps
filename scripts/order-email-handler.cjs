@@ -203,7 +203,8 @@ function wrapHtml(heading, introHtml, bodyHtml) {
           <h1 style="margin:0 0 8px;font-size:28px;line-height:1.1;color:#ece9e3">${escapeHtml(heading)}</h1>
           <p style="margin:0 0 22px;color:#9a9184">${introHtml}</p>
           ${bodyHtml}
-          <p style="margin:22px 0 0;color:#6e675d;font-size:12px">Research use only. 18+.</p>
+          <p style="margin:22px 0 0;color:#9a9184;font-size:12px;line-height:1.5">Tip: add us to your contacts, and check spam/junk if you don't see payment or shipping updates.</p>
+          <p style="margin:12px 0 0;color:#6e675d;font-size:12px">Research use only. 18+.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -240,6 +241,8 @@ function buildStatusEmail(order, items, bank, status) {
       ? `\nPay by PayID using your order ID as the reference:\n${bankText(bank)}`
       : '',
     '',
+    'Tip: add us to your contacts, and check spam/junk if you do not see payment or shipping updates.',
+    '',
     'Research use only. 18+.',
   ]
     .filter((line) => line !== '')
@@ -267,6 +270,8 @@ function buildReplacementEmail(order, trackingNumber) {
     `Updated tracking for order ${order.id}.`,
     '',
     trackingText(tn, { replacement: true }),
+    '',
+    'Tip: add us to your contacts, and check spam/junk if you do not see payment or shipping updates.',
     '',
     'Research use only. 18+.',
   ].join('\n')

@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
+import { LEGAL_NAV } from '../data/legalPages'
 import { LEGAL } from '../data/site'
 import { subscribeNewsletter } from '../lib/newsletter'
 
@@ -96,15 +98,27 @@ export default function Footer() {
           <div className="foot-col foot-support">
             <h5>Support</h5>
             <div className="foot-links">
-              <a href="#shipping">Shipping &amp; delivery</a>
-              <a href="#faq">FAQ</a>
-              <a href="#disclaimer">Legal disclaimer</a>
+              <Link to="/shipping-policy">Shipping &amp; delivery</Link>
+              <Link to="/track-order">Track order</Link>
+              <Link to="/coa-library">COA Library</Link>
+              <a href="/#faq">FAQ</a>
+              <Link to="/legal">Legal &amp; compliance</Link>
               {contact.email && (
                 <a href={`mailto:${contact.email}`}>{contact.email}</a>
               )}
               {contact.phone && (
                 <a href={`tel:${contact.phone}`}>{contact.phone}</a>
               )}
+            </div>
+          </div>
+          <div className="foot-col">
+            <h5>Legal policies</h5>
+            <div className="foot-links">
+              {LEGAL_NAV.map((item) => (
+                <Link key={item.slug} to={`/${item.slug}`}>
+                  {item.title}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -150,6 +164,13 @@ export default function Footer() {
 
         <div className="legal">
           <span>© 2026 Primal Peps. All rights reserved.</span>
+          <span className="legal-links">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+            <Link to="/returns">Returns</Link>
+            <Link to="/shipping-policy">Shipping</Link>
+            <Link to="/legal">Compliance</Link>
+          </span>
         </div>
       </div>
     </footer>
