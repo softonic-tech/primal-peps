@@ -49,13 +49,9 @@ const emptyShipping = {
   notes: '',
 }
 
-function isValidPhone(value) {
-  const digits = value.replace(/\D/g, '')
-  return digits.length >= 8 && digits.length <= 15
-}
-
 function isValidEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+  const email = value.trim()
+  return email.includes('@') && email.includes('.')
 }
 
 function StateSelect({ value, onChange, invalid }) {
@@ -315,10 +311,38 @@ export default function Checkout() {
   const [promoInput, setPromoInput] = useState(promoApplied ? promoCode : '')
   const [shipping, setShipping] = useState(emptyShipping)
   const [errors, setErrors] = useState({})
-  const [legalAck, setLegalAck] = useState(false)
+  const [legalAck, setLegalAck] = useState(true)
   const [placedOrder, setPlacedOrder] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const prefillsDone = useRef(false)
+  const contentRef = useRef(null)
+  const formRef = useRef(null)
+
+  const scrollContentTop = () => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const focusFirstError = (nextErrors) => {
+    const order = [
+      'fullName',
+      'email',
+      'phone',
+      'line1',
+      'suburb',
+      'state',
+      'postcode',
+    ]
+    const firstKey = order.find((key) => nextErrors[key])
+    if (!firstKey) return
+    requestAnimationFrame(() => {
+      const el = formRef.current?.querySelector(`[data-field="${firstKey}"]`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const focusable =
+        el.querySelector('input, button.fancy-select-trigger') || el
+      if (typeof focusable.focus === 'function') focusable.focus({ preventScroll: true })
+    })
+  }
 
   useEffect(() => {
     if (promoApplied) setPromoInput(promoCode)
@@ -329,10 +353,15 @@ export default function Checkout() {
   }, [onCheckoutRoute, setCartOpen])
 
   useEffect(() => {
+    if (!cartOpen) return
+    scrollContentTop()
+  }, [step, cartOpen, placedOrder])
+
+  useEffect(() => {
     if (!cartOpen) {
       setStep(1)
       setErrors({})
-      setLegalAck(false)
+      setLegalAck(true)
       setPlacedOrder(null)
       prefillsDone.current = false
       return
@@ -387,19 +416,26 @@ export default function Checkout() {
 
   const validateShipping = () => {
     const next = {}
-    if (!shipping.fullName.trim()) next.fullName = 'Enter your full name'
-    if (!isValidEmail(shipping.email)) next.email = 'Enter a valid email'
-    if (!isValidPhone(shipping.phone)) {
-      next.phone = 'Enter a valid phone number'
+    if (!shipping.fullName.trim()) next.fullName = 'Required'
+    if (!shipping.email.trim() || !isValidEmail(shipping.email)) {
+      next.email = 'Required'
     }
-    if (!shipping.line1.trim()) next.line1 = 'Enter your street address'
-    if (!shipping.suburb.trim()) next.suburb = 'Enter your suburb'
-    if (!shipping.state) next.state = 'Select your state or territory'
-    if (!/^\d{4}$/.test(shipping.postcode.trim())) {
-      next.postcode = 'Enter a valid 4-digit postcode'
-    }
+    if (!shipping.phone.trim()) next.phone = 'Required'
+    if (!shipping.line1.trim()) next.line1 = 'Required'
+    if (!shipping.suburb.trim()) next.suburb = 'Required'
+    if (!shipping.state) next.state = 'Required'
+    if (!shipping.postcode.trim()) next.postcode = 'Required'
     setErrors(next)
-    return Object.keys(next).length === 0
+    const ok = Object.keys(next).length === 0
+    if (!ok) focusFirstError(next)
+    return ok
+  }
+
+  const goToStep = (target) => {
+    if (placedOrder || submitting) return
+    if (target >= step || target < 1) return
+    setErrors({})
+    setStep(target)
   }
 
   const goNext = async () => {
@@ -414,7 +450,7 @@ export default function Checkout() {
     }
     if (step === 2) {
       if (!validateShipping()) {
-        toast('Please complete your Australian shipping details')
+        toast('Fill the highlighted fields to continue')
         return
       }
       setStep(3)
@@ -425,16 +461,12 @@ export default function Checkout() {
         toast('Please wait — checking your session')
         return
       }
-      if (!legalAck) {
-        toast('Please confirm the research-use and 18+ acknowledgement')
-        return
-      }
       setSubmitting(true)
       try {
         const order = await placeOrder(shipping, { shipFee, keepOpen: true })
         setPlacedOrder(order)
         setShipping(emptyShipping)
-        setLegalAck(false)
+        setLegalAck(true)
         toast(
           `Order ${order.id} submitted — transfer funds to confirm. Check spam for emails.`,
         )
@@ -455,8 +487,11 @@ export default function Checkout() {
       continueShopping()
       return
     }
+    setErrors({})
     setStep((s) => s - 1)
   }
+
+  const errorCount = Object.values(errors).filter(Boolean).length
 
   const primaryLabel = placedOrder
     ? 'Done'
@@ -522,26 +557,41 @@ export default function Checkout() {
           </svg>
         </button>
 
-        <div className="checkout-progress">
-          <div className={`progress-step${step >= 1 ? ' active' : ''}${step > 1 ? ' completed' : ''}`}>
-            <div className="step-icon">🛒</div>
-            <span>Cart</span>
-          </div>
-          <div className="progress-line" />
-          <div className={`progress-step${step >= 2 ? ' active' : ''}${step > 2 ? ' completed' : ''}`}>
-            <div className="step-icon">📦</div>
-            <span>Shipping</span>
-          </div>
-          <div className="progress-line" />
-          <div
-            className={`progress-step${step >= 3 || placedOrder ? ' active' : ''}${placedOrder ? ' completed' : ''}`}
+        <div className="checkout-progress" role="navigation" aria-label="Checkout steps">
+          <button
+            type="button"
+            className={`progress-step${step >= 1 ? ' active' : ''}${step > 1 ? ' completed' : ''}${step > 1 && !placedOrder ? ' clickable' : ''}`}
+            onClick={() => goToStep(1)}
+            disabled={placedOrder || step <= 1}
+            aria-current={step === 1 && !placedOrder ? 'step' : undefined}
           >
-            <div className="step-icon">🏦</div>
-            <span>{placedOrder ? 'Transfer' : 'Payment'}</span>
-          </div>
+            <div className="step-icon" aria-hidden="true">1</div>
+            <span>Cart</span>
+          </button>
+          <div className={`progress-line${step > 1 ? ' filled' : ''}`} aria-hidden="true" />
+          <button
+            type="button"
+            className={`progress-step${step >= 2 ? ' active' : ''}${step > 2 ? ' completed' : ''}${step > 2 && !placedOrder ? ' clickable' : ''}`}
+            onClick={() => goToStep(2)}
+            disabled={placedOrder || step <= 2}
+            aria-current={step === 2 && !placedOrder ? 'step' : undefined}
+          >
+            <div className="step-icon" aria-hidden="true">2</div>
+            <span>Shipping</span>
+          </button>
+          <div className={`progress-line${step > 2 || placedOrder ? ' filled' : ''}`} aria-hidden="true" />
+          <button
+            type="button"
+            className={`progress-step${step >= 3 || placedOrder ? ' active' : ''}${placedOrder ? ' completed' : ''}`}
+            disabled
+            aria-current={step === 3 || placedOrder ? 'step' : undefined}
+          >
+            <div className="step-icon" aria-hidden="true">3</div>
+            <span>{placedOrder ? 'Done' : 'Pay'}</span>
+          </button>
         </div>
 
-        <div className="checkout-content">
+        <div className="checkout-content" ref={contentRef}>
           {step === 1 && (
             <div className="checkout-step">
               <div className="checkout-main">
@@ -678,53 +728,57 @@ export default function Checkout() {
               <div className="checkout-main">
                 <h2 className="checkout-title">SHIP TO AUSTRALIA</h2>
                 <p className="ship-intro">
-                  We currently deliver Australia-wide via Australia Post. Enter
-                  your delivery details exactly as they appear for AU parcel
-                  delivery.
+                  Australia-wide via Australia Post. Use the address exactly as
+                  it appears for AU parcel delivery.
                 </p>
                 {authLoading ? (
-                  <p className="checkout-auth-note">
-                    Checking your session… shipping and account options will
-                    appear in a moment.
-                  </p>
+                  <p className="checkout-auth-note">Checking your session…</p>
                 ) : isLoggedIn ? (
                   <p className="checkout-auth-note logged-in">
-                    Signed in as <strong>{user.email}</strong> — this order is
-                    linked to your account. Shipping details are prefilled from
-                    your profile; edit anything before continuing.
+                    Signed in as <strong>{user.email}</strong> — details
+                    prefilled from your profile.
                   </p>
                 ) : (
                   <p className="checkout-auth-note">
-                    Checking out as a guest — this order won&apos;t earn points
-                    on your account unless you sign in first.{' '}
+                    Guest checkout —{' '}
                     <button
                       type="button"
                       className="text-link"
                       onClick={() => openAuth('login')}
                     >
-                      Sign in
+                      sign in
                     </button>{' '}
-                    to autofill saved shipping, or{' '}
-                    <Link to="/account" onClick={close}>
-                      create an account
-                    </Link>{' '}
-                    after your order.
+                    to autofill and earn points.
                   </p>
+                )}
+
+                {errorCount > 0 && (
+                  <div className="checkout-error-banner" role="alert">
+                    Fix {errorCount} field{errorCount === 1 ? '' : 's'} highlighted
+                    below to continue.
+                  </div>
                 )}
 
                 <form
                   className="ship-form"
+                  ref={formRef}
+                  noValidate
                   onSubmit={(e) => {
                     e.preventDefault()
                     goNext()
                   }}
                 >
                   <div className="ship-grid">
-                    <label className={`ship-field${errors.fullName ? ' invalid' : ''}`}>
+                    <label
+                      className={`ship-field${errors.fullName ? ' invalid' : ''}`}
+                      data-field="fullName"
+                    >
                       <span>Full name</span>
                       <input
                         type="text"
                         autoComplete="name"
+                        name="name"
+                        enterKeyHint="next"
                         placeholder="Alex Taylor"
                         value={shipping.fullName}
                         onChange={(e) => setField('fullName', e.target.value)}
@@ -732,11 +786,17 @@ export default function Checkout() {
                       {errors.fullName && <em>{errors.fullName}</em>}
                     </label>
 
-                    <label className={`ship-field${errors.email ? ' invalid' : ''}`}>
+                    <label
+                      className={`ship-field${errors.email ? ' invalid' : ''}`}
+                      data-field="email"
+                    >
                       <span>Email</span>
                       <input
                         type="email"
                         autoComplete="email"
+                        name="email"
+                        enterKeyHint="next"
+                        inputMode="email"
                         placeholder="you@email.com"
                         value={shipping.email}
                         onChange={(e) => setField('email', e.target.value)}
@@ -744,23 +804,34 @@ export default function Checkout() {
                       {errors.email && <em>{errors.email}</em>}
                     </label>
 
-                    <label className={`ship-field${errors.phone ? ' invalid' : ''}`}>
-                      <span>Phone number</span>
+                    <label
+                      className={`ship-field${errors.phone ? ' invalid' : ''}`}
+                      data-field="phone"
+                    >
+                      <span>Phone</span>
                       <input
                         type="tel"
                         autoComplete="tel"
-                        placeholder="+61 4XX XXX XXX"
+                        name="tel"
+                        enterKeyHint="next"
+                        inputMode="tel"
+                        placeholder="04XX XXX XXX"
                         value={shipping.phone}
                         onChange={(e) => setField('phone', e.target.value)}
                       />
                       {errors.phone && <em>{errors.phone}</em>}
                     </label>
 
-                    <label className={`ship-field ship-span-2${errors.line1 ? ' invalid' : ''}`}>
+                    <label
+                      className={`ship-field ship-span-2${errors.line1 ? ' invalid' : ''}`}
+                      data-field="line1"
+                    >
                       <span>Street address</span>
                       <input
                         type="text"
                         autoComplete="address-line1"
+                        name="address-line1"
+                        enterKeyHint="next"
                         placeholder="12 Example Street"
                         value={shipping.line1}
                         onChange={(e) => setField('line1', e.target.value)}
@@ -769,21 +840,28 @@ export default function Checkout() {
                     </label>
 
                     <label className="ship-field ship-span-2">
-                      <span>Apartment / unit / suite (optional)</span>
+                      <span>Unit / apartment (optional)</span>
                       <input
                         type="text"
                         autoComplete="address-line2"
-                        placeholder="Unit 3, Level 2"
+                        name="address-line2"
+                        enterKeyHint="next"
+                        placeholder="Unit 3"
                         value={shipping.line2}
                         onChange={(e) => setField('line2', e.target.value)}
                       />
                     </label>
 
-                    <label className={`ship-field${errors.suburb ? ' invalid' : ''}`}>
+                    <label
+                      className={`ship-field${errors.suburb ? ' invalid' : ''}`}
+                      data-field="suburb"
+                    >
                       <span>Suburb</span>
                       <input
                         type="text"
                         autoComplete="address-level2"
+                        name="address-level2"
+                        enterKeyHint="next"
                         placeholder="South Yarra"
                         value={shipping.suburb}
                         onChange={(e) => setField('suburb', e.target.value)}
@@ -791,8 +869,11 @@ export default function Checkout() {
                       {errors.suburb && <em>{errors.suburb}</em>}
                     </label>
 
-                    <div className={`ship-field${errors.state ? ' invalid' : ''}`}>
-                      <span>State / Territory</span>
+                    <div
+                      className={`ship-field${errors.state ? ' invalid' : ''}`}
+                      data-field="state"
+                    >
+                      <span>State</span>
                       <StateSelect
                         value={shipping.state}
                         invalid={Boolean(errors.state)}
@@ -801,12 +882,17 @@ export default function Checkout() {
                       {errors.state && <em>{errors.state}</em>}
                     </div>
 
-                    <label className={`ship-field${errors.postcode ? ' invalid' : ''}`}>
+                    <label
+                      className={`ship-field${errors.postcode ? ' invalid' : ''}`}
+                      data-field="postcode"
+                    >
                       <span>Postcode</span>
                       <input
                         type="text"
                         inputMode="numeric"
                         autoComplete="postal-code"
+                        name="postal-code"
+                        enterKeyHint="done"
                         maxLength={4}
                         placeholder="3141"
                         value={shipping.postcode}
@@ -824,7 +910,8 @@ export default function Checkout() {
                       <span>Delivery notes (optional)</span>
                       <input
                         type="text"
-                        placeholder="Leave at front door / building access code"
+                        enterKeyHint="done"
+                        placeholder="Leave at front door / access code"
                         value={shipping.notes}
                         onChange={(e) => setField('notes', e.target.value)}
                       />
@@ -898,24 +985,19 @@ export default function Checkout() {
               <div className="checkout-main">
                 <h2 className="checkout-title">PAYMENT</h2>
                 {authLoading ? (
-                  <p className="checkout-auth-note">
-                    Checking your session before you submit…
-                  </p>
+                  <p className="checkout-auth-note">Checking your session…</p>
                 ) : isLoggedIn ? (
                   <p className="checkout-auth-note logged-in">
-                    Submitting as <strong>{user.email}</strong> — points earned
-                    (and any redeem) apply to this account.
+                    Submitting as <strong>{user.email}</strong>
                   </p>
                 ) : (
                   <p className="checkout-auth-note">
-                    Submitting as a guest. Points from this order won&apos;t be
-                    saved to an account.
+                    Guest checkout — points won&apos;t be saved to an account.
                   </p>
                 )}
                 <p className="ship-intro">
-                  We accept payment by PayID — instant and easy. Submit your
-                  order, then transfer the total via PayID using your order number
-                  as the reference.
+                  Pay by PayID after you submit. Use your order number as the
+                  transfer reference so we can match payment quickly.
                 </p>
                 <BankTransferCard
                   amount={orderTotal}
@@ -923,7 +1005,16 @@ export default function Checkout() {
                   bank={bank}
                 />
                 <div className="ship-review">
-                  <h3>Shipping summary</h3>
+                  <div className="ship-review-head">
+                    <h3>Delivering to</h3>
+                    <button
+                      type="button"
+                      className="text-link ship-edit-btn"
+                      onClick={() => goToStep(2)}
+                    >
+                      Edit
+                    </button>
+                  </div>
                   <p>
                     <strong>{shipping.fullName}</strong>
                     <br />
@@ -1106,10 +1197,7 @@ export default function Checkout() {
                 type="button"
                 aria-label={primaryLabel}
                 disabled={
-                  !placedOrder &&
-                  (empty ||
-                    submitting ||
-                    (step === 3 && (!legalAck || authLoading)))
+                  !placedOrder && (empty || submitting || (step === 3 && authLoading))
                 }
                 onClick={goNext}
               >

@@ -30,7 +30,7 @@ function catFromSearch(params) {
 }
 
 function ProductCard({ product, index }) {
-  const { addToCart } = useCart()
+  const { addToCart, setCartOpen } = useCart()
   const { getProductReviews } = useAuth()
   const [added, setAdded] = useState(false)
   const [variantId, setVariantId] = useState(defaultVariant(product).id)
@@ -82,11 +82,14 @@ function ProductCard({ product, index }) {
   const totalOffPercent =
     wasTotal > 0 ? Math.round((1 - lineTotal / wasTotal) * 100) : 0
 
-  const handleAdd = () => {
+  const handleAdd = (qty = bundleQty) => {
     if (!inStock) return
-    addToCart(product.id, variant.id, bundleQty)
+    const addQty = Math.max(1, Math.floor(Number(qty) || 1))
+    setBundleQty(addQty)
+    addToCart(product.id, variant.id, addQty)
+    setCartOpen(true)
     setAdded(true)
-    setTimeout(() => setAdded(false), 1100)
+    setTimeout(() => setAdded(false), 1200)
   }
 
   return (
@@ -172,32 +175,36 @@ function ProductCard({ product, index }) {
 
         <div className="card-bundle">
           <div className="card-bundle-head">
-            <span className="dose-label">Bundle &amp; Save</span>
-            <span className="card-bundle-max">Up to 20% off</span>
+            <span className="dose-label">Buy pack</span>
+            <span className="card-bundle-max">Tap pack → add to cart</span>
           </div>
           <div
             className="card-bundle-options"
-            role="radiogroup"
-            aria-label={`${product.name} bundle size`}
+            role="group"
+            aria-label={`${product.name} pack size — tap to add`}
           >
             {BUNDLE_TIERS.map((tier) => {
               const selected = bundleQty === tier.qty
+              const justAdded = added && selected
               return (
                 <button
                   key={tier.qty}
                   type="button"
-                  role="radio"
-                  aria-checked={selected}
                   className={`card-bundle-tile${selected ? ' active' : ''}${
                     tier.bestValue ? ' best' : ''
-                  }`}
+                  }${justAdded ? ' just-added' : ''}`}
                   disabled={!inStock}
-                  onClick={() => setBundleQty(tier.qty)}
+                  aria-label={
+                    inStock
+                      ? `Add ${tier.qty}× ${product.name} ${variant.label} to cart`
+                      : 'Out of stock'
+                  }
+                  onClick={() => handleAdd(tier.qty)}
                 >
                   {tier.bestValue && (
                     <span className="card-bundle-ribbon">Best</span>
                   )}
-                  <span className="card-bundle-qty">{tier.qty}</span>
+                  <span className="card-bundle-qty">{tier.qty}×</span>
                   <span className="card-bundle-unit">
                     {tier.qty === 1 ? 'Vial' : 'Vials'}
                   </span>
@@ -206,7 +213,11 @@ function ProductCard({ product, index }) {
                       tier.savePercent ? '' : ' is-base'
                     }`}
                   >
-                    {tier.savePercent ? `−${tier.savePercent}%` : 'Base'}
+                    {justAdded
+                      ? 'Added'
+                      : tier.savePercent
+                        ? `−${tier.savePercent}%`
+                        : 'Add'}
                   </span>
                 </button>
               )
@@ -239,7 +250,7 @@ function ProductCard({ product, index }) {
             )}
           </div>
           <button
-            className={`add-btn-round add-btn${added ? ' added' : ''}${
+            className={`card-add-btn${added ? ' added' : ''}${
               inStock ? '' : ' is-disabled'
             }`}
             data-id={product.id}
@@ -250,9 +261,13 @@ function ProductCard({ product, index }) {
             }
             type="button"
             disabled={!inStock}
-            onClick={handleAdd}
+            onClick={() => handleAdd(bundleQty)}
           >
-            {added ? '✓' : inStock ? '+' : '–'}
+            {added
+              ? 'Added ✓'
+              : inStock
+                ? `Add ${bundleQty}×`
+                : 'Sold out'}
           </button>
         </div>
       </div>

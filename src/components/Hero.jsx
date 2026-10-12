@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { FILTERS } from '../data/products'
 import { useFinePointer, useReducedMotion } from '../hooks/useMedia'
 import { useReveal } from '../hooks/useReveal'
+
+const CATEGORIES = FILTERS.filter((f) => f.cat !== 'all')
 
 function typeInto(el, text, speed) {
   return new Promise((resolve) => {
@@ -152,17 +155,33 @@ export default function Hero() {
             <span className="type-cursor" aria-hidden="true" ref={cursorRef} />
           </h1>
           <p className="hero-lede">
-            Lab-tested, research-backed peptides — in stock and ready to ship.
-            Level up your recovery, performance, and wellness with the strongest
-            lineup in the game.
+            Lab-tested peptides in stock and ready to ship. Jump straight into
+            the catalogue — no hunting through the page.
           </p>
           <div className="hero-actions">
             <a className="btn-primary magnetic" href="#shop">
-              Shop the lineup →
+              Shop products →
             </a>
-            <a className="btn-ghost" href="#points">
-              Earn Primal Points
+            <a className="btn-ghost" href="#catalogue">
+              Browse catalogue
             </a>
+          </div>
+          <div className="hero-cats" aria-label="Shop by category">
+            <span className="hero-cats-label">Quick shop</span>
+            <div className="hero-cat-list">
+              {CATEGORIES.map((f) => (
+                <a
+                  key={f.cat}
+                  className="hero-cat-chip"
+                  href={`/?cat=${f.cat}#shop`}
+                >
+                  {f.label}
+                </a>
+              ))}
+              <a className="hero-cat-chip hero-cat-all" href="#shop">
+                All products
+              </a>
+            </div>
           </div>
           <div className="hero-stats" ref={statsRef}>
             <div className="hstat">
@@ -218,7 +237,7 @@ export default function Hero() {
           </div>
         </div>
       </div>
-      <div className="scroll-hint" aria-hidden="true">
+      <a className="scroll-hint" href="#catalogue">
         <svg
           width="20"
           height="20"
@@ -229,8 +248,8 @@ export default function Hero() {
         >
           <path d="M12 5v14M5 12l7 7 7-7" />
         </svg>
-        Scroll to explore
-      </div>
+        View catalogue
+      </a>
     </header>
   )
 }
