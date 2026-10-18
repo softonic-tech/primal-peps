@@ -37,8 +37,8 @@ export const PRODUCTS = [
       'The triple-receptor research peptide at the centre of modern metabolic and incretin signalling studies.',
     hue: '#f7c04a',
     variants: [
-      { id: '5mg', label: '5MG', price: 109, img: 'products/RETATRUTIDE.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 135, img: 'products/RETATRUTIDE-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 109, img: 'primal-peps-transparent-vials/retatrutide-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 135, img: 'primal-peps-transparent-vials/retatrutide-10mg.png', stock: 100 },
     ],
   },
   {
@@ -74,9 +74,10 @@ export const PRODUCTS = [
       'A mitochondrial-derived peptide at the forefront of cellular metabolism and energy-pathway research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 69, img: 'products/MOTS-C.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 80, img: 'products/MOTS-C-10MG.png', stock: 100 },
-      { id: '40mg', label: '40MG', price: 145, img: 'products/MOTS-C-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 69, img: 'primal-peps-transparent-vials/mots-c-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 80, img: 'primal-peps-transparent-vials/mots-c-10mg.png', stock: 100 },
+      { id: '20mg', label: '20MG', price: 110, img: 'primal-peps-transparent-vials/mots-c-20mg.png', stock: 100 },
+      { id: '40mg', label: '40MG', price: 145, img: 'primal-peps-transparent-vials/mots-c-40mg.png', stock: 100 },
     ],
   },
   {
@@ -116,8 +117,8 @@ export const PRODUCTS = [
       'The dual secretagogue blend trusted for GH-axis signalling and endocrine pathway research.',
     hue: '#f7c04a',
     variants: [
-      { id: '5mg', label: '5MG', price: 79, img: 'products/CJC-IPA.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 115, img: 'products/CJC-IPA-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 79, img: 'primal-peps-transparent-vials/cjc-ipa-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 115, img: 'primal-peps-transparent-vials/cjc-ipa-10mg.png', stock: 100 },
     ],
   },
   {
@@ -153,8 +154,8 @@ export const PRODUCTS = [
       'The copper-binding tripeptide essential for matrix signalling and cellular repair research.',
     hue: '#d98e1b',
     variants: [
-      { id: '50mg', label: '50MG', price: 70, img: 'products/GHK-CU.png', stock: 100 },
-      { id: '100mg', label: '100MG', price: 88, img: 'new-peptides/ghk-cu-100mg.png', stock: 0 },
+      { id: '50mg', label: '50MG', price: 70, img: 'primal-peps-transparent-vials/ghk-cu-50mg.png', stock: 100 },
+      { id: '100mg', label: '100MG', price: 88, img: 'primal-peps-transparent-vials/ghk-cu-100mg.png', stock: 0 },
     ],
   },
   {
@@ -190,8 +191,8 @@ export const PRODUCTS = [
       'A GHRH analogue widely used in lipid-metabolism and endocrine signalling research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 85, img: 'products/TESAMORELIN.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 130, img: 'products/TESAMORELIN-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 85, img: 'primal-peps-transparent-vials/tesamorelin-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 130, img: 'primal-peps-transparent-vials/tesamorelin-10mg.png', stock: 100 },
     ],
   },
   {
@@ -233,8 +234,8 @@ export const PRODUCTS = [
       'Our signature multi-peptide blend for advanced cellular signalling and recovery research.',
     hue: '#f7c04a',
     variants: [
-      { id: '70mg', label: '70MG', price: 75, img: 'products/KLOW-70.png', stock: 0 },
-      { id: '80mg', label: '80MG', price: 185, img: 'products/KLOW-80.png', stock: 100 },
+      { id: '70mg', label: '70MG', price: 75, img: 'primal-peps-transparent-vials/klow-70mg.png', stock: 0 },
+      { id: '80mg', label: '80MG', price: 185, img: 'primal-peps-transparent-vials/klow-80mg.png', stock: 100 },
     ],
   },
   {
@@ -270,8 +271,8 @@ export const PRODUCTS = [
       'The thymosin beta-4 fragment essential for actin regulation and tissue research models.',
     hue: '#d98e1b',
     variants: [
-      { id: '5mg', label: '5MG', price: 65, img: 'products/TB-500.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 115, img: 'products/TB-500-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 65, img: 'primal-peps-transparent-vials/tb-500-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 115, img: 'primal-peps-transparent-vials/tb-500-10mg.png', stock: 100 },
     ],
   },
   {
@@ -307,8 +308,8 @@ export const PRODUCTS = [
       'The gastric pentadecapeptide at the centre of angiogenic pathway and tissue research.',
     hue: '#e8a020',
     variants: [
-      { id: '5mg', label: '5MG', price: 59, img: 'products/BPC-157.png', stock: 0 },
-      { id: '10mg', label: '10MG', price: 80, img: 'products/BPC-157-10MG.png', stock: 100 },
+      { id: '5mg', label: '5MG', price: 59, img: 'primal-peps-transparent-vials/bpc-157-5mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 80, img: 'primal-peps-transparent-vials/bpc-157-10mg.png', stock: 100 },
     ],
   },
   {
@@ -344,7 +345,7 @@ export const PRODUCTS = [
       'A long-acting amylin analogue advancing metabolic and appetite-pathway research models.',
     hue: '#f7c04a',
     variants: [
-      { id: '10mg', label: '10MG', price: 115, img: 'products/CAGRILINTIDE.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 115, img: 'primal-peps-transparent-vials/cagrilintide-10mg.png', stock: 100 },
     ],
   },
   {
@@ -380,7 +381,7 @@ export const PRODUCTS = [
       'The melanocortin analogue used widely in pigmentation and receptor-pathway research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 65, img: 'products/MT-2.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 65, img: 'primal-peps-transparent-vials/mt-2-10mg.png', stock: 100 },
     ],
   },
   {
@@ -414,7 +415,7 @@ export const PRODUCTS = [
       'The essential bacteriostatic water for reconstituting lyophilised research peptides.',
     hue: '#e8a020',
     variants: [
-      { id: 'std', label: '3ML', price: 10, img: 'products/BAC-WATER.png', stock: 100 },
+      { id: 'std', label: '3ML', price: 10, img: 'primal-peps-transparent-vials/bac-water-3ml.png', stock: 100 },
     ],
   },
   {
@@ -455,7 +456,7 @@ export const PRODUCTS = [
       'A multi-peptide blend formulated for advanced skin, matrix, and cellular repair research.',
     hue: '#f7c04a',
     variants: [
-      { id: '70mg', label: '70MG', price: 155, img: 'products/GLOW.png', stock: 100 },
+      { id: '70mg', label: '70MG', price: 155, img: 'primal-peps-transparent-vials/glow-70mg.png', stock: 100 },
     ],
   },
   {
@@ -491,7 +492,7 @@ export const PRODUCTS = [
       'The essential coenzyme at the centre of cellular energy and redox-pathway research.',
     hue: '#e8a020',
     variants: [
-      { id: '500mg', label: '500MG', price: 115, img: 'products/NAD.png', stock: 100 },
+      { id: '500mg', label: '500MG', price: 115, img: 'primal-peps-transparent-vials/nad-plus-500mg.png', stock: 100 },
     ],
   },
   {
@@ -527,7 +528,7 @@ export const PRODUCTS = [
       'A widely referenced cognitive-research peptide for neurotrophic and neuroprotection models.',
     hue: '#6ea8dc',
     variants: [
-      { id: '10mg', label: '10MG', price: 55, img: 'products/SEMAX.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 55, img: 'primal-peps-transparent-vials/semax-10mg.png', stock: 100 },
     ],
   },
   {
@@ -563,7 +564,7 @@ export const PRODUCTS = [
       'A tuftsin-analogue research peptide for anxiety and cognitive pathway models.',
     hue: '#6ea8dc',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/selank-10mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/selank-10mg.png', stock: 0 },
     ],
   },
   {
@@ -602,7 +603,7 @@ export const PRODUCTS = [
       'A dual-peptide blend for advanced tissue-repair and recovery research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/bpc-tb-500-10mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/bpc-tb-500-10mg.png', stock: 0 },
     ],
   },
   {
@@ -637,7 +638,7 @@ export const PRODUCTS = [
       'A copper tripeptide tool for dermal and follicle signalling research.',
     hue: '#d98e1b',
     variants: [
-      { id: '50mg', label: '50MG', price: 88, img: 'new-peptides/ahk-cu-50mg.png', stock: 0 },
+      { id: '50mg', label: '50MG', price: 88, img: 'primal-peps-transparent-vials/ahk-cu-50mg.png', stock: 0 },
     ],
   },
   {
@@ -672,7 +673,7 @@ export const PRODUCTS = [
       'A compact α-MSH fragment for inflammation and barrier-pathway research.',
     hue: '#e8a020',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/kpv-10mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/kpv-10mg.png', stock: 0 },
     ],
   },
   {
@@ -707,7 +708,7 @@ export const PRODUCTS = [
       'A stabilised Semax analogue for advanced cognitive-research protocols.',
     hue: '#6ea8dc',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/adamax-10mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/adamax-10mg.png', stock: 0 },
     ],
   },
   {
@@ -742,7 +743,7 @@ export const PRODUCTS = [
       'A long-acting IGF-1 analogue for growth-factor and anabolic pathway research.',
     hue: '#f7c04a',
     variants: [
-      { id: '1mg', label: '1MG', price: 88, img: 'new-peptides/igf-1-lr3-1mg.png', stock: 0 },
+      { id: '1mg', label: '1MG', price: 88, img: 'primal-peps-transparent-vials/igf-1-lr3-1mg.png', stock: 0 },
     ],
   },
   {
@@ -777,7 +778,7 @@ export const PRODUCTS = [
       'The MC1R-focused melanocortin analogue for pigmentation pathway research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/mt-1-10mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/mt-1-10mg.png', stock: 0 },
     ],
   },
   {
@@ -812,8 +813,369 @@ export const PRODUCTS = [
       'The dual-incretin research peptide widely used in modern metabolic studies.',
     hue: '#f7c04a',
     variants: [
-      { id: '10mg', label: '10MG', price: 88, img: 'new-peptides/tirzepatide-10mg.png', stock: 0 },
-      { id: '20mg', label: '20MG', price: 88, img: 'new-peptides/tirzepatide-20mg.png', stock: 0 },
+      { id: '10mg', label: '10MG', price: 88, img: 'primal-peps-transparent-vials/tirzepatide-10mg.png', stock: 0 },
+      { id: '20mg', label: '20MG', price: 88, img: 'primal-peps-transparent-vials/tirzepatide-20mg.png', stock: 0 },
+    ],
+  },
+  {
+    id: 'sema',
+    name: 'Semaglutide',
+    aka: ['Sema', 'GLP-1 receptor agonist'],
+    sub: 'Long-acting GLP-1 receptor agonist for metabolic research.',
+    tag: 'Metabolic',
+    cat: 'metabolic',
+    categoryLabel: 'Metabolic Research',
+    cas: '910463-68-2',
+    mw: '4,113.6 Da',
+    lot: 'PP-2026-023',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Selective GLP-1 receptor agonist',
+      'Metabolic & appetite models',
+      'Incretin pathway research',
+    ],
+    researchFocus: [
+      'Appetite and caloric-intake signalling',
+      'Glycaemic and metabolic marker studies',
+      'Comparison with dual- and tri-agonist incretin peptides',
+    ],
+    description:
+      'Semaglutide is a long-acting GLP-1 receptor agonist widely used in metabolic, appetite, and body-composition research models. As a mono-agonist GLP-1 tool, it is commonly compared with dual agonists such as tirzepatide and tri-agonists such as retatrutide. Supplied lyophilised for laboratory reconstitution.',
+    story:
+      'The foundational GLP-1 research peptide used across modern metabolic and incretin studies.',
+    hue: '#f7c04a',
+    variants: [
+      { id: '10mg', label: '10MG', price: 99, img: 'primal-peps-transparent-vials/semaglutide-10mg.png', stock: 100 },
+      { id: '20mg', label: '20MG', price: 149, img: 'primal-peps-transparent-vials/semaglutide-20mg.png', stock: 100 },
+     ],
+  },
+  {
+    id: '5amino',
+    name: '5-Amino',
+    aka: ['5-Amino-1MQ', '5-Amino-1-methylquinolinium'],
+    sub: 'NNMT inhibitor tool compound for metabolic and NAD+ pathway research.',
+    tag: 'New drop',
+    cat: 'metabolic',
+    categoryLabel: 'Metabolic Research',
+    cas: '42464-96-0',
+    mw: '159 Da',
+    lot: 'PP-2026-024',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'NNMT pathway research',
+      'NAD+ / metabolic models',
+      'Adipocyte signalling studies',
+    ],
+    researchFocus: [
+      'Nicotinamide N-methyltransferase (NNMT) inhibition models',
+      'Cellular NAD+ and energy metabolism',
+      'Adipocyte size and metabolic signalling',
+      'Comparative metabolic pathway research',
+    ],
+    description:
+      '5-Amino (5-Amino-1MQ) is a membrane-permeable research compound studied as an inhibitor of nicotinamide N-methyltransferase (NNMT). Labs use it to probe NAD+ salvage, adipocyte metabolism, and energy-pathway signalling in controlled in-vitro models. Supplied lyophilised for laboratory reconstitution.',
+    story:
+      'A compact NNMT-pathway tool compound for modern metabolic and NAD+ research.',
+    hue: '#f7c04a',
+    variants: [
+      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/5-amino-10mg.png', stock: 100 },
+      { id: '50mg', label: '50MG', price: 145, img: 'primal-peps-transparent-vials/5-amino-50mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'cjcdac',
+    name: 'CJC With DAC',
+    aka: ['CJC-1295 with DAC', 'DAC-CJC-1295', 'Drug Affinity Complex CJC'],
+    sub: 'Long-acting GHRH analogue with Drug Affinity Complex for sustained GH-axis research.',
+    tag: 'New drop',
+    cat: 'growth',
+    categoryLabel: 'Growth Hormone Research',
+    cas: '863288-34-0',
+    mw: '3,648 Da',
+    lot: 'PP-2026-025',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Extended half-life GHRH model',
+      'Sustained GH-axis signalling',
+      'Endocrine pathway research',
+    ],
+    researchFocus: [
+      'Prolonged GHRH-receptor activation',
+      'Sustained GH and IGF-1 dynamics',
+      'Comparison with non-DAC CJC analogues',
+      'Long-interval endocrine research protocols',
+    ],
+    description:
+      'CJC with DAC is a modified GHRH analogue carrying a Drug Affinity Complex (DAC) that extends circulating half-life relative to non-DAC CJC-1295. It is used in laboratory models that require sustained GH-axis stimulation rather than short pulsatile pulses. Supplied as a lyophilised research vial.',
+    story:
+      'The long-acting CJC analogue for sustained GH-axis and endocrine pathway studies.',
+    hue: '#e8a020',
+    variants: [
+      { id: '10mg', label: '10MG', price: 95, img: 'primal-peps-transparent-vials/cjc-with-dac-10mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'cjcnodac',
+    name: 'CJC Without DAC',
+    aka: ['CJC-1295 no DAC', 'Mod GRF 1-29', 'CJC-1295 without DAC'],
+    sub: 'Short-acting GHRH analogue for pulsatile GH-axis research protocols.',
+    tag: 'New drop',
+    cat: 'growth',
+    categoryLabel: 'Growth Hormone Research',
+    cas: '863288-34-0',
+    mw: '3,368 Da',
+    lot: 'PP-2026-026',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Pulsatile GHRH signalling',
+      'Often paired with GHS analogues',
+      'Endocrine timing studies',
+    ],
+    researchFocus: [
+      'Short-duration GHRH receptor activation',
+      'Pulsatile GH release dynamics',
+      'Co-administration models with Ipamorelin and related GHS',
+      'Comparison with DAC-extended CJC analogues',
+    ],
+    description:
+      'CJC without DAC (often called Mod GRF 1-29) is a GHRH analogue designed for shorter-acting, pulsatile GH-axis research — without the albumin-binding DAC extension. It is frequently studied alongside growth-hormone secretagogues such as Ipamorelin. Supplied lyophilised for in-vitro research use.',
+    story:
+      'The classic short-acting CJC analogue for pulsatile GH-axis research.',
+    hue: '#d98e1b',
+    variants: [
+      { id: '10mg', label: '10MG', price: 85, img: 'primal-peps-transparent-vials/cjc-without-dac-10mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'ipa',
+    name: 'Ipamorelin',
+    aka: ['IPA', 'NNC 26-0161'],
+    sub: 'Selective ghrelin-receptor (GHS-R) agonist for GH secretagogue research.',
+    tag: 'New drop',
+    cat: 'growth',
+    categoryLabel: 'Growth Hormone Research',
+    cas: '170851-70-4',
+    mw: '711 Da',
+    lot: 'PP-2026-027',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Selective GHS-R agonist',
+      'Pulsatile GH models',
+      'Often stacked with GHRH analogues',
+    ],
+    researchFocus: [
+      'Ghrelin-receptor mediated GH release',
+      'Selectivity vs broader GHS peptides',
+      'Pulsatile endocrine signalling',
+      'Combinatorial protocols with CJC / GHRH analogues',
+    ],
+    description:
+      'Ipamorelin is a pentapeptide growth-hormone secretagogue that selectively targets the ghrelin receptor (GHS-R1a). It is widely used in GH-axis research for its focused secretagogue profile and is commonly paired with GHRH analogues such as CJC without DAC. Supplied lyophilised for laboratory reconstitution.',
+    story:
+      'A selective GH secretagogue staple for endocrine and recovery-pathway research.',
+    hue: '#f7c04a',
+    variants: [
+      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/ipamorelin-10mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'dsip',
+    name: 'DSIP',
+    aka: ['Delta Sleep-Inducing Peptide'],
+    sub: 'Nonapeptide studied in sleep architecture and stress-adaptation models.',
+    tag: 'New drop',
+    cat: 'recovery',
+    categoryLabel: 'Neuromodulation Research',
+    cas: '62568-57-4',
+    mw: '849 Da',
+    lot: 'PP-2026-028',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Sleep-architecture models',
+      'Stress-adaptation research',
+      'CNS signalling studies',
+    ],
+    researchFocus: [
+      'Delta-wave and sleep-stage research models',
+      'Stress and recovery signalling',
+      'Hypothalamic peptide pathway studies',
+      'Neuroendocrine adaptation protocols',
+    ],
+    description:
+      'DSIP (Delta Sleep-Inducing Peptide) is a nonapeptide originally isolated from cerebral venous blood and studied for its associations with sleep architecture, stress adaptation, and related neuroendocrine signalling. Supplied as a lyophilised research peptide for controlled laboratory use.',
+    story:
+      'A classic CNS-linked nonapeptide for sleep and stress-adaptation research models.',
+    hue: '#e8a020',
+    variants: [
+      { id: '10mg', label: '10MG', price: 70, img: 'primal-peps-transparent-vials/dsip-10mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'hcg',
+    name: 'HCG',
+    aka: ['Human Chorionic Gonadotropin', 'hCG'],
+    sub: 'Glycoprotein hormone for LH-receptor and reproductive-axis research.',
+    tag: 'New drop',
+    cat: 'growth',
+    categoryLabel: 'Endocrine Research',
+    cas: '9002-61-3',
+    mw: '~36.7 kDa',
+    lot: 'PP-2026-029',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'LH-receptor pathway research',
+      'Reproductive-axis models',
+      'Gonadotropin signalling studies',
+    ],
+    researchFocus: [
+      'LH / hCG receptor activation models',
+      'Gonadal steroidogenesis research',
+      'Reproductive endocrinology pathways',
+      'Comparative gonadotropin signalling',
+    ],
+    description:
+      'HCG (human chorionic gonadotropin) is a glycoprotein hormone that engages LH/hCG receptors and is used extensively in reproductive and endocrine pathway research. This research-grade lyophilised preparation is intended for controlled laboratory protocols only.',
+    story:
+      'A foundational gonadotropin for LH-receptor and reproductive-axis research.',
+    hue: '#d98e1b',
+    variants: [
+      { id: '10000iu', label: '10000IU', price: 95, img: 'primal-peps-transparent-vials/hcg-10000iu.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'glutathione',
+    name: 'Glutathione',
+    aka: ['GSH', 'L-Glutathione', 'γ-L-Glutamyl-L-cysteinylglycine'],
+    sub: 'Endogenous tripeptide antioxidant for redox and detoxification research.',
+    tag: 'New drop',
+    cat: 'repair',
+    categoryLabel: 'Cellular Research',
+    cas: '70-18-8',
+    mw: '307 Da',
+    lot: 'PP-2026-030',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Cellular redox models',
+      'Detoxification pathway research',
+      'Oxidative-stress studies',
+    ],
+    researchFocus: [
+      'Glutathione redox cycle and antioxidant capacity',
+      'Phase II detoxification signalling',
+      'Oxidative stress and cellular resilience',
+      'Comparative antioxidant pathway research',
+    ],
+    description:
+      'Glutathione (GSH) is the principal intracellular thiol antioxidant — a tripeptide of glutamate, cysteine, and glycine. Research applications span redox balance, detoxification, and oxidative-stress models. Supplied lyophilised at research purity for laboratory reconstitution.',
+    story:
+      'The core cellular antioxidant tripeptide for redox and detoxification research.',
+    hue: '#f7c04a',
+    variants: [
+      { id: '1500mg', label: '1500MG', price: 65, img: 'primal-peps-transparent-vials/glutathione-1500mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'kisspeptin',
+    name: 'Kisspeptin',
+    aka: ['Kisspeptin-10', 'Metastin', 'Kp-10'],
+    sub: 'KISS1R agonist peptide for reproductive neuroendocrine research.',
+    tag: 'New drop',
+    cat: 'growth',
+    categoryLabel: 'Endocrine Research',
+    cas: '374675-50-6',
+    mw: '1,302 Da',
+    lot: 'PP-2026-031',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'GnRH / HPG-axis research',
+      'KISS1R signalling',
+      'Reproductive neuroendocrine models',
+    ],
+    researchFocus: [
+      'Kisspeptin receptor (KISS1R) activation',
+      'GnRH pulse-generator upstream signalling',
+      'Hypothalamic–pituitary–gonadal axis models',
+      'Comparative reproductive neuroendocrine research',
+    ],
+    description:
+      'Kisspeptin (commonly studied as Kisspeptin-10) is a KISS1-gene product that activates the kisspeptin receptor (KISS1R) and sits upstream of GnRH release in reproductive neuroendocrine research. Supplied lyophilised for controlled laboratory use.',
+    story:
+      'A key upstream peptide for GnRH-axis and reproductive neuroendocrine studies.',
+    hue: '#e8a020',
+    variants: [
+      { id: '10mg', label: '10MG', price: 80, img: 'primal-peps-transparent-vials/kisspeptin-10mg.png', stock: 100 },
+    ],
+  },
+  {
+    id: 'epithalon',
+    name: 'Epithalon',
+    aka: ['Epitalon', 'Ala-Glu-Asp-Gly', 'Epithalone'],
+    sub: 'Synthetic tetrapeptide for telomerase and ageing-pathway research.',
+    tag: 'New drop',
+    cat: 'metabolic',
+    categoryLabel: 'Longevity Research',
+    cas: '307297-39-8',
+    mw: '390 Da',
+    lot: 'PP-2026-032',
+    form: 'Lyophilised powder',
+    purity: '99%+',
+    storageLyophilised: '-20 °C — protect from light & moisture',
+    storageReconstituted: '2–8 °C — use within 28 days',
+    reconstitution: 'Bacteriostatic water (recommended)',
+    perks: [
+      'Telomerase pathway models',
+      'Ageing & pineal research',
+      'Cellular longevity studies',
+    ],
+    researchFocus: [
+      'Telomerase activity and telomere-length models',
+      'Pineal and circadian peptide research',
+      'Cellular senescence and ageing pathways',
+      'Comparative longevity-peptide protocols',
+    ],
+    description:
+      'Epithalon (Epitalon) is a synthetic tetrapeptide analogue related to epithalamin, studied in telomerase regulation, pineal signalling, and cellular ageing research models. Supplied as a lyophilised vial for laboratory reconstitution.',
+    story:
+      'A compact longevity-research tetrapeptide centred on telomerase and ageing pathways.',
+    hue: '#d98e1b',
+    variants: [
+      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/epithalon-10mg.png', stock: 100 },
     ],
   },
 ]
@@ -824,7 +1186,6 @@ export const PROMO = 'PRIMAL15'
 
 export const ANNOUNCE_MSGS = [
   'Free shipping on orders over $150',
-  'Free BAC Water on orders over $300',
   'Research use only · Not for human or veterinary consumption',
   '18+ to purchase · Pay by PayID',
   'Every batch third-party lab tested',
