@@ -192,6 +192,35 @@ function trackingText(trackingNumber, { replacement = false } = {}) {
   ].join('\n')
 }
 
+const TIKTOK_HANDLE = '@primalpepsaus'
+
+function tiktokRewardHtml() {
+  return `
+    <div style="margin:22px 0 0;padding:16px;border:1px solid #57431c;border-radius:12px;background:#0c0b09">
+      <p style="margin:0 0 6px;color:#e8a020;letter-spacing:.12em;font-size:11px;text-transform:uppercase">TikTok reward</p>
+      <p style="margin:0 0 10px;color:#ece9e3;font-size:16px;font-weight:700">Get 50% off your next order</p>
+      <p style="margin:0 0 12px;color:#9a9184;font-size:13px;line-height:1.55">
+        Pay for this order first and wait until it arrives. Then post a TikTok showing your Primal Peps order, recommend us, and tag <strong style="color:#f7c04a">${TIKTOK_HANDLE}</strong>.
+        DM us the video link on WhatsApp — after we manually confirm, your <strong style="color:#ece9e3">next</strong> order is 50% off.
+      </p>
+      <p style="margin:0;color:#6e675d;font-size:12px;line-height:1.45">
+        Important: this is not a free first order. Pay now → post after delivery → discount on order #2+.
+      </p>
+    </div>`
+}
+
+function tiktokRewardText() {
+  return [
+    '— TikTok reward —',
+    'Get 50% off your NEXT order:',
+    '1) Pay for this order and wait until it arrives',
+    `2) Post a TikTok showing your order, recommend us, and tag ${TIKTOK_HANDLE}`,
+    '3) DM us the video link on WhatsApp for manual review',
+    '4) Once approved, your next order is 50% off',
+    'Important: you must pay first — the discount is for a future order only.',
+  ].join('\n')
+}
+
 function wrapHtml(heading, introHtml, bodyHtml) {
   return `<!doctype html>
 <html><body style="margin:0;background:#050504;color:#ece9e3;font-family:Arial,sans-serif">
@@ -203,6 +232,7 @@ function wrapHtml(heading, introHtml, bodyHtml) {
           <h1 style="margin:0 0 8px;font-size:28px;line-height:1.1;color:#ece9e3">${escapeHtml(heading)}</h1>
           <p style="margin:0 0 22px;color:#9a9184">${introHtml}</p>
           ${bodyHtml}
+          ${tiktokRewardHtml()}
           <p style="margin:22px 0 0;color:#9a9184;font-size:12px;line-height:1.5">Tip: add us to your contacts, and check spam/junk if you don't see payment or shipping updates.</p>
           <p style="margin:12px 0 0;color:#6e675d;font-size:12px">Research use only. 18+.</p>
         </td></tr>
@@ -241,6 +271,8 @@ function buildStatusEmail(order, items, bank, status) {
       ? `\nPay by PayID using your order ID as the reference:\n${bankText(bank)}`
       : '',
     '',
+    tiktokRewardText(),
+    '',
     'Tip: add us to your contacts, and check spam/junk if you do not see payment or shipping updates.',
     '',
     'Research use only. 18+.',
@@ -270,6 +302,8 @@ function buildReplacementEmail(order, trackingNumber) {
     `Updated tracking for order ${order.id}.`,
     '',
     trackingText(tn, { replacement: true }),
+    '',
+    tiktokRewardText(),
     '',
     'Tip: add us to your contacts, and check spam/junk if you do not see payment or shipping updates.',
     '',

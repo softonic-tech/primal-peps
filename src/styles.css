@@ -1361,6 +1361,65 @@ body.announce-visible .scroll-progress{top:36px}
 .tl-step p{font-size:.84rem;color:var(--mute);max-width:24ch;margin:0 auto}
 .shipping-note{text-align:right;margin-top:32px;font-size:.78rem;color:var(--mute);font-style:italic}
 
+/* ---------- TikTok reward ---------- */
+.tiktok-reward-sec{background:var(--onyx);border-block:1px solid var(--line)}
+.tiktok-reward-layout{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(36px,5vw,72px);
+  align-items:start;margin-top:48px;
+}
+.tiktok-reward-copy p{color:var(--mute);margin:18px 0 26px;max-width:48ch;line-height:1.65}
+.tiktok-reward-display{
+  font-size:clamp(2.4rem,4.5vw,3.8rem);line-height:1;margin:16px 0 0;
+}
+.tiktok-reward-actions{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 18px}
+.tiktok-reward-btn{min-height:44px}
+.tiktok-reward-foot{font-size:.78rem;color:var(--mute);line-height:1.5;max-width:52ch;margin:0}
+.tiktok-reward-steps{
+  list-style:none;display:grid;gap:14px;margin:0;padding:0;
+}
+.tiktok-reward-steps li{
+  display:flex;gap:14px;align-items:flex-start;
+  border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;
+  background:linear-gradient(180deg,#110f0c,#090806);
+}
+.tiktok-reward-steps .n{
+  flex-shrink:0;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#140d02;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+}
+.tiktok-reward-steps b{display:block;margin-bottom:4px}
+.tiktok-reward-steps span{color:var(--mute);font-size:.84rem;line-height:1.5}
+.tiktok-reward-steps.compact{
+  gap:10px;margin:16px 0 18px;
+}
+.tiktok-reward-steps.compact li{
+  flex-direction:column;gap:4px;padding:14px 16px;
+}
+.tiktok-reward-steps.compact strong{font-size:.9rem}
+.tiktok-reward{
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(180deg,#12100c,#0a0907);
+  padding:20px 22px;
+}
+.tiktok-reward-panel h3{
+  font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.04em;
+  margin:10px 0 10px;
+}
+.tiktok-reward-panel > p{color:var(--mute);font-size:.9rem;line-height:1.55;margin:0}
+.tiktok-reward-compact{margin:18px 0}
+.tiktok-reward-kicker{
+  font-size:.72rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);margin:0 0 8px;
+}
+.tiktok-reward-compact-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:.04em;margin:0 0 8px;
+}
+.tiktok-reward-compact-body{color:var(--mute);font-size:.88rem;line-height:1.55;margin:0 0 8px}
+.tiktok-reward-compact-note{
+  font-size:.78rem;color:var(--gold-hi);line-height:1.45;margin:0 0 14px;
+}
+.checkout-tiktok-reward{margin:18px 0 4px}
+
 /* ---------- points ---------- */
 .points-sec{background:var(--onyx);border-block:1px solid var(--line);position:relative;overflow:hidden;padding-bottom:clamp(32px,4vw,48px)!important}
 .points-sec::after{
@@ -2254,6 +2313,7 @@ footer::before{
   .metric-chip{display:flex;justify-content:space-between;align-items:center;text-align:left}
   .metric-chip strong{margin-bottom:0}
   .science-grid{grid-template-columns:1fr}
+  .tiktok-reward-layout{grid-template-columns:1fr;gap:36px}
   .points-layout{grid-template-columns:1fr;gap:44px}
   .rank-ladder{flex-direction:row;justify-content:space-between}
   .rank-ladder::before{display:none}

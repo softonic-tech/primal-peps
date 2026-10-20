@@ -13,6 +13,7 @@ import Spotlight from './components/Spotlight'
 import Shop from './components/Shop'
 import Science from './components/Science'
 import Shipping from './components/Shipping'
+import TikTokReward from './components/TikTokReward'
 import Points from './components/Points'
 import Testimonials from './components/Testimonials'
 import Faq from './components/Faq'
@@ -124,6 +125,7 @@ function HomePage() {
       <Shop />
       <Science />
       <Shipping />
+      <TikTokReward />
       <Points />
       <Testimonials />
       <Faq />

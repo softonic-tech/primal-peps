@@ -9,6 +9,7 @@ import {
   useCart,
 } from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
+import TikTokReward from './TikTokReward'
 
 const AU_STATES = [
   { value: 'NSW', label: 'New South Wales' },
@@ -1004,6 +1005,7 @@ export default function Checkout() {
                   toast={toast}
                   bank={bank}
                 />
+                <TikTokReward variant="compact" className="checkout-tiktok-reward" />
                 <div className="ship-review">
                   <div className="ship-review-head">
                     <h3>Delivering to</h3>
@@ -1101,6 +1103,7 @@ export default function Checkout() {
                     folder — payment and shipping updates will go there too.
                   </p>
                 </div>
+                <TikTokReward variant="panel" className="checkout-tiktok-reward" />
                 <BankTransferCard
                   reference={placedOrder.id}
                   amount={placedOrder.total}

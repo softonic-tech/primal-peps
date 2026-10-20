@@ -76,7 +76,7 @@ export const PRODUCTS = [
     variants: [
       { id: '5mg', label: '5MG', price: 69, img: 'primal-peps-transparent-vials/mots-c-5mg.png', stock: 0 },
       { id: '10mg', label: '10MG', price: 80, img: 'primal-peps-transparent-vials/mots-c-10mg.png', stock: 100 },
-      { id: '20mg', label: '20MG', price: 110, img: 'primal-peps-transparent-vials/mots-c-20mg.png', stock: 100 },
+      { id: '20mg', label: '20MG', price: 110, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/mots/20mg.png', stock: 0 },
       { id: '40mg', label: '40MG', price: 145, img: 'primal-peps-transparent-vials/mots-c-40mg.png', stock: 100 },
     ],
   },
@@ -886,8 +886,8 @@ export const PRODUCTS = [
       'A compact NNMT-pathway tool compound for modern metabolic and NAD+ research.',
     hue: '#f7c04a',
     variants: [
-      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/5-amino-10mg.png', stock: 100 },
-      { id: '50mg', label: '50MG', price: 145, img: 'primal-peps-transparent-vials/5-amino-50mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 75, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/5amino/10mg.png', stock: 0 },
+      { id: '50mg', label: '50MG', price: 145, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/5amino/50mg.png', stock: 0 },
     ],
   },
   {
@@ -923,7 +923,7 @@ export const PRODUCTS = [
       'The long-acting CJC analogue for sustained GH-axis and endocrine pathway studies.',
     hue: '#e8a020',
     variants: [
-      { id: '10mg', label: '10MG', price: 95, img: 'primal-peps-transparent-vials/cjc-with-dac-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 95, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/cjcdac/10mg.png', stock: 0 },
     ],
   },
   {
@@ -959,7 +959,7 @@ export const PRODUCTS = [
       'The classic short-acting CJC analogue for pulsatile GH-axis research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 85, img: 'primal-peps-transparent-vials/cjc-without-dac-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 85, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/cjcnodac/10mg.png', stock: 0 },
     ],
   },
   {
@@ -995,7 +995,7 @@ export const PRODUCTS = [
       'A selective GH secretagogue staple for endocrine and recovery-pathway research.',
     hue: '#f7c04a',
     variants: [
-      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/ipamorelin-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 75, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/ipa/10mg.png', stock: 0 },
     ],
   },
   {
@@ -1031,7 +1031,7 @@ export const PRODUCTS = [
       'A classic CNS-linked nonapeptide for sleep and stress-adaptation research models.',
     hue: '#e8a020',
     variants: [
-      { id: '10mg', label: '10MG', price: 70, img: 'primal-peps-transparent-vials/dsip-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 70, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/dsip/10mg.png', stock: 0 },
     ],
   },
   {
@@ -1067,7 +1067,7 @@ export const PRODUCTS = [
       'A foundational gonadotropin for LH-receptor and reproductive-axis research.',
     hue: '#d98e1b',
     variants: [
-      { id: '10000iu', label: '10000IU', price: 95, img: 'primal-peps-transparent-vials/hcg-10000iu.png', stock: 100 },
+      { id: '10000iu', label: '10000IU', price: 95, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/hcg/10000iu.png', stock: 0 },
     ],
   },
   {
@@ -1103,7 +1103,7 @@ export const PRODUCTS = [
       'The core cellular antioxidant tripeptide for redox and detoxification research.',
     hue: '#f7c04a',
     variants: [
-      { id: '1500mg', label: '1500MG', price: 65, img: 'primal-peps-transparent-vials/glutathione-1500mg.png', stock: 100 },
+      { id: '1500mg', label: '1500MG', price: 65, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/glutathione/1500mg.png', stock: 100 },
     ],
   },
   {
@@ -1139,7 +1139,7 @@ export const PRODUCTS = [
       'A key upstream peptide for GnRH-axis and reproductive neuroendocrine studies.',
     hue: '#e8a020',
     variants: [
-      { id: '10mg', label: '10MG', price: 80, img: 'primal-peps-transparent-vials/kisspeptin-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 80, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/kisspeptin/10mg.png', stock: 100 },
     ],
   },
   {
@@ -1175,7 +1175,7 @@ export const PRODUCTS = [
       'A compact longevity-research tetrapeptide centred on telomerase and ageing pathways.',
     hue: '#d98e1b',
     variants: [
-      { id: '10mg', label: '10MG', price: 75, img: 'primal-peps-transparent-vials/epithalon-10mg.png', stock: 100 },
+      { id: '10mg', label: '10MG', price: 75, img: 'https://pyccunarqluxmmhczwsk.supabase.co/storage/v1/object/public/product-images/epithalon/10mg.png', stock: 100 },
     ],
   },
 ]
@@ -1185,6 +1185,7 @@ export const PTS_PER_DOLLAR = 2
 export const PROMO = 'PRIMAL15'
 
 export const ANNOUNCE_MSGS = [
+  'TikTok tip: pay first → post & tag us → DM the link → 50% off your next order',
   'Free shipping on orders over $150',
   'Research use only · Not for human or veterinary consumption',
   '18+ to purchase · Pay by PayID',
