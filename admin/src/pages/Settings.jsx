@@ -90,6 +90,12 @@ export default function Settings() {
       promo: {
         code: (form.promo.code || '').trim().toUpperCase() || 'PRIMAL15',
         percent: Math.min(90, Math.max(0, Number(form.promo.percent) || 0)),
+        tiktokCode:
+          (form.promo.tiktokCode || '').trim().toUpperCase() || 'TIKTOK50',
+        tiktokPercent: Math.min(
+          90,
+          Math.max(1, Number(form.promo.tiktokPercent) || 50),
+        ),
       },
       shipping: {
         freeThreshold: Math.max(0, Number(form.shipping.freeThreshold) || 0),
@@ -104,7 +110,7 @@ export default function Settings() {
       social: {
         instagram: form.social.instagram.trim(),
         facebook: form.social.facebook.trim(),
-        tiktok: '',
+        tiktok: form.social.tiktok.trim(),
         youtube: form.social.youtube.trim(),
         x: form.social.x.trim(),
       },
@@ -281,18 +287,18 @@ export default function Settings() {
           <section className="panel">
             <h2>Promo & shipping</h2>
             <p className="panel-help">
-              Welcome offer code and free-shipping threshold used on the
-              storefront.
+              Welcome offer, TikTok UGC redeem code, and free-shipping threshold
+              used on the storefront.
             </p>
             <div className="form-grid">
-              <Field label="Promo code">
+              <Field label="Welcome promo code">
                 <input
                   value={form.promo.code}
                   onChange={(e) => patch('promo', 'code', e.target.value)}
                   required
                 />
               </Field>
-              <Field label="Discount %" hint="Applied when the code is used">
+              <Field label="Welcome discount %" hint="Applied when the welcome code is used">
                 <input
                   type="number"
                   min={0}
@@ -301,6 +307,32 @@ export default function Settings() {
                   value={form.promo.percent}
                   onChange={(e) => patch('promo', 'percent', e.target.value)}
                   required
+                />
+              </Field>
+              <Field
+                label="TikTok redeem code"
+                hint="Customers use this after you approve them under TikTok"
+              >
+                <input
+                  value={form.promo.tiktokCode || 'TIKTOK50'}
+                  onChange={(e) =>
+                    patch('promo', 'tiktokCode', e.target.value)
+                  }
+                />
+              </Field>
+              <Field
+                label="TikTok discount %"
+                hint="Default % when approving; checkout uses the approved entitlement %"
+              >
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  step={1}
+                  value={form.promo.tiktokPercent ?? 50}
+                  onChange={(e) =>
+                    patch('promo', 'tiktokPercent', e.target.value)
+                  }
                 />
               </Field>
               <Field
@@ -353,18 +385,26 @@ export default function Settings() {
             </p>
             <div className="form-grid">
               {[
-                ['instagram', 'Instagram'],
-                ['facebook', 'Facebook'],
-                ['youtube', 'YouTube'],
-                ['x', 'X (Twitter)'],
-              ].map(([key, label]) => (
+                ['instagram', 'Instagram', 'https://'],
+                ['facebook', 'Facebook', 'https://'],
+                ['tiktok', 'TikTok', '@primalpepsaus or https://tiktok.com/@…'],
+                ['youtube', 'YouTube', 'https://'],
+                ['x', 'X (Twitter)', 'https://'],
+              ].map(([key, label, placeholder]) => (
                 <div key={key} className="span-2">
-                  <Field label={label}>
+                  <Field
+                    label={label}
+                    hint={
+                      key === 'tiktok'
+                        ? 'Handle or profile URL used on the TikTok reward section'
+                        : undefined
+                    }
+                  >
                     <input
-                      type="url"
+                      type={key === 'tiktok' ? 'text' : 'url'}
                       value={form.social[key]}
                       onChange={(e) => patch('social', key, e.target.value)}
-                      placeholder="https://"
+                      placeholder={placeholder}
                     />
                   </Field>
                 </div>

@@ -63,11 +63,11 @@ export const TIKTOK_REWARD = {
     {
       n: '4',
       title: 'Save 50%',
-      body: 'After we approve, your next order gets 50% off.',
+      body: 'After we approve, use your TikTok code (e.g. TIKTOK50) on the next order.',
     },
   ],
   footnote:
-    'Reward applies to your next paid order after approval. Video must be public and tag us. Offer may be withdrawn anytime.',
+    'Reward applies once to your next paid order after approval. Use the TikTok promo code at checkout with the same email. Video must be public and tag us. Offer may be withdrawn anytime.',
 }
 
 /** Plain-text block for emails */

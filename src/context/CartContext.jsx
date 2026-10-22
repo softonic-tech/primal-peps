@@ -14,7 +14,14 @@ import {
   parseCartKey,
 } from '../data/products'
 import { bundleUnitPrice } from '../lib/bundlePricing'
-import { hasUsedPromoCode, ordersShowPromoUsed } from '../lib/promo'
+import {
+  getTikTokRewardEntitlement,
+  hasUsedPromoCode,
+  ordersShowPromoUsed,
+  redeemTikTokReward,
+  resolveTikTokPromoCode,
+  resolveTikTokPromoPercent,
+} from '../lib/promo'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { useProducts } from './ProductsContext'
@@ -61,13 +68,22 @@ export function CartProvider({ children }) {
   } = useAuth()
   const { products, getProduct } = useProducts()
   const { promo, points } = useSettings()
-  const promoCode = (promo.code || 'PRIMAL15').toUpperCase()
-  const promoPercent = Number(promo.percent) || 0
+  const welcomeCode = (promo.code || 'PRIMAL15').toUpperCase()
+  const welcomePercent = Number(promo.percent) || 0
+  const tiktokCode = resolveTikTokPromoCode(promo)
+  const tiktokSettingsPercent = resolveTikTokPromoPercent(promo)
   const ptsPerDollar = Number(points.perDollar) || 0
 
   const initialWelcome = useMemo(() => readWelcomeOffer(), [])
   const [cart, setCart] = useState({})
   const [promoApplied, setPromoApplied] = useState(initialWelcome.claimed)
+  const [appliedPromoCode, setAppliedPromoCode] = useState(
+    initialWelcome.claimed ? welcomeCode : null,
+  )
+  const [appliedPromoPercent, setAppliedPromoPercent] = useState(
+    initialWelcome.claimed ? welcomePercent : 0,
+  )
+  const [tiktokRewardId, setTiktokRewardId] = useState(null)
   const [signedUp, setSignedUp] = useState(initialWelcome.claimed)
   const [welcomeSeen, setWelcomeSeen] = useState(initialWelcome.seen)
   const [redeemApplied, setRedeemApplied] = useState(false)
@@ -129,12 +145,24 @@ export function CartProvider({ children }) {
     [cartItems],
   )
 
+  const promoCode = promoApplied && appliedPromoCode ? appliedPromoCode : welcomeCode
+  const promoPercent =
+    promoApplied && appliedPromoPercent > 0
+      ? appliedPromoPercent
+      : welcomePercent
   const disc = promoApplied ? sub * (promoPercent / 100) : 0
   const canRedeem =
     isLoggedIn && (user?.points || 0) >= REDEEM_POINTS && sub > 0
   const redeemDisc = redeemApplied && canRedeem ? REDEEM_VALUE : 0
   const totalVal = Math.max(0, sub - disc - redeemDisc)
   const earnPts = Math.round(totalVal * ptsPerDollar)
+
+  const clearPromo = useCallback(() => {
+    setPromoApplied(false)
+    setAppliedPromoCode(null)
+    setAppliedPromoPercent(0)
+    setTiktokRewardId(null)
+  }, [])
 
   // Drop redeem if user logs out or no longer has enough points
   useEffect(() => {
@@ -207,36 +235,80 @@ export function CartProvider({ children }) {
       const trimmed = String(code || '')
         .trim()
         .toUpperCase()
-      if (trimmed !== promoCode) {
-        if (String(code || '').trim()) {
-          toast(`That code isn't valid — try ${promoCode}`)
-        }
-        return false
-      }
-
-      if (ordersShowPromoUsed(orders, promoCode)) {
-        toast('This welcome code can only be used once per customer', 'error')
-        setPromoApplied(false)
-        return false
-      }
+      if (!trimmed) return false
 
       const checkEmail = email || user?.email || ''
-      const used = await hasUsedPromoCode(promoCode, {
+
+      if (trimmed === tiktokCode) {
+        if (!checkEmail) {
+          toast(
+            'Add your email on the shipping step, then apply the TikTok code',
+            'error',
+          )
+          return false
+        }
+        const entitlement = await getTikTokRewardEntitlement({
+          email: checkEmail,
+          userId: user?.id,
+        })
+        if (!entitlement) {
+          toast(
+            'No approved TikTok reward for this email yet — post, tag us, and DM the link first',
+            'error',
+          )
+          clearPromo()
+          return false
+        }
+        const pct = entitlement.percent || tiktokSettingsPercent
+        setPromoApplied(true)
+        setAppliedPromoCode(tiktokCode)
+        setAppliedPromoPercent(pct)
+        setTiktokRewardId(entitlement.id)
+        writeWelcomeOffer({ claimed: false })
+        toast(`${pct}% TikTok reward applied ✓`)
+        return true
+      }
+
+      if (trimmed !== welcomeCode) {
+        toast(`That code isn't valid — try ${welcomeCode} or ${tiktokCode}`)
+        return false
+      }
+
+      if (ordersShowPromoUsed(orders, welcomeCode)) {
+        toast('This welcome code can only be used once per customer', 'error')
+        clearPromo()
+        return false
+      }
+
+      const used = await hasUsedPromoCode(welcomeCode, {
         email: checkEmail,
         userId: user?.id,
       })
       if (used) {
         toast('This welcome code can only be used once per customer', 'error')
-        setPromoApplied(false)
+        clearPromo()
         return false
       }
 
       setPromoApplied(true)
+      setAppliedPromoCode(welcomeCode)
+      setAppliedPromoPercent(welcomePercent)
+      setTiktokRewardId(null)
       writeWelcomeOffer({ claimed: true })
-      toast(`${promoPercent}% welcome discount applied ✓`)
+      toast(`${welcomePercent}% welcome discount applied ✓`)
       return true
     },
-    [orders, promoCode, promoPercent, toast, user?.email, user?.id],
+    [
+      clearPromo,
+      orders,
+      tiktokCode,
+      tiktokSettingsPercent,
+      toast,
+      user?.email,
+      user?.id,
+      welcomeCode,
+      welcomePercent,
+    ],
   )
 
   const dismissWelcome = useCallback(() => {
@@ -249,18 +321,18 @@ export function CartProvider({ children }) {
       setSignedUp(true)
       setWelcomeSeen(true)
 
-      if (ordersShowPromoUsed(orders, promoCode)) {
-        setPromoApplied(false)
+      if (ordersShowPromoUsed(orders, welcomeCode)) {
+        clearPromo()
         writeWelcomeOffer({ seen: true, claimed: false })
         return false
       }
 
-      const used = await hasUsedPromoCode(promoCode, {
+      const used = await hasUsedPromoCode(welcomeCode, {
         email: user?.email,
         userId: user?.id,
       })
       if (used) {
-        setPromoApplied(false)
+        clearPromo()
         writeWelcomeOffer({ seen: true, claimed: false })
         if (!silent) {
           toast('Welcome code already used on a previous order', 'error')
@@ -269,13 +341,24 @@ export function CartProvider({ children }) {
       }
 
       setPromoApplied(true)
+      setAppliedPromoCode(welcomeCode)
+      setAppliedPromoPercent(welcomePercent)
+      setTiktokRewardId(null)
       writeWelcomeOffer({ seen: true, claimed: true })
       if (!silent) {
-        toast(`Welcome to the troop — ${promoCode} applied ✓`)
+        toast(`Welcome to the troop — ${welcomeCode} applied ✓`)
       }
       return true
     },
-    [orders, promoCode, toast, user?.email, user?.id],
+    [
+      clearPromo,
+      orders,
+      toast,
+      user?.email,
+      user?.id,
+      welcomeCode,
+      welcomePercent,
+    ],
   )
 
   // Logged-in members: never show the popup — apply welcome promo quietly if unused
@@ -302,26 +385,45 @@ export function CartProvider({ children }) {
 
       let promoDiscount = promoApplied ? disc : 0
       const shipEmail = shipping?.email || user?.email || ''
+      const activeCode = appliedPromoCode || welcomeCode
+      const isTikTokPromo =
+        Boolean(tiktokRewardId) && activeCode === tiktokCode
+
       if (promoDiscount > 0) {
-        if (ordersShowPromoUsed(orders, promoCode)) {
-          setPromoApplied(false)
-          const err = new Error(
-            'This welcome code can only be used once per customer',
-          )
-          toast(err.message, 'error')
-          throw err
-        }
-        const used = await hasUsedPromoCode(promoCode, {
-          email: shipEmail,
-          userId: user?.id,
-        })
-        if (used === true) {
-          setPromoApplied(false)
-          const err = new Error(
-            'This welcome code can only be used once per customer',
-          )
-          toast(err.message, 'error')
-          throw err
+        if (isTikTokPromo) {
+          const entitlement = await getTikTokRewardEntitlement({
+            email: shipEmail,
+            userId: user?.id,
+          })
+          if (!entitlement || entitlement.id !== tiktokRewardId) {
+            clearPromo()
+            const err = new Error(
+              'TikTok reward is no longer available for this email',
+            )
+            toast(err.message, 'error')
+            throw err
+          }
+        } else {
+          if (ordersShowPromoUsed(orders, welcomeCode)) {
+            clearPromo()
+            const err = new Error(
+              'This welcome code can only be used once per customer',
+            )
+            toast(err.message, 'error')
+            throw err
+          }
+          const used = await hasUsedPromoCode(welcomeCode, {
+            email: shipEmail,
+            userId: user?.id,
+          })
+          if (used === true) {
+            clearPromo()
+            const err = new Error(
+              'This welcome code can only be used once per customer',
+            )
+            toast(err.message, 'error')
+            throw err
+          }
         }
       } else {
         promoDiscount = 0
@@ -350,7 +452,7 @@ export function CartProvider({ children }) {
         subtotal: sub,
         discount: promoDiscount + redeemAmount,
         promoDiscount,
-        promoCode: promoDiscount > 0 ? promoCode : null,
+        promoCode: promoDiscount > 0 ? activeCode : null,
         redeemDiscount: redeemAmount,
         pointsRedeemed: pointsSpent,
         shippingFee: shipFee,
@@ -364,6 +466,10 @@ export function CartProvider({ children }) {
       } catch (err) {
         toast(err.message || 'Could not place order')
         throw err
+      }
+
+      if (promoDiscount > 0 && isTikTokPromo && tiktokRewardId) {
+        await redeemTikTokReward(tiktokRewardId, shipEmail, order.id)
       }
 
       try {
@@ -381,7 +487,7 @@ export function CartProvider({ children }) {
       setCart({})
       setRedeemApplied(false)
       if (promoDiscount > 0) {
-        setPromoApplied(false)
+        clearPromo()
         writeWelcomeOffer({ claimed: false, seen: true })
       }
       if (!extras.keepOpen) {
@@ -393,19 +499,23 @@ export function CartProvider({ children }) {
       return order
     },
     [
+      appliedPromoCode,
       authLoading,
       canRedeem,
       cartItems,
+      clearPromo,
       disc,
       orders,
       promoApplied,
-      promoCode,
       ptsPerDollar,
       recordOrder,
       redeemApplied,
       sub,
+      tiktokCode,
+      tiktokRewardId,
       toast,
       user,
+      welcomeCode,
     ],
   )
 
@@ -423,6 +533,7 @@ export function CartProvider({ children }) {
     promoApplied,
     promoCode,
     promoPercent,
+    tiktokPromoCode: tiktokCode,
     ptsPerDollar,
     signedUp,
     welcomeSeen,

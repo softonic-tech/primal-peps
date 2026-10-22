@@ -295,6 +295,7 @@ export default function Checkout() {
     earnPts,
     promoApplied,
     promoCode,
+    tiktokPromoCode,
     ptsPerDollar,
     applyPromo,
     updateQty,
@@ -302,7 +303,10 @@ export default function Checkout() {
     toast,
   } = useCart()
   const { user, isLoggedIn, openAuth, loading: authLoading } = useAuth()
-  const { bank, shipping: shipSettings } = useSettings()
+  const { bank, shipping: shipSettings, promo: promoSettings } = useSettings()
+  const welcomePromoCode = String(promoSettings?.code || 'PRIMAL15')
+    .trim()
+    .toUpperCase()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const onCheckoutRoute = pathname === '/checkout'
@@ -658,7 +662,7 @@ export default function Checkout() {
                   <label>Promo Code</label>
                   <div className="promo-input-group">
                     <input
-                      placeholder="Enter code"
+                      placeholder={`${welcomePromoCode} or ${tiktokPromoCode || 'TIKTOK50'}`}
                       type="text"
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
@@ -677,6 +681,11 @@ export default function Checkout() {
                       Apply
                     </button>
                   </div>
+                  <p className="promo-hint muted">
+                    TikTok reward? After we approve your video, use{' '}
+                    <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> with this
+                    email.
+                  </p>
                 </div>
 
                 {canRedeem && (

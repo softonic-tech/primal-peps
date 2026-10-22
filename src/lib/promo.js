@@ -1,5 +1,64 @@
 import { supabase } from './supabase'
 
+/** Normalize TikTok redeem code from settings (fallback TIKTOK50). */
+export function resolveTikTokPromoCode(promo) {
+  return (
+    String(promo?.tiktokCode || 'TIKTOK50')
+      .trim()
+      .toUpperCase() || 'TIKTOK50'
+  )
+}
+
+export function resolveTikTokPromoPercent(promo) {
+  const n = Number(promo?.tiktokPercent)
+  return Number.isFinite(n) && n > 0 ? Math.min(90, n) : 50
+}
+
+/**
+ * Fetch an unused approved TikTok entitlement for this customer.
+ * @returns {Promise<{ id: string, percent: number, customer_email: string } | null>}
+ */
+export async function getTikTokRewardEntitlement({ email, userId } = {}) {
+  const cleanEmail = String(email || '')
+    .trim()
+    .toLowerCase()
+  if (!cleanEmail && !userId) return null
+
+  const { data, error } = await supabase.rpc('get_tiktok_reward_entitlement', {
+    p_email: cleanEmail || null,
+    p_user_id: userId || null,
+  })
+
+  if (error) {
+    console.warn('get_tiktok_reward_entitlement failed', error.message)
+    return null
+  }
+
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row?.id) return null
+  return {
+    id: row.id,
+    percent: Number(row.percent) || 50,
+    customer_email: row.customer_email,
+  }
+}
+
+/** Mark entitlement redeemed after the order is saved. */
+export async function redeemTikTokReward(rewardId, email, orderId) {
+  const { data, error } = await supabase.rpc('redeem_tiktok_reward', {
+    p_reward_id: rewardId,
+    p_email: String(email || '')
+      .trim()
+      .toLowerCase(),
+    p_order_id: String(orderId || '').trim(),
+  })
+  if (error) {
+    console.warn('redeem_tiktok_reward failed', error.message)
+    return false
+  }
+  return Boolean(data)
+}
+
 /** Local order history: code already used (incl. legacy discounted orders). */
 export function ordersShowPromoUsed(orders, code) {
   const normalized = String(code || '')

@@ -12,10 +12,14 @@ import {
  * @param {'section' | 'panel' | 'compact'} variant
  */
 export default function TikTokReward({ variant = 'section', className = '' }) {
-  const { social, contact } = useSettings()
+  const { social, contact, promo } = useSettings()
   const handle = normalizeTikTokHandle(social?.tiktok || DEFAULT_TIKTOK_HANDLE)
   const tiktokUrl = tiktokProfileUrl(handle)
   const dmUrl = whatsappDmUrl(contact?.phone, handle)
+  const redeemCode = String(promo?.tiktokCode || 'TIKTOK50')
+    .trim()
+    .toUpperCase() || 'TIKTOK50'
+  const redeemPercent = Number(promo?.tiktokPercent) || 50
   const hairRef = useReveal({ threshold: 0.5 })
   const bodyRef = useReveal()
 
@@ -23,10 +27,13 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
     return (
       <aside className={`tiktok-reward tiktok-reward-compact ${className}`.trim()}>
         <p className="tiktok-reward-kicker">{TIKTOK_REWARD.eyebrow}</p>
-        <p className="tiktok-reward-compact-title">{TIKTOK_REWARD.title}</p>
+        <p className="tiktok-reward-compact-title">
+          {redeemPercent}% off your next order
+        </p>
         <p className="tiktok-reward-compact-body">{TIKTOK_REWARD.short}</p>
         <p className="tiktok-reward-compact-note">
-          Pay first → receive → post &amp; tag {handle} → DM us → 50% off next order
+          Pay first → receive → post &amp; tag {handle} → DM us → use{' '}
+          {redeemCode} next time
         </p>
         <div className="tiktok-reward-actions">
           <a
@@ -56,15 +63,23 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
     return (
       <aside className={`tiktok-reward tiktok-reward-panel ${className}`.trim()}>
         <span className="eyebrow">{TIKTOK_REWARD.eyebrow}</span>
-        <h3>{TIKTOK_REWARD.title}</h3>
+        <h3>{redeemPercent}% off your next order</h3>
         <p>{TIKTOK_REWARD.lead}</p>
+        <p className="tiktok-reward-compact-note">
+          After approval, apply <strong>{redeemCode}</strong> at checkout with
+          the same email.
+        </p>
         <ol className="tiktok-reward-steps compact">
           {TIKTOK_REWARD.steps.map((s) => (
             <li key={s.n}>
               <strong>
                 {s.n}. {s.title}
               </strong>
-              <span>{s.body}</span>
+              <span>
+                {s.n === '4'
+                  ? `After we approve, use ${redeemCode} on your next order for ${redeemPercent}% off.`
+                  : s.body}
+              </span>
             </li>
           ))}
         </ol>
@@ -102,9 +117,13 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
             <span className="eyebrow">{TIKTOK_REWARD.eyebrow}</span>
             <h2 className="display tiktok-reward-display">
               POST ON TIKTOK.{' '}
-              <span className="gold">SAVE 50%</span>
+              <span className="gold">SAVE {redeemPercent}%</span>
             </h2>
             <p>{TIKTOK_REWARD.lead}</p>
+            <p className="tiktok-reward-compact-note">
+              After we approve your video, use code <strong>{redeemCode}</strong>{' '}
+              on your next order.
+            </p>
             <div className="tiktok-reward-actions">
               <a
                 className="btn-primary tiktok-reward-btn"
@@ -134,8 +153,12 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
                   {s.n}
                 </span>
                 <div>
-                  <b>{s.title}</b>
-                  <span>{s.body}</span>
+                  <b>{s.n === '4' ? `Save ${redeemPercent}%` : s.title}</b>
+                  <span>
+                    {s.n === '4'
+                      ? `After we approve, use ${redeemCode} on your next order.`
+                      : s.body}
+                  </span>
                 </div>
               </li>
             ))}

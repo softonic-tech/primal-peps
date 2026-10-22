@@ -6,6 +6,12 @@ const NAV = [
   { to: '/orders', label: 'Orders', short: 'Orders', icon: OrdersIcon },
   { to: '/products', label: 'Products', short: 'Shop', icon: ProductsIcon },
   { to: '/users', label: 'Users', short: 'Users', icon: UsersIcon },
+  {
+    to: '/tiktok-rewards',
+    label: 'TikTok',
+    short: 'TikTok',
+    icon: TikTokIcon,
+  },
   { to: '/reviews', label: 'Reviews', short: 'Reviews', icon: ReviewsIcon },
   { to: '/settings', label: 'Settings', short: 'Setup', icon: SettingsIcon },
 ]
@@ -82,6 +88,19 @@ function ReviewsIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 3.5 14.4 9l5.8.5-4.4 3.8 1.4 5.7L12 16.2 6.8 19l1.4-5.7L3.8 9.5 9.6 9 12 3.5Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function TikTokIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M14 4.5c.7 2.2 2.2 3.6 4.5 4V11c-1.7-.1-3.2-.7-4.5-1.7V16a5 5 0 1 1-5-5c.4 0 .8 0 1.2.1V13a2.7 2.7 0 1 0 1.8 2.5V4.5H14Z"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinejoin="round"

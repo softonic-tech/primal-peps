@@ -6,10 +6,11 @@ export const DEFAULT_SETTINGS = {
   promo: {
     code: 'PRIMAL15',
     percent: 15,
+    tiktokCode: 'TIKTOK50',
+    tiktokPercent: 50,
   },
   shipping: {
     freeThreshold: 150,
-    freeBacThreshold: 300,
   },
   points: {
     perDollar: 2,
@@ -44,16 +45,20 @@ export function mergeSettings(row) {
       ...DEFAULT_SETTINGS.promo,
       ...(row.promo || {}),
       percent: Number(row.promo?.percent ?? DEFAULT_SETTINGS.promo.percent),
+      tiktokPercent: Number(
+        row.promo?.tiktokPercent ?? DEFAULT_SETTINGS.promo.tiktokPercent,
+      ),
+      tiktokCode: String(
+        row.promo?.tiktokCode ?? DEFAULT_SETTINGS.promo.tiktokCode,
+      )
+        .trim()
+        .toUpperCase() || DEFAULT_SETTINGS.promo.tiktokCode,
     },
     shipping: {
       ...DEFAULT_SETTINGS.shipping,
       ...(row.shipping || {}),
       freeThreshold: Number(
         row.shipping?.freeThreshold ?? DEFAULT_SETTINGS.shipping.freeThreshold,
-      ),
-      freeBacThreshold: Number(
-        row.shipping?.freeBacThreshold ??
-          DEFAULT_SETTINGS.shipping.freeBacThreshold,
       ),
     },
     points: {

@@ -10,6 +10,7 @@ import ProductForm from './pages/ProductForm'
 import Products from './pages/Products'
 import Reviews from './pages/Reviews'
 import Settings from './pages/Settings'
+import TikTokRewards from './pages/TikTokRewards'
 import Users from './pages/Users'
 
 function Protected({ children }) {
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="products/new" element={<ProductForm />} />
         <Route path="products/:id" element={<ProductForm />} />
         <Route path="users" element={<Users />} />
+        <Route path="tiktok-rewards" element={<TikTokRewards />} />
         <Route path="reviews" element={<Reviews />} />
         <Route path="settings" element={<Settings />} />
       </Route>
