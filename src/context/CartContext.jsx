@@ -235,29 +235,34 @@ export function CartProvider({ children }) {
       const trimmed = String(code || '')
         .trim()
         .toUpperCase()
-      if (!trimmed) return false
+      if (!trimmed) {
+        return {
+          ok: false,
+          reason: 'empty',
+          message: 'Enter a promo code first',
+        }
+      }
 
-      const checkEmail = email || user?.email || ''
+      const checkEmail = String(email || user?.email || '')
+        .trim()
+        .toLowerCase()
 
       if (trimmed === tiktokCode) {
-        if (!checkEmail) {
-          toast(
-            'Add your email on the shipping step, then apply the TikTok code',
-            'error',
-          )
-          return false
+        if (!checkEmail || !checkEmail.includes('@')) {
+          const message =
+            'Enter your email on the Shipping step first, then come back to Payment and apply your TikTok code.'
+          toast(message, 'error')
+          return { ok: false, reason: 'need_email', message }
         }
         const entitlement = await getTikTokRewardEntitlement({
           email: checkEmail,
           userId: user?.id,
         })
         if (!entitlement) {
-          toast(
-            'No approved TikTok reward for this email yet — post, tag us, and DM the link first',
-            'error',
-          )
+          const message = `This email is not approved for the TikTok reward yet. Post your video, tag us, DM the link on WhatsApp — once we approve ${checkEmail}, ${tiktokCode} will unlock ${tiktokSettingsPercent}% off.`
+          toast(message, 'error')
           clearPromo()
-          return false
+          return { ok: false, reason: 'not_approved', message }
         }
         const pct = entitlement.percent || tiktokSettingsPercent
         setPromoApplied(true)
@@ -265,19 +270,22 @@ export function CartProvider({ children }) {
         setAppliedPromoPercent(pct)
         setTiktokRewardId(entitlement.id)
         writeWelcomeOffer({ claimed: false })
-        toast(`${pct}% TikTok reward applied ✓`)
-        return true
+        const message = `${pct}% TikTok reward applied for ${checkEmail} ✓`
+        toast(message)
+        return { ok: true, reason: 'tiktok', message }
       }
 
       if (trimmed !== welcomeCode) {
-        toast(`That code isn't valid — try ${welcomeCode} or ${tiktokCode}`)
-        return false
+        const message = `That code is not valid — try ${welcomeCode} (welcome) or ${tiktokCode} (TikTok reward)`
+        toast(message, 'error')
+        return { ok: false, reason: 'invalid', message }
       }
 
       if (ordersShowPromoUsed(orders, welcomeCode)) {
-        toast('This welcome code can only be used once per customer', 'error')
+        const message = 'This welcome code can only be used once per customer'
+        toast(message, 'error')
         clearPromo()
-        return false
+        return { ok: false, reason: 'welcome_used', message }
       }
 
       const used = await hasUsedPromoCode(welcomeCode, {
@@ -285,9 +293,10 @@ export function CartProvider({ children }) {
         userId: user?.id,
       })
       if (used) {
-        toast('This welcome code can only be used once per customer', 'error')
+        const message = 'This welcome code can only be used once per customer'
+        toast(message, 'error')
         clearPromo()
-        return false
+        return { ok: false, reason: 'welcome_used', message }
       }
 
       setPromoApplied(true)
@@ -295,8 +304,9 @@ export function CartProvider({ children }) {
       setAppliedPromoPercent(welcomePercent)
       setTiktokRewardId(null)
       writeWelcomeOffer({ claimed: true })
-      toast(`${welcomePercent}% welcome discount applied ✓`)
-      return true
+      const message = `${welcomePercent}% welcome discount applied ✓`
+      toast(message)
+      return { ok: true, reason: 'welcome', message }
     },
     [
       clearPromo,

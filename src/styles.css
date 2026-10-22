@@ -1884,6 +1884,20 @@ footer::before{
 .promo-btn:hover{background:rgba(232,160,32,.15);border-color:var(--gold)}
 .promo-hint{margin:10px 0 0;font-size:.78rem;line-height:1.45;color:var(--mute)}
 .promo-hint strong{color:var(--gold-hi)}
+.promo-feedback{
+  margin:10px 0 0;font-size:.82rem;line-height:1.5;padding:10px 12px;
+  border-radius:10px;border:1px solid var(--line);
+}
+.promo-feedback.ok{
+  color:#b8e0be;border-color:rgba(111,191,122,.35);background:rgba(111,191,122,.1);
+}
+.promo-feedback.err{
+  color:#f0c4c0;border-color:rgba(200,90,80,.35);background:rgba(200,90,80,.1);
+}
+.tiktok-promo-section{
+  margin-top:22px;padding:18px 18px 16px;border:1px solid var(--line);
+  border-radius:var(--radius);background:linear-gradient(180deg,#12100c,#0a0907);
+}
 
 .redeem-section{margin-top:20px}
 .redeem-toggle{

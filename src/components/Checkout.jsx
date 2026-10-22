@@ -314,6 +314,11 @@ export default function Checkout() {
 
   const [step, setStep] = useState(1)
   const [promoInput, setPromoInput] = useState(promoApplied ? promoCode : '')
+  const [tiktokInput, setTiktokInput] = useState('')
+  const [promoFeedback, setPromoFeedback] = useState(null)
+  const [tiktokFeedback, setTiktokFeedback] = useState(null)
+  const [applyingPromo, setApplyingPromo] = useState(false)
+  const [applyingTiktok, setApplyingTiktok] = useState(false)
   const [shipping, setShipping] = useState(emptyShipping)
   const [errors, setErrors] = useState({})
   const [legalAck, setLegalAck] = useState(true)
@@ -350,8 +355,51 @@ export default function Checkout() {
   }
 
   useEffect(() => {
-    if (promoApplied) setPromoInput(promoCode)
-  }, [promoApplied, promoCode])
+    if (promoApplied) {
+      setPromoInput(promoCode)
+      if (promoCode === (tiktokPromoCode || 'TIKTOK50')) {
+        setTiktokInput(promoCode)
+      }
+    }
+  }, [promoApplied, promoCode, tiktokPromoCode])
+
+  const handleApplyWelcome = async () => {
+    setApplyingPromo(true)
+    setPromoFeedback(null)
+    const result = await applyPromo(promoInput, { email: shipping.email })
+    setApplyingPromo(false)
+    if (result?.ok) {
+      setPromoFeedback({ ok: true, message: result.message })
+      setTiktokFeedback(null)
+    } else {
+      setPromoFeedback({
+        ok: false,
+        message:
+          result?.message ||
+          'Could not apply that code. Check the code and try again.',
+      })
+    }
+  }
+
+  const handleApplyTikTok = async () => {
+    const code = (tiktokInput || tiktokPromoCode || 'TIKTOK50').trim()
+    setApplyingTiktok(true)
+    setTiktokFeedback(null)
+    const result = await applyPromo(code, { email: shipping.email })
+    setApplyingTiktok(false)
+    if (result?.ok) {
+      setTiktokFeedback({ ok: true, message: result.message })
+      setPromoFeedback(null)
+      setPromoInput(code)
+    } else {
+      setTiktokFeedback({
+        ok: false,
+        message:
+          result?.message ||
+          'This email is not approved for the TikTok reward yet.',
+      })
+    }
+  }
 
   useEffect(() => {
     setCartOpen(onCheckoutRoute)
@@ -659,33 +707,46 @@ export default function Checkout() {
                 </div>
 
                 <div className="promo-section">
-                  <label>Promo Code</label>
+                  <label>Welcome promo code</label>
                   <div className="promo-input-group">
                     <input
-                      placeholder={`${welcomePromoCode} or ${tiktokPromoCode || 'TIKTOK50'}`}
+                      placeholder={welcomePromoCode}
                       type="text"
                       value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value)
+                        setPromoFeedback(null)
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
-                          applyPromo(promoInput, { email: shipping.email })
+                          handleApplyWelcome()
                         }
                       }}
                     />
                     <button
                       className="promo-btn"
                       type="button"
-                      onClick={() => applyPromo(promoInput, { email: shipping.email })}
+                      disabled={applyingPromo}
+                      onClick={handleApplyWelcome}
                     >
-                      Apply
+                      {applyingPromo ? '…' : 'Apply'}
                     </button>
                   </div>
-                  <p className="promo-hint muted">
-                    TikTok reward? After we approve your video, use{' '}
-                    <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> with this
-                    email.
-                  </p>
+                  {promoFeedback ? (
+                    <p
+                      className={`promo-feedback ${promoFeedback.ok ? 'ok' : 'err'}`}
+                      role="status"
+                    >
+                      {promoFeedback.message}
+                    </p>
+                  ) : (
+                    <p className="promo-hint muted">
+                      Have a TikTok reward? Enter your shipping email next, then
+                      apply <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> on
+                      the Payment step.
+                    </p>
+                  )}
                 </div>
 
                 {canRedeem && (
@@ -1014,6 +1075,58 @@ export default function Checkout() {
                   toast={toast}
                   bank={bank}
                 />
+
+                <div className="promo-section tiktok-promo-section">
+                  <label>TikTok reward code</label>
+                  <p className="promo-hint muted" style={{ marginTop: 0, marginBottom: 12 }}>
+                    Using email <strong>{shipping.email}</strong>. Only works
+                    after we approve your video for this address.
+                  </p>
+                  <div className="promo-input-group">
+                    <input
+                      placeholder={tiktokPromoCode || 'TIKTOK50'}
+                      type="text"
+                      value={tiktokInput}
+                      onChange={(e) => {
+                        setTiktokInput(e.target.value)
+                        setTiktokFeedback(null)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleApplyTikTok()
+                        }
+                      }}
+                    />
+                    <button
+                      className="promo-btn"
+                      type="button"
+                      disabled={applyingTiktok || !shipping.email}
+                      onClick={handleApplyTikTok}
+                    >
+                      {applyingTiktok ? '…' : 'Apply'}
+                    </button>
+                  </div>
+                  {tiktokFeedback ? (
+                    <p
+                      className={`promo-feedback ${tiktokFeedback.ok ? 'ok' : 'err'}`}
+                      role="status"
+                    >
+                      {tiktokFeedback.message}
+                    </p>
+                  ) : promoApplied &&
+                    promoCode === (tiktokPromoCode || 'TIKTOK50') ? (
+                    <p className="promo-feedback ok" role="status">
+                      TikTok discount already applied ✓
+                    </p>
+                  ) : (
+                    <p className="promo-hint muted">
+                      Not approved yet? Post, tag us, DM WhatsApp — then apply{' '}
+                      <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> here.
+                    </p>
+                  )}
+                </div>
+
                 <TikTokReward variant="compact" className="checkout-tiktok-reward" />
                 <div className="ship-review">
                   <div className="ship-review-head">
