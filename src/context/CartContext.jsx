@@ -19,7 +19,9 @@ import {
   hasUsedPromoCode,
   ordersShowPromoUsed,
   redeemTikTokReward,
+  findTikTokPromoCode,
   resolveTikTokPromoCode,
+  resolveTikTokPromoCodes,
   resolveTikTokPromoPercent,
 } from '../lib/promo'
 import { supabase } from '../lib/supabase'
@@ -70,8 +72,10 @@ export function CartProvider({ children }) {
   const { promo, points } = useSettings()
   const welcomeCode = (promo.code || 'PRIMAL15').toUpperCase()
   const welcomePercent = Number(promo.percent) || 0
+  const tiktokCodes = resolveTikTokPromoCodes(promo)
   const tiktokCode = resolveTikTokPromoCode(promo)
   const tiktokSettingsPercent = resolveTikTokPromoPercent(promo)
+  const tiktokCodeList = tiktokCodes.map((c) => c.code).join(', ')
   const ptsPerDollar = Number(points.perDollar) || 0
 
   const initialWelcome = useMemo(() => readWelcomeOffer(), [])
@@ -247,7 +251,8 @@ export function CartProvider({ children }) {
         .trim()
         .toLowerCase()
 
-      if (trimmed === tiktokCode) {
+      const tiktokMatch = findTikTokPromoCode(promo, trimmed)
+      if (tiktokMatch) {
         if (!checkEmail || !checkEmail.includes('@')) {
           const message =
             'Enter your email on the Shipping step first, then come back to Payment and apply your TikTok code.'
@@ -259,24 +264,24 @@ export function CartProvider({ children }) {
           userId: user?.id,
         })
         if (!entitlement) {
-          const message = `This email is not approved for the TikTok reward yet. Post your video, tag us, DM the link on WhatsApp — once we approve ${checkEmail}, ${tiktokCode} will unlock ${tiktokSettingsPercent}% off.`
+          const message = `This email is not approved for the TikTok reward yet. Post your video, tag us, DM the link on WhatsApp — once we approve ${checkEmail}, ${tiktokMatch.code} will unlock ${tiktokMatch.percent}% off.`
           toast(message, 'error')
           clearPromo()
           return { ok: false, reason: 'not_approved', message }
         }
-        const pct = entitlement.percent || tiktokSettingsPercent
+        const pct = tiktokMatch.percent || entitlement.percent || tiktokSettingsPercent
         setPromoApplied(true)
-        setAppliedPromoCode(tiktokCode)
+        setAppliedPromoCode(tiktokMatch.code)
         setAppliedPromoPercent(pct)
         setTiktokRewardId(entitlement.id)
         writeWelcomeOffer({ claimed: false })
-        const message = `${pct}% TikTok reward applied for ${checkEmail} ✓`
+        const message = `${pct}% ${tiktokMatch.label || 'TikTok'} reward applied for ${checkEmail} ✓`
         toast(message)
         return { ok: true, reason: 'tiktok', message }
       }
 
       if (trimmed !== welcomeCode) {
-        const message = `That code is not valid — try ${welcomeCode} (welcome) or ${tiktokCode} (TikTok reward)`
+        const message = `That code is not valid — try ${welcomeCode} (welcome) or a TikTok code (${tiktokCodeList || tiktokCode})`
         toast(message, 'error')
         return { ok: false, reason: 'invalid', message }
       }
@@ -311,7 +316,9 @@ export function CartProvider({ children }) {
     [
       clearPromo,
       orders,
+      promo,
       tiktokCode,
+      tiktokCodeList,
       tiktokSettingsPercent,
       toast,
       user?.email,
@@ -397,7 +404,7 @@ export function CartProvider({ children }) {
       const shipEmail = shipping?.email || user?.email || ''
       const activeCode = appliedPromoCode || welcomeCode
       const isTikTokPromo =
-        Boolean(tiktokRewardId) && activeCode === tiktokCode
+        Boolean(tiktokRewardId) && Boolean(findTikTokPromoCode(promo, activeCode))
 
       if (promoDiscount > 0) {
         if (isTikTokPromo) {
@@ -521,7 +528,7 @@ export function CartProvider({ children }) {
       recordOrder,
       redeemApplied,
       sub,
-      tiktokCode,
+      promo,
       tiktokRewardId,
       toast,
       user,
@@ -544,6 +551,7 @@ export function CartProvider({ children }) {
     promoCode,
     promoPercent,
     tiktokPromoCode: tiktokCode,
+    tiktokPromoCodes: tiktokCodes,
     ptsPerDollar,
     signedUp,
     welcomeSeen,

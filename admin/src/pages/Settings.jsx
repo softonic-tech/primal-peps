@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { LoadingBlock } from '../components/ui'
-import { DEFAULT_SETTINGS, mergeSettings } from '../lib/settings'
+import {
+  DEFAULT_SETTINGS,
+  mergeSettings,
+  normalizeTikTokCodes,
+} from '../lib/settings'
 import { supabase } from '../lib/supabase'
 
 const TABS = [
@@ -75,6 +79,65 @@ export default function Settings() {
     setOk('')
   }
 
+  const tiktokCodes = normalizeTikTokCodes(form.promo)
+
+  const patchTikTokCode = (index, key, value) => {
+    setForm((prev) => {
+      const list = normalizeTikTokCodes(prev.promo).map((row) => ({ ...row }))
+      if (!list[index]) return prev
+      list[index] = { ...list[index], [key]: value }
+      const primary = list[0]
+      return {
+        ...prev,
+        promo: {
+          ...prev.promo,
+          tiktokCodes: list,
+          tiktokCode: primary?.code || 'TIKTOK50',
+          tiktokPercent: primary?.percent || 50,
+        },
+      }
+    })
+    setOk('')
+  }
+
+  const addTikTokCode = (preset = null) => {
+    setForm((prev) => {
+      const list = normalizeTikTokCodes(prev.promo).map((row) => ({ ...row }))
+      list.push(
+        preset || {
+          label: 'New TikTok code',
+          code: '',
+          percent: 30,
+        },
+      )
+      return {
+        ...prev,
+        promo: { ...prev.promo, tiktokCodes: list },
+      }
+    })
+    setOk('')
+  }
+
+  const removeTikTokCode = (index) => {
+    setForm((prev) => {
+      const list = normalizeTikTokCodes(prev.promo).filter((_, i) => i !== index)
+      const next = list.length
+        ? list
+        : [{ label: 'TikTok reward', code: 'TIKTOK50', percent: 50 }]
+      const primary = next[0]
+      return {
+        ...prev,
+        promo: {
+          ...prev.promo,
+          tiktokCodes: next,
+          tiktokCode: primary.code,
+          tiktokPercent: primary.percent,
+        },
+      }
+    })
+    setOk('')
+  }
+
   const save = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -87,16 +150,22 @@ export default function Settings() {
         accountName: form.bank.accountName.trim(),
         payId: form.bank.payId.trim(),
       },
-      promo: {
-        code: (form.promo.code || '').trim().toUpperCase() || 'PRIMAL15',
-        percent: Math.min(90, Math.max(0, Number(form.promo.percent) || 0)),
-        tiktokCode:
-          (form.promo.tiktokCode || '').trim().toUpperCase() || 'TIKTOK50',
-        tiktokPercent: Math.min(
-          90,
-          Math.max(1, Number(form.promo.tiktokPercent) || 50),
-        ),
-      },
+      promo: (() => {
+        const tiktokCodes = normalizeTikTokCodes({
+          tiktokCodes: form.promo.tiktokCodes,
+        })
+        const primary = tiktokCodes[0] || {
+          code: 'TIKTOK50',
+          percent: 50,
+        }
+        return {
+          code: (form.promo.code || '').trim().toUpperCase() || 'PRIMAL15',
+          percent: Math.min(90, Math.max(0, Number(form.promo.percent) || 0)),
+          tiktokCodes,
+          tiktokCode: primary.code,
+          tiktokPercent: primary.percent,
+        }
+      })(),
       shipping: {
         freeThreshold: Math.max(0, Number(form.shipping.freeThreshold) || 0),
         freeBacThreshold: Math.max(
@@ -309,32 +378,94 @@ export default function Settings() {
                   required
                 />
               </Field>
-              <Field
-                label="TikTok redeem code"
-                hint="Customers use this after you approve them under TikTok"
-              >
-                <input
-                  value={form.promo.tiktokCode || 'TIKTOK50'}
-                  onChange={(e) =>
-                    patch('promo', 'tiktokCode', e.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label="TikTok discount %"
-                hint="Default % when approving; checkout uses the approved entitlement %"
-              >
-                <input
-                  type="number"
-                  min={1}
-                  max={90}
-                  step={1}
-                  value={form.promo.tiktokPercent ?? 50}
-                  onChange={(e) =>
-                    patch('promo', 'tiktokPercent', e.target.value)
-                  }
-                />
-              </Field>
+              <div className="span-2">
+                <div className="tiktok-codes-head">
+                  <div>
+                    <strong>TikTok redeem codes</strong>
+                    <p className="panel-help" style={{ margin: '6px 0 0' }}>
+                      Add seasonal codes (e.g. Halloween) without replacing the
+                      main one. Customers still need email approval under TikTok,
+                      then enter one of these codes at checkout.
+                    </p>
+                  </div>
+                  <div className="tiktok-codes-actions">
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() =>
+                        addTikTokCode({
+                          label: 'Halloween special',
+                          code: 'HALLOWEEN30',
+                          percent: 30,
+                        })
+                      }
+                    >
+                      + Halloween 30%
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => addTikTokCode()}
+                    >
+                      + Add code
+                    </button>
+                  </div>
+                </div>
+                <div className="tiktok-codes-list">
+                  {tiktokCodes.map((row, index) => (
+                    <div key={`tiktok-code-${index}`} className="tiktok-code-row">
+                      <label className="settings-field">
+                        <span>Label</span>
+                        <input
+                          value={row.label}
+                          onChange={(e) =>
+                            patchTikTokCode(index, 'label', e.target.value)
+                          }
+                          placeholder="Halloween special"
+                        />
+                      </label>
+                      <label className="settings-field">
+                        <span>Code</span>
+                        <input
+                          value={row.code}
+                          onChange={(e) =>
+                            patchTikTokCode(index, 'code', e.target.value)
+                          }
+                          placeholder="HALLOWEEN30"
+                          required
+                        />
+                      </label>
+                      <label className="settings-field">
+                        <span>Discount %</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={90}
+                          step={1}
+                          value={row.percent}
+                          onChange={(e) =>
+                            patchTikTokCode(index, 'percent', e.target.value)
+                          }
+                          required
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn-ghost tiktok-code-remove"
+                        onClick={() => removeTikTokCode(index)}
+                        disabled={tiktokCodes.length <= 1}
+                        title={
+                          tiktokCodes.length <= 1
+                            ? 'Keep at least one TikTok code'
+                            : 'Remove code'
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <Field
                 label="Free shipping over ($)"
                 hint="AUD cart total before shipping fee"

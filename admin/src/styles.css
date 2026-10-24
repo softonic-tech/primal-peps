@@ -526,6 +526,22 @@ a.btn-primary,a.btn-ghost{text-decoration:none}
 /* Settings */
 .settings-tabs{margin-bottom:16px}
 .settings-field{display:grid;gap:8px}
+.tiktok-codes-head{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.tiktok-codes-head strong{display:block;font-size:.95rem}
+.tiktok-codes-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tiktok-codes-list{display:grid;gap:12px}
+.tiktok-code-row{
+  display:grid;grid-template-columns:1.2fr 1fr .7fr auto;gap:10px;align-items:end;
+  padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.22);
+}
+.tiktok-code-remove{white-space:nowrap;min-height:42px}
+@media (max-width:900px){
+  .tiktok-code-row{grid-template-columns:1fr 1fr; }
+  .tiktok-code-remove{grid-column:1 / -1}
+}
 .settings-field>span{
   font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);
 }

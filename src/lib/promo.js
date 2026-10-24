@@ -1,17 +1,27 @@
 import { supabase } from './supabase'
+import { normalizeTikTokCodes } from './settings'
 
-/** Normalize TikTok redeem code from settings (fallback TIKTOK50). */
+/** All active TikTok redeem codes from settings. */
+export function resolveTikTokPromoCodes(promo) {
+  return normalizeTikTokCodes(promo)
+}
+
+/** Primary TikTok redeem code (first in list / legacy field). */
 export function resolveTikTokPromoCode(promo) {
-  return (
-    String(promo?.tiktokCode || 'TIKTOK50')
-      .trim()
-      .toUpperCase() || 'TIKTOK50'
-  )
+  return resolveTikTokPromoCodes(promo)[0]?.code || 'TIKTOK50'
 }
 
 export function resolveTikTokPromoPercent(promo) {
-  const n = Number(promo?.tiktokPercent)
-  return Number.isFinite(n) && n > 0 ? Math.min(90, n) : 50
+  return resolveTikTokPromoCodes(promo)[0]?.percent || 50
+}
+
+/** Find a TikTok code entry by the code string. */
+export function findTikTokPromoCode(promo, code) {
+  const trimmed = String(code || '')
+    .trim()
+    .toUpperCase()
+  if (!trimmed) return null
+  return resolveTikTokPromoCodes(promo).find((row) => row.code === trimmed) || null
 }
 
 /**

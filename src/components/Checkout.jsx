@@ -296,6 +296,7 @@ export default function Checkout() {
     promoApplied,
     promoCode,
     tiktokPromoCode,
+    tiktokPromoCodes,
     ptsPerDollar,
     applyPromo,
     updateQty,
@@ -354,14 +355,17 @@ export default function Checkout() {
     })
   }
 
+  const tiktokCodeOptions = tiktokPromoCodes?.length
+    ? tiktokPromoCodes
+    : [{ code: tiktokPromoCode || 'TIKTOK50', percent: 50, label: 'TikTok' }]
+  const isTikTokApplied = tiktokCodeOptions.some((c) => c.code === promoCode)
+
   useEffect(() => {
     if (promoApplied) {
       setPromoInput(promoCode)
-      if (promoCode === (tiktokPromoCode || 'TIKTOK50')) {
-        setTiktokInput(promoCode)
-      }
+      if (isTikTokApplied) setTiktokInput(promoCode)
     }
-  }, [promoApplied, promoCode, tiktokPromoCode])
+  }, [promoApplied, promoCode, isTikTokApplied])
 
   const handleApplyWelcome = async () => {
     setApplyingPromo(true)
@@ -382,7 +386,12 @@ export default function Checkout() {
   }
 
   const handleApplyTikTok = async () => {
-    const code = (tiktokInput || tiktokPromoCode || 'TIKTOK50').trim()
+    const code = (
+      tiktokInput ||
+      tiktokCodeOptions[0]?.code ||
+      tiktokPromoCode ||
+      'TIKTOK50'
+    ).trim()
     setApplyingTiktok(true)
     setTiktokFeedback(null)
     const result = await applyPromo(code, { email: shipping.email })
@@ -743,8 +752,9 @@ export default function Checkout() {
                   ) : (
                     <p className="promo-hint muted">
                       Have a TikTok reward? Enter your shipping email next, then
-                      apply <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> on
-                      the Payment step.
+                      apply a TikTok code (
+                      {tiktokCodeOptions.map((c) => c.code).join(' / ')}) on the
+                      Payment step.
                     </p>
                   )}
                 </div>
@@ -1081,10 +1091,22 @@ export default function Checkout() {
                   <p className="promo-hint muted" style={{ marginTop: 0, marginBottom: 12 }}>
                     Using email <strong>{shipping.email}</strong>. Only works
                     after we approve your video for this address.
+                    {tiktokCodeOptions.length > 1 ? (
+                      <>
+                        {' '}
+                        Active codes:{' '}
+                        {tiktokCodeOptions.map((c, i) => (
+                          <span key={c.code}>
+                            {i > 0 ? ', ' : ''}
+                            <strong>{c.code}</strong> ({c.percent}%)
+                          </span>
+                        ))}
+                      </>
+                    ) : null}
                   </p>
                   <div className="promo-input-group">
                     <input
-                      placeholder={tiktokPromoCode || 'TIKTOK50'}
+                      placeholder={tiktokCodeOptions.map((c) => c.code).join(' / ')}
                       type="text"
                       value={tiktokInput}
                       onChange={(e) => {
@@ -1114,15 +1136,14 @@ export default function Checkout() {
                     >
                       {tiktokFeedback.message}
                     </p>
-                  ) : promoApplied &&
-                    promoCode === (tiktokPromoCode || 'TIKTOK50') ? (
+                  ) : promoApplied && isTikTokApplied ? (
                     <p className="promo-feedback ok" role="status">
                       TikTok discount already applied ✓
                     </p>
                   ) : (
                     <p className="promo-hint muted">
-                      Not approved yet? Post, tag us, DM WhatsApp — then apply{' '}
-                      <strong>{tiktokPromoCode || 'TIKTOK50'}</strong> here.
+                      Not approved yet? Post, tag us, DM WhatsApp — then apply
+                      your TikTok code here.
                     </p>
                   )}
                 </div>

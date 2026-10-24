@@ -7,6 +7,7 @@ import {
   whatsappDmUrl,
   TIKTOK_REWARD,
 } from '../data/tiktokReward'
+import { normalizeTikTokCodes } from '../lib/settings'
 
 /**
  * @param {'section' | 'panel' | 'compact'} variant
@@ -16,10 +17,10 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
   const handle = normalizeTikTokHandle(social?.tiktok || DEFAULT_TIKTOK_HANDLE)
   const tiktokUrl = tiktokProfileUrl(handle)
   const dmUrl = whatsappDmUrl(contact?.phone, handle)
-  const redeemCode = String(promo?.tiktokCode || 'TIKTOK50')
-    .trim()
-    .toUpperCase() || 'TIKTOK50'
-  const redeemPercent = Number(promo?.tiktokPercent) || 50
+  const tiktokCodes = normalizeTikTokCodes(promo)
+  const redeemCode = tiktokCodes[0]?.code || 'TIKTOK50'
+  const redeemPercent = tiktokCodes[0]?.percent || 50
+  const codeHint = tiktokCodes.map((c) => `${c.code} (${c.percent}%)`).join(' · ')
   const hairRef = useReveal({ threshold: 0.5 })
   const bodyRef = useReveal()
 
@@ -33,7 +34,7 @@ export default function TikTokReward({ variant = 'section', className = '' }) {
         <p className="tiktok-reward-compact-body">{TIKTOK_REWARD.short}</p>
         <p className="tiktok-reward-compact-note">
           Pay first → receive → post &amp; tag {handle} → DM us → use{' '}
-          {redeemCode} next time
+          {codeHint || redeemCode} next time
         </p>
         <div className="tiktok-reward-actions">
           <a

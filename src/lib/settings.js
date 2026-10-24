@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = {
     percent: 15,
     tiktokCode: 'TIKTOK50',
     tiktokPercent: 50,
+    tiktokCodes: [{ label: 'TikTok reward', code: 'TIKTOK50', percent: 50 }],
   },
   shipping: {
     freeThreshold: 150,
@@ -24,7 +25,7 @@ export const DEFAULT_SETTINGS = {
   },
   contact: {
     email: 'hello@primalpeps.com',
-    phone: '+61449979054'
+    phone: '+61449979054',
   },
   site: {
     tagline:
@@ -37,22 +38,60 @@ export const DEFAULT_SETTINGS = {
   },
 }
 
+/** Normalize TikTok redeem codes (supports legacy single code fields). */
+export function normalizeTikTokCodes(promo) {
+  const raw = Array.isArray(promo?.tiktokCodes) ? promo.tiktokCodes : []
+  const fromList = raw
+    .map((row) => ({
+      label: String(row?.label || '').trim(),
+      code: String(row?.code || '')
+        .trim()
+        .toUpperCase(),
+      percent: Math.min(90, Math.max(1, Number(row?.percent) || 50)),
+    }))
+    .filter((row) => row.code)
+
+  if (fromList.length) {
+    const seen = new Set()
+    return fromList.filter((row) => {
+      if (seen.has(row.code)) return false
+      seen.add(row.code)
+      return true
+    })
+  }
+
+  const code =
+    String(promo?.tiktokCode || 'TIKTOK50')
+      .trim()
+      .toUpperCase() || 'TIKTOK50'
+  const percent = Math.min(
+    90,
+    Math.max(1, Number(promo?.tiktokPercent) || 50),
+  )
+  return [{ label: 'TikTok reward', code, percent }]
+}
+
 export function mergeSettings(row) {
   if (!row) return structuredClone(DEFAULT_SETTINGS)
+  const rowPromo = row.promo || {}
+  const promoMerged = {
+    ...DEFAULT_SETTINGS.promo,
+    ...rowPromo,
+    percent: Number(rowPromo.percent ?? DEFAULT_SETTINGS.promo.percent),
+    // Prefer DB list when present; otherwise rebuild from legacy fields only
+    tiktokCodes: Array.isArray(rowPromo.tiktokCodes)
+      ? rowPromo.tiktokCodes
+      : undefined,
+  }
+  const tiktokCodes = normalizeTikTokCodes(promoMerged)
+  const primary = tiktokCodes[0]
   return {
     bank: { ...DEFAULT_SETTINGS.bank, ...(row.bank || {}) },
     promo: {
-      ...DEFAULT_SETTINGS.promo,
-      ...(row.promo || {}),
-      percent: Number(row.promo?.percent ?? DEFAULT_SETTINGS.promo.percent),
-      tiktokPercent: Number(
-        row.promo?.tiktokPercent ?? DEFAULT_SETTINGS.promo.tiktokPercent,
-      ),
-      tiktokCode: String(
-        row.promo?.tiktokCode ?? DEFAULT_SETTINGS.promo.tiktokCode,
-      )
-        .trim()
-        .toUpperCase() || DEFAULT_SETTINGS.promo.tiktokCode,
+      ...promoMerged,
+      tiktokCodes,
+      tiktokCode: primary.code,
+      tiktokPercent: primary.percent,
     },
     shipping: {
       ...DEFAULT_SETTINGS.shipping,
