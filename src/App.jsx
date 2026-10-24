@@ -13,6 +13,7 @@ import Spotlight from './components/Spotlight'
 import Shop from './components/Shop'
 import Science from './components/Science'
 import Shipping from './components/Shipping'
+import HalloweenSale from './components/HalloweenSale'
 import TikTokReward from './components/TikTokReward'
 import Points from './components/Points'
 import Testimonials from './components/Testimonials'
@@ -120,6 +121,7 @@ function HomePage() {
       />
       <Nav announceVisible={announceVisible} />
       <Hero />
+      <HalloweenSale />
       <Marquee />
       <Spotlight />
       <Shop />

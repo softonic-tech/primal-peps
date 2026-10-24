@@ -9,6 +9,7 @@ import {
   useCart,
 } from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
+import { normalizeSalePromo } from '../lib/settings'
 import TikTokReward from './TikTokReward'
 
 const AU_STATES = [
@@ -308,6 +309,12 @@ export default function Checkout() {
   const welcomePromoCode = String(promoSettings?.code || 'PRIMAL15')
     .trim()
     .toUpperCase()
+  const saleEnabled = promoSettings?.saleEnabled !== false
+  const saleCode = String(promoSettings?.saleCode || 'HALLOWEEN30')
+    .trim()
+    .toUpperCase()
+  const salePercent = Number(promoSettings?.salePercent) || 30
+  const salePromo = normalizeSalePromo(promoSettings)
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const onCheckoutRoute = pathname === '/checkout'
@@ -392,7 +399,7 @@ export default function Checkout() {
       tiktokPromoCode ||
       'TIKTOK50'
     ).trim()
-    setApplyingTiktok(true)
+setApplyingTiktok(true)
     setTiktokFeedback(null)
     const result = await applyPromo(code, { email: shipping.email })
     setApplyingTiktok(false)
@@ -401,7 +408,7 @@ export default function Checkout() {
       setPromoFeedback(null)
       setPromoInput(code)
     } else {
-      setTiktokFeedback({
+          setTiktokFeedback({
         ok: false,
         message:
           result?.message ||
@@ -716,10 +723,14 @@ export default function Checkout() {
                 </div>
 
                 <div className="promo-section">
-                  <label>Welcome promo code</label>
+                  <label>Promo code</label>
                   <div className="promo-input-group">
                     <input
-                      placeholder={welcomePromoCode}
+                      placeholder={
+                        saleEnabled
+                          ? `${saleCode} / ${welcomePromoCode}`
+                          : welcomePromoCode
+                      }
                       type="text"
                       value={promoInput}
                       onChange={(e) => {
@@ -751,10 +762,21 @@ export default function Checkout() {
                     </p>
                   ) : (
                     <p className="promo-hint muted">
-                      Have a TikTok reward? Enter your shipping email next, then
-                      apply a TikTok code (
-                      {tiktokCodeOptions.map((c) => c.code).join(' / ')}) on the
-                      Payment step.
+                      {saleEnabled ? (
+                        <>
+                          Halloween: <strong>{saleCode}</strong> for{' '}
+                          {salePercent}% storewide (once per email). Welcome:{' '}
+                          {welcomePromoCode}. TikTok codes apply on Payment after
+                          approval.
+                        </>
+                      ) : (
+                        <>
+                          Have a TikTok reward? Enter your shipping email next,
+                          then apply a TikTok code (
+                          {tiktokCodeOptions.map((c) => c.code).join(' / ')}) on
+                          the Payment step.
+                        </>
+                      )}
                     </p>
                   )}
                 </div>

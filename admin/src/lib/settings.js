@@ -9,6 +9,11 @@ export const DEFAULT_SETTINGS = {
     tiktokCode: 'TIKTOK50',
     tiktokPercent: 50,
     tiktokCodes: [{ label: 'TikTok reward', code: 'TIKTOK50', percent: 50 }],
+    saleEnabled: true,
+    saleCode: 'HALLOWEEN30',
+    salePercent: 30,
+    saleLabel: 'Halloween sale',
+    saleImage: '/halloween-sale.jpg',
   },
   shipping: {
     freeThreshold: 150,
@@ -39,8 +44,32 @@ export const DEFAULT_SETTINGS = {
   },
 }
 
+/** Storewide seasonal sale (not TikTok-gated). One-time use enforced at checkout. */
+export function normalizeSalePromo(promo) {
+  const code =
+    String(promo?.saleCode ?? DEFAULT_SETTINGS.promo.saleCode)
+      .trim()
+      .toUpperCase() || 'HALLOWEEN30'
+  const percent = Math.min(
+    90,
+    Math.max(
+      1,
+      Number(promo?.salePercent ?? DEFAULT_SETTINGS.promo.salePercent) || 30,
+    ),
+  )
+  const label =
+    String(promo?.saleLabel ?? DEFAULT_SETTINGS.promo.saleLabel).trim() ||
+    'Halloween sale'
+  const image =
+    String(promo?.saleImage ?? DEFAULT_SETTINGS.promo.saleImage).trim() ||
+    '/halloween-sale.jpg'
+  const enabled = promo?.saleEnabled !== false && Boolean(code) && percent > 0
+  return { enabled, code, percent, label, image }
+}
+
 /** Normalize TikTok redeem codes (supports legacy single code fields). */
 export function normalizeTikTokCodes(promo) {
+  const saleCode = normalizeSalePromo(promo).code
   const raw = Array.isArray(promo?.tiktokCodes) ? promo.tiktokCodes : []
   const fromList = raw
     .map((row) => ({
@@ -50,7 +79,7 @@ export function normalizeTikTokCodes(promo) {
         .toUpperCase(),
       percent: Math.min(90, Math.max(1, Number(row?.percent) || 50)),
     }))
-    .filter((row) => row.code)
+    .filter((row) => row.code && row.code !== saleCode)
 
   if (fromList.length) {
     const seen = new Set()
@@ -65,6 +94,9 @@ export function normalizeTikTokCodes(promo) {
     String(promo?.tiktokCode || 'TIKTOK50')
       .trim()
       .toUpperCase() || 'TIKTOK50'
+  if (code === saleCode) {
+    return [{ label: 'TikTok reward', code: 'TIKTOK50', percent: 50 }]
+  }
   const percent = Math.min(
     90,
     Math.max(1, Number(promo?.tiktokPercent) || 50),
@@ -84,12 +116,21 @@ export function mergeSettings(row) {
       ? rowPromo.tiktokCodes
       : undefined,
   }
-  const tiktokCodes = normalizeTikTokCodes(promoMerged)
+  const sale = normalizeSalePromo(promoMerged)
+  const promoWithSale = {
+    ...promoMerged,
+    saleEnabled: sale.enabled,
+    saleCode: sale.code,
+    salePercent: sale.percent,
+    saleLabel: sale.label,
+    saleImage: sale.image,
+  }
+  const tiktokCodes = normalizeTikTokCodes(promoWithSale)
   const primary = tiktokCodes[0]
   return {
     bank: { ...DEFAULT_SETTINGS.bank, ...(row.bank || {}) },
     promo: {
-      ...promoMerged,
+      ...promoWithSale,
       tiktokCodes,
       tiktokCode: primary.code,
       tiktokPercent: primary.percent,
