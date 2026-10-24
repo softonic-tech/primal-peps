@@ -73,6 +73,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   color:var(--mute);font-size:1rem;padding:4px 8px;line-height:1;
 }
 .announce-close:hover{color:var(--ivory)}
+.announce-halloween{
+  background:linear-gradient(90deg,#1a0c04,#2a1408 40%,#1a0c04);
+  border-bottom-color:rgba(255,140,40,.35);
+  color:#ffd4a8;
+}
+.announce-halloween .announce-glyph{opacity:1}
 
 /* ---------- nav ---------- */
 nav{
@@ -1360,6 +1366,55 @@ body.announce-visible .scroll-progress{top:36px}
 .tl-step h4{font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:.05em;margin-bottom:8px}
 .tl-step p{font-size:.84rem;color:var(--mute);max-width:24ch;margin:0 auto}
 .shipping-note{text-align:right;margin-top:32px;font-size:.78rem;color:var(--mute);font-style:italic}
+
+/* ---------- Halloween sale ---------- */
+.halloween-sale-sec{
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 20%,rgba(255,120,20,.14),transparent 55%),
+    radial-gradient(ellipse 50% 45% at 90% 80%,rgba(180,40,0,.1),transparent 50%),
+    #070605;
+  border-block:1px solid rgba(255,140,40,.22);
+  padding-block:clamp(48px,7vw,88px);
+}
+.halloween-sale-layout{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(28px,5vw,64px);align-items:center;
+}
+.halloween-sale-visual{
+  margin:0;border-radius:4px;overflow:hidden;
+  border:1px solid rgba(255,140,40,.28);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,160,60,.08);
+  background:#000;
+}
+.halloween-sale-visual img{
+  display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;
+}
+.halloween-sale-copy .eyebrow{color:#ff9a3c}
+.halloween-sale-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.8rem,6vw,4.4rem);line-height:.95;letter-spacing:.02em;
+  margin:10px 0 18px;color:#fff4e8;
+}
+.halloween-sale-title .gold{
+  background:linear-gradient(180deg,#ffc878,#ff8c28);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.halloween-sale-lead{
+  color:rgba(255,228,200,.78);font-size:1.05rem;line-height:1.6;
+  max-width:36ch;margin:0 0 26px;
+}
+.halloween-sale-code{
+  font-family:'JetBrains Mono',monospace;color:#ffb45a;
+  letter-spacing:.04em;
+}
+.halloween-sale-actions{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 16px}
+.halloween-sale-foot{
+  font-size:.78rem;color:rgba(255,200,150,.55);line-height:1.5;margin:0;max-width:42ch;
+}
+@media (max-width:860px){
+  .halloween-sale-layout{grid-template-columns:1fr;gap:28px}
+  .halloween-sale-visual{max-width:420px;margin-inline:auto}
+}
 
 /* ---------- TikTok reward ---------- */
 .tiktok-reward-sec{background:var(--onyx);border-block:1px solid var(--line)}

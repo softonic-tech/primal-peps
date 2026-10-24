@@ -1,5 +1,10 @@
 import { supabase } from './supabase'
-import { normalizeTikTokCodes } from './settings'
+import { normalizeSalePromo, normalizeTikTokCodes } from './settings'
+
+/** Storewide seasonal sale (e.g. Halloween) — not TikTok-gated. */
+export function resolveSalePromo(promo) {
+  return normalizeSalePromo(promo)
+}
 
 /** All active TikTok redeem codes from settings. */
 export function resolveTikTokPromoCodes(promo) {

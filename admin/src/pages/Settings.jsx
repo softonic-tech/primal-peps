@@ -151,8 +151,11 @@ export default function Settings() {
         payId: form.bank.payId.trim(),
       },
       promo: (() => {
+        const saleCode =
+          (form.promo.saleCode || '').trim().toUpperCase() || 'HALLOWEEN30'
         const tiktokCodes = normalizeTikTokCodes({
           tiktokCodes: form.promo.tiktokCodes,
+          saleCode,
         })
         const primary = tiktokCodes[0] || {
           code: 'TIKTOK50',
@@ -161,6 +164,16 @@ export default function Settings() {
         return {
           code: (form.promo.code || '').trim().toUpperCase() || 'PRIMAL15',
           percent: Math.min(90, Math.max(0, Number(form.promo.percent) || 0)),
+          saleEnabled: form.promo.saleEnabled !== false,
+          saleCode,
+          salePercent: Math.min(
+            90,
+            Math.max(1, Number(form.promo.salePercent) || 30),
+          ),
+          saleLabel:
+            (form.promo.saleLabel || '').trim() || 'Halloween sale',
+          saleImage:
+            (form.promo.saleImage || '').trim() || '/halloween-sale.jpg',
           tiktokCodes,
           tiktokCode: primary.code,
           tiktokPercent: primary.percent,
@@ -356,8 +369,8 @@ export default function Settings() {
           <section className="panel">
             <h2>Promo & shipping</h2>
             <p className="panel-help">
-              Welcome offer, TikTok UGC redeem code, and free-shipping threshold
-              used on the storefront.
+              Welcome offer, storewide sale (Halloween), TikTok UGC codes, and
+              free-shipping threshold used on the storefront.
             </p>
             <div className="form-grid">
               <Field label="Welcome promo code">
@@ -381,27 +394,89 @@ export default function Settings() {
               <div className="span-2">
                 <div className="tiktok-codes-head">
                   <div>
+                    <strong>Storewide sale (Halloween)</strong>
+                    <p className="panel-help" style={{ margin: '6px 0 0' }}>
+                      Public storewide code — no TikTok approval. One use per
+                      customer email. Banner image shows on the homepage when
+                      enabled.
+                    </p>
+                  </div>
+                  <label className="settings-field" style={{ minWidth: 140 }}>
+                    <span>Enabled</span>
+                    <select
+                      value={form.promo.saleEnabled === false ? 'off' : 'on'}
+                      onChange={(e) =>
+                        patch(
+                          'promo',
+                          'saleEnabled',
+                          e.target.value === 'on',
+                        )
+                      }
+                    >
+                      <option value="on">On</option>
+                      <option value="off">Off</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="tiktok-codes-list">
+                  <div className="tiktok-code-row">
+                    <label className="settings-field">
+                      <span>Label</span>
+                      <input
+                        value={form.promo.saleLabel || ''}
+                        onChange={(e) =>
+                          patch('promo', 'saleLabel', e.target.value)
+                        }
+                        placeholder="Halloween sale"
+                      />
+                    </label>
+                    <label className="settings-field">
+                      <span>Code</span>
+                      <input
+                        value={form.promo.saleCode || ''}
+                        onChange={(e) =>
+                          patch('promo', 'saleCode', e.target.value)
+                        }
+                        placeholder="HALLOWEEN30"
+                      />
+                    </label>
+                    <label className="settings-field">
+                      <span>Discount %</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={90}
+                        step={1}
+                        value={form.promo.salePercent ?? 30}
+                        onChange={(e) =>
+                          patch('promo', 'salePercent', e.target.value)
+                        }
+                      />
+                    </label>
+                    <label className="settings-field">
+                      <span>Banner image path</span>
+                      <input
+                        value={form.promo.saleImage || ''}
+                        onChange={(e) =>
+                          patch('promo', 'saleImage', e.target.value)
+                        }
+                        placeholder="/halloween-sale.jpg"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="span-2">
+                <div className="tiktok-codes-head">
+                  <div>
                     <strong>TikTok redeem codes</strong>
                     <p className="panel-help" style={{ margin: '6px 0 0' }}>
-                      Add seasonal codes (e.g. Halloween) without replacing the
-                      main one. Customers still need email approval under TikTok,
-                      then enter one of these codes at checkout.
+                      Customers need email approval under TikTok Rewards, then
+                      enter one of these codes at checkout. Seasonal storewide
+                      sales belong in the section above — not here.
                     </p>
                   </div>
                   <div className="tiktok-codes-actions">
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() =>
-                        addTikTokCode({
-                          label: 'Halloween special',
-                          code: 'HALLOWEEN30',
-                          percent: 30,
-                        })
-                      }
-                    >
-                      + Halloween 30%
-                    </button>
                     <button
                       type="button"
                       className="btn-ghost"

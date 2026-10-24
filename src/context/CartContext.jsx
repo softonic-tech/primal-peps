@@ -20,6 +20,7 @@ import {
   ordersShowPromoUsed,
   redeemTikTokReward,
   findTikTokPromoCode,
+  resolveSalePromo,
   resolveTikTokPromoCode,
   resolveTikTokPromoCodes,
   resolveTikTokPromoPercent,
@@ -76,6 +77,7 @@ export function CartProvider({ children }) {
   const tiktokCode = resolveTikTokPromoCode(promo)
   const tiktokSettingsPercent = resolveTikTokPromoPercent(promo)
   const tiktokCodeList = tiktokCodes.map((c) => c.code).join(', ')
+  const salePromo = resolveSalePromo(promo)
   const ptsPerDollar = Number(points.perDollar) || 0
 
   const initialWelcome = useMemo(() => readWelcomeOffer(), [])
@@ -251,6 +253,39 @@ export function CartProvider({ children }) {
         .trim()
         .toLowerCase()
 
+      if (salePromo.enabled && trimmed === salePromo.code) {
+        if (!checkEmail || !checkEmail.includes('@')) {
+          const message =
+            'Enter your email on the Shipping step first, then apply the Halloween code.'
+          toast(message, 'error')
+          return { ok: false, reason: 'need_email', message }
+        }
+        if (ordersShowPromoUsed(orders, salePromo.code)) {
+          const message = `${salePromo.code} can only be used once per customer`
+          toast(message, 'error')
+          clearPromo()
+          return { ok: false, reason: 'sale_used', message }
+        }
+        const usedSale = await hasUsedPromoCode(salePromo.code, {
+          email: checkEmail,
+          userId: user?.id,
+        })
+        if (usedSale) {
+          const message = `${salePromo.code} can only be used once per customer`
+          toast(message, 'error')
+          clearPromo()
+          return { ok: false, reason: 'sale_used', message }
+        }
+        setPromoApplied(true)
+        setAppliedPromoCode(salePromo.code)
+        setAppliedPromoPercent(salePromo.percent)
+        setTiktokRewardId(null)
+        writeWelcomeOffer({ claimed: false })
+        const message = `${salePromo.percent}% ${salePromo.label} applied ✓`
+        toast(message)
+        return { ok: true, reason: 'sale', message }
+      }
+
       const tiktokMatch = findTikTokPromoCode(promo, trimmed)
       if (tiktokMatch) {
         if (!checkEmail || !checkEmail.includes('@')) {
@@ -281,7 +316,8 @@ export function CartProvider({ children }) {
       }
 
       if (trimmed !== welcomeCode) {
-        const message = `That code is not valid — try ${welcomeCode} (welcome) or a TikTok code (${tiktokCodeList || tiktokCode})`
+        const saleHint = salePromo.enabled ? ` or ${salePromo.code} (sale)` : ''
+        const message = `That code is not valid — try ${welcomeCode} (welcome)${saleHint} or a TikTok code (${tiktokCodeList || tiktokCode})`
         toast(message, 'error')
         return { ok: false, reason: 'invalid', message }
       }
@@ -317,6 +353,7 @@ export function CartProvider({ children }) {
       clearPromo,
       orders,
       promo,
+      salePromo,
       tiktokCode,
       tiktokCodeList,
       tiktokSettingsPercent,
@@ -552,6 +589,7 @@ export function CartProvider({ children }) {
     promoPercent,
     tiktokPromoCode: tiktokCode,
     tiktokPromoCodes: tiktokCodes,
+    salePromo,
     ptsPerDollar,
     signedUp,
     welcomeSeen,
