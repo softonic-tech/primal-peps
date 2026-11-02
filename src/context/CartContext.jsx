@@ -256,7 +256,7 @@ export function CartProvider({ children }) {
       if (salePromo.enabled && trimmed === salePromo.code) {
         if (!checkEmail || !checkEmail.includes('@')) {
           const message =
-            'Enter your email on the Shipping step first, then apply the Halloween code.'
+            'Enter your email on the Shipping step first, then apply the Black Friday code.'
           toast(message, 'error')
           return { ok: false, reason: 'need_email', message }
         }

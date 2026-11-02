@@ -10,7 +10,7 @@ export default function AnnounceBar({ visible, onClose }) {
     const base = [...ANNOUNCE_MSGS]
     if (sale.enabled) {
       base.unshift(
-        `Halloween sale: ${sale.percent}% storewide with code ${sale.code} · once per customer`,
+        `Black Friday: ${sale.percent}% storewide with code ${sale.code} · once per customer`,
       )
     }
     return base
@@ -35,9 +35,9 @@ export default function AnnounceBar({ visible, onClose }) {
   }, [visible, messages.length])
 
   return (
-    <div className={`announce${visible ? '' : ' hidden'}${sale.enabled ? ' announce-halloween' : ''}`} id="announceBar">
+    <div className={`announce${visible ? '' : ' hidden'}${sale.enabled ? ' announce-sale' : ''}`} id="announceBar">
       <span className="announce-glyph" aria-hidden="true">
-        {sale.enabled ? '🎃' : '🦍'}
+        🦍
       </span>
       <span className={`announce-msg${fade ? ' fade' : ''}`} id="announceMsg">
         {messages[idx % messages.length]}

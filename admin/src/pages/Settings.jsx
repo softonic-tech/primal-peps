@@ -151,8 +151,14 @@ export default function Settings() {
         payId: form.bank.payId.trim(),
       },
       promo: (() => {
-        const saleCode =
-          (form.promo.saleCode || '').trim().toUpperCase() || 'HALLOWEEN30'
+        let saleCode =
+          (form.promo.saleCode || '').trim().toUpperCase() || 'BLACKFRIDAY30'
+        if (saleCode === 'HALLOWEEN30') saleCode = 'BLACKFRIDAY30'
+        let saleLabel =
+          (form.promo.saleLabel || '').trim() || 'Black Friday sale'
+        if (/halloween/i.test(saleLabel)) saleLabel = 'Black Friday sale'
+        let saleImage = (form.promo.saleImage || '').trim()
+        if (/halloween/i.test(saleImage)) saleImage = ''
         const tiktokCodes = normalizeTikTokCodes({
           tiktokCodes: form.promo.tiktokCodes,
           saleCode,
@@ -170,10 +176,8 @@ export default function Settings() {
             90,
             Math.max(1, Number(form.promo.salePercent) || 30),
           ),
-          saleLabel:
-            (form.promo.saleLabel || '').trim() || 'Halloween sale',
-          saleImage:
-            (form.promo.saleImage || '').trim() || '/halloween-sale.jpg',
+          saleLabel,
+          saleImage,
           tiktokCodes,
           tiktokCode: primary.code,
           tiktokPercent: primary.percent,
@@ -369,8 +373,8 @@ export default function Settings() {
           <section className="panel">
             <h2>Promo & shipping</h2>
             <p className="panel-help">
-              Welcome offer, storewide sale (Halloween), TikTok UGC codes, and
-              free-shipping threshold used on the storefront.
+              Welcome offer, storewide sale (Black Friday), TikTok UGC codes,
+              and free-shipping threshold used on the storefront.
             </p>
             <div className="form-grid">
               <Field label="Welcome promo code">
@@ -394,11 +398,11 @@ export default function Settings() {
               <div className="span-2">
                 <div className="tiktok-codes-head">
                   <div>
-                    <strong>Storewide sale (Halloween)</strong>
+                    <strong>Storewide sale (Black Friday)</strong>
                     <p className="panel-help" style={{ margin: '6px 0 0' }}>
                       Public storewide code — no TikTok approval. One use per
-                      customer email. Banner image shows on the homepage when
-                      enabled.
+                      customer email. Optional banner image path; leave blank
+                      for the built-in Black Friday layout.
                     </p>
                   </div>
                   <label className="settings-field" style={{ minWidth: 140 }}>
@@ -427,7 +431,7 @@ export default function Settings() {
                         onChange={(e) =>
                           patch('promo', 'saleLabel', e.target.value)
                         }
-                        placeholder="Halloween sale"
+                        placeholder="Black Friday sale"
                       />
                     </label>
                     <label className="settings-field">
@@ -437,7 +441,7 @@ export default function Settings() {
                         onChange={(e) =>
                           patch('promo', 'saleCode', e.target.value)
                         }
-                        placeholder="HALLOWEEN30"
+                        placeholder="BLACKFRIDAY30"
                       />
                     </label>
                     <label className="settings-field">
@@ -460,7 +464,7 @@ export default function Settings() {
                         onChange={(e) =>
                           patch('promo', 'saleImage', e.target.value)
                         }
-                        placeholder="/halloween-sale.jpg"
+                        placeholder="optional"
                       />
                     </label>
                   </div>
@@ -496,7 +500,7 @@ export default function Settings() {
                           onChange={(e) =>
                             patchTikTokCode(index, 'label', e.target.value)
                           }
-                          placeholder="Halloween special"
+                          placeholder="TikTok reward"
                         />
                       </label>
                       <label className="settings-field">
@@ -506,7 +510,7 @@ export default function Settings() {
                           onChange={(e) =>
                             patchTikTokCode(index, 'code', e.target.value)
                           }
-                          placeholder="HALLOWEEN30"
+                          placeholder="TIKTOK50"
                           required
                         />
                       </label>

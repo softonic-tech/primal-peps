@@ -310,9 +310,10 @@ export default function Checkout() {
     .trim()
     .toUpperCase()
   const saleEnabled = promoSettings?.saleEnabled !== false
-  const saleCode = String(promoSettings?.saleCode || 'HALLOWEEN30')
+  const saleCode = String(promoSettings?.saleCode || 'BLACKFRIDAY30')
     .trim()
     .toUpperCase()
+    .replace(/^HALLOWEEN30$/, 'BLACKFRIDAY30')
   const salePercent = Number(promoSettings?.salePercent) || 30
   const salePromo = normalizeSalePromo(promoSettings)
   const { pathname } = useLocation()
@@ -764,7 +765,7 @@ setApplyingTiktok(true)
                     <p className="promo-hint muted">
                       {saleEnabled ? (
                         <>
-                          Halloween: <strong>{saleCode}</strong> for{' '}
+                          Black Friday: <strong>{saleCode}</strong> for{' '}
                           {salePercent}% storewide (once per email). Welcome:{' '}
                           {welcomePromoCode}. TikTok codes apply on Payment after
                           approval.

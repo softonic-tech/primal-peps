@@ -10,10 +10,10 @@ export const DEFAULT_SETTINGS = {
     tiktokPercent: 50,
     tiktokCodes: [{ label: 'TikTok reward', code: 'TIKTOK50', percent: 50 }],
     saleEnabled: true,
-    saleCode: 'HALLOWEEN30',
+    saleCode: 'BLACKFRIDAY30',
     salePercent: 30,
-    saleLabel: 'Halloween sale',
-    saleImage: '/halloween-sale.jpg',
+    saleLabel: 'Black Friday sale',
+    saleImage: '',
   },
   shipping: {
     freeThreshold: 150,
@@ -46,10 +46,12 @@ export const DEFAULT_SETTINGS = {
 
 /** Storewide seasonal sale (not TikTok-gated). One-time use enforced at checkout. */
 export function normalizeSalePromo(promo) {
-  const code =
+  let code =
     String(promo?.saleCode ?? DEFAULT_SETTINGS.promo.saleCode)
       .trim()
-      .toUpperCase() || 'HALLOWEEN30'
+      .toUpperCase() || 'BLACKFRIDAY30'
+  if (code === 'HALLOWEEN30') code = 'BLACKFRIDAY30'
+
   const percent = Math.min(
     90,
     Math.max(
@@ -57,12 +59,17 @@ export function normalizeSalePromo(promo) {
       Number(promo?.salePercent ?? DEFAULT_SETTINGS.promo.salePercent) || 30,
     ),
   )
-  const label =
+
+  let label =
     String(promo?.saleLabel ?? DEFAULT_SETTINGS.promo.saleLabel).trim() ||
-    'Halloween sale'
-  const image =
-    String(promo?.saleImage ?? DEFAULT_SETTINGS.promo.saleImage).trim() ||
-    '/halloween-sale.jpg'
+    'Black Friday sale'
+  if (/halloween/i.test(label)) label = 'Black Friday sale'
+
+  let image = String(
+    promo?.saleImage ?? DEFAULT_SETTINGS.promo.saleImage ?? '',
+  ).trim()
+  if (/halloween/i.test(image)) image = ''
+
   const enabled = promo?.saleEnabled !== false && Boolean(code) && percent > 0
   return { enabled, code, percent, label, image }
 }
@@ -79,7 +86,13 @@ export function normalizeTikTokCodes(promo) {
         .toUpperCase(),
       percent: Math.min(90, Math.max(1, Number(row?.percent) || 50)),
     }))
-    .filter((row) => row.code && row.code !== saleCode)
+    .filter(
+      (row) =>
+        row.code &&
+        row.code !== saleCode &&
+        row.code !== 'HALLOWEEN30' &&
+        row.code !== 'BLACKFRIDAY30',
+    )
 
   if (fromList.length) {
     const seen = new Set()
