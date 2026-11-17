@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useProducts } from '../context/ProductsContext'
+import { trackViewItem } from '../lib/analytics'
 import { CoaAction } from './CoaDialog'
 import SalePrice from './SalePrice'
 
@@ -51,6 +52,15 @@ export default function ProductDetail() {
   }, [product])
 
   const variant = product ? findVariant(product, variantId) : null
+  useEffect(() => {
+    if (!product?.id || !variant?.id) return
+    trackViewItem({
+      itemId: product.id,
+      itemName: product.name,
+      itemVariant: variant.label,
+      price: variant.price,
+    })
+  }, [product?.id, product?.name, variant?.id, variant?.label, variant?.price])
   const reviews = useMemo(
     () => (product ? getProductReviews(product.id) : []),
     [getProductReviews, product],

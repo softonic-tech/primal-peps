@@ -9,6 +9,11 @@ import {
   useCart,
 } from '../context/CartContext'
 import { useSettings } from '../context/SettingsContext'
+import {
+  trackAddPaymentInfo,
+  trackBeginCheckout,
+  trackPurchase,
+} from '../lib/analytics'
 import { normalizeSalePromo } from '../lib/settings'
 import TikTokReward from './TikTokReward'
 
@@ -515,6 +520,7 @@ setApplyingTiktok(true)
     }
     if (step === 1) {
       if (empty) return
+      trackBeginCheckout({ items: cartItems, value: totalVal })
       setStep(2)
       return
     }
@@ -523,6 +529,7 @@ setApplyingTiktok(true)
         toast('Fill the highlighted fields to continue')
         return
       }
+      trackAddPaymentInfo({ items: cartItems, value: orderTotal })
       setStep(3)
       return
     }
@@ -534,6 +541,12 @@ setApplyingTiktok(true)
       setSubmitting(true)
       try {
         const order = await placeOrder(shipping, { shipFee, keepOpen: true })
+        trackPurchase({
+          transactionId: order?.id,
+          items: order?.items,
+          value: order?.total,
+          shipping: order?.shippingFee,
+        })
         setPlacedOrder(order)
         setShipping(emptyShipping)
         setLegalAck(true)

@@ -13,6 +13,7 @@ import {
   isInStock,
   parseCartKey,
 } from '../data/products'
+import { trackAddToCart } from '../lib/analytics'
 import { bundleUnitPrice } from '../lib/bundlePricing'
 import {
   getTikTokRewardEntitlement,
@@ -216,6 +217,13 @@ export function CartProvider({ children }) {
         return { ...prev, [key]: nextQty }
       })
       const unit = bundleUnitPrice(variant.price, addQty)
+      trackAddToCart({
+        itemId: product.id,
+        itemName: product.name,
+        itemVariant: variant.label,
+        price: unit,
+        quantity: addQty,
+      })
       toast(
         `${product.name} (${variant.label}) ×${addQty} added — +${Math.round(unit * addQty * ptsPerDollar)} pts at checkout`,
       )
